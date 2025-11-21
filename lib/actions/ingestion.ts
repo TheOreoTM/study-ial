@@ -1,12 +1,14 @@
+"use server";
+
 import { eq, and, desc } from "drizzle-orm";
-import { dbClient } from "./client";
+import { dbClient } from "../db/client";
 import {
   ingestionJobs,
   sourcePapers,
   IngestionJob,
   IngestionJobInsert,
   SourcePaperInsert,
-} from "./schema";
+} from "../db/schema";
 import { createQuestion } from "./questions";
 
 /**

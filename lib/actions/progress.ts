@@ -1,6 +1,8 @@
+"use server";
+
 import { eq, and, desc, asc, inArray } from "drizzle-orm";
-import { dbClient } from "./client";
-import { userQuestionProgress } from "./schema";
+import { dbClient } from "../db/client";
+import { userQuestionProgress } from "../db/schema";
 
 /**
  * Get or create user question progress

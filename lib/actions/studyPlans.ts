@@ -1,5 +1,7 @@
+"use server";
+
 import { eq, and, desc, gte, lte, inArray, asc } from "drizzle-orm";
-import { dbClient } from "./client";
+import { dbClient } from "../db/client";
 import {
   studyPlans,
   studyPlanItems,
@@ -8,7 +10,7 @@ import {
   StudyPlanInsert,
   StudyPlanItem,
   StudyPlanItemInsert,
-} from "./schema";
+} from "../db/schema";
 
 /**
  * Create a new study plan

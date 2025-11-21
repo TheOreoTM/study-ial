@@ -1,5 +1,7 @@
+"use server";
+
 import { eq, and, inArray, like, desc, asc } from "drizzle-orm";
-import { dbClient } from "./client";
+import { dbClient } from "../db/client";
 import {
   questions,
   questionParts,
@@ -12,7 +14,7 @@ import {
   QuestionPartInsert as QuestionPartInsertType,
   AnswerOptionInsert,
   QuestionAssetInsert,
-} from "./schema";
+} from "../db/schema";
 
 /**
  * Create a new question with all its parts and assets
