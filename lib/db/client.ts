@@ -8,14 +8,14 @@ const connectionString = process.env.DATABASE_URL;
 let db: ReturnType<typeof drizzle> | null = null;
 
 export function getDb() {
-  if (!db) {
-    if (!connectionString) {
-      throw new Error("DATABASE_URL environment variable is not set");
+    if (!db) {
+        if (!connectionString) {
+            throw new Error("DATABASE_URL environment variable is not set");
+        }
+        const client = postgres(connectionString);
+        db = drizzle(client, { schema });
     }
-    const client = postgres(connectionString);
-    db = drizzle(client, { schema });
-  }
-  return db;
+    return db as ReturnType<typeof drizzle<typeof schema>>;
 }
 
 // For use in server components and API routes

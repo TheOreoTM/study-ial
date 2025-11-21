@@ -66,11 +66,37 @@ export function CreateStudyPlanModal() {
         }
     };
 
-    const handleCreate = () => {
-        // Here you would call your API to create the plan
-        console.log("Creating plan:", formData);
-        setOpen(false);
-        resetForm();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleCreate = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch("/api/study-plans/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    subjectCode: formData.subject,
+                    subjectName: SUBJECTS.find((s) => s.id === formData.subject)?.name,
+                    goal: formData.goal,
+                    duration: formData.duration,
+                    hoursPerDay: formData.hoursPerDay,
+                    topics: formData.topics,
+                }),
+            });
+
+            if (!response.ok) throw new Error("Failed to create plan");
+
+            const data = await response.json();
+            console.log("Plan created:", data);
+            setOpen(false);
+            resetForm();
+            // Optional: Redirect to the new plan or show success toast
+        } catch (error) {
+            console.error("Error creating plan:", error);
+            // Optional: Show error toast
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const toggleTopic = (topic: string) => {
@@ -358,8 +384,18 @@ export function CreateStudyPlanModal() {
                             Next <ArrowRight className="w-4 h-4" />
                         </Button>
                     ) : (
-                        <Button onClick={handleCreate} className="gap-2 px-8 bg-primary hover:bg-primary/90">
-                            Create Plan <Check className="w-4 h-4" />
+                        <Button
+                            onClick={handleCreate}
+                            disabled={isLoading}
+                            className="gap-2 px-8 bg-primary hover:bg-primary/90"
+                        >
+                            {isLoading ? (
+                                <>Creating...</>
+                            ) : (
+                                <>
+                                    Create Plan <Check className="w-4 h-4" />
+                                </>
+                            )}
                         </Button>
                     )}
                 </DialogFooter>
