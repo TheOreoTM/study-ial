@@ -1,6 +1,7 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import { useUser } from "@/lib/auth/useUser";
 import { motion } from "framer-motion";
 import {
     BookOpen,
@@ -17,9 +18,46 @@ import {
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
+import { getStudyPlanStatistics } from "@/lib/actions/studyPlans";
 
 export default function StudyHubPage() {
-    const { user, isLoaded } = useUser();
+    const { clerkUser, db, isLoaded, isAuthenticated } = useUser();
+    const [activePlans, setActivePlans] = useState<any[]>([]);
+    const [plansLoading, setPlansLoading] = useState(false);
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        let cancelled = false;
+
+        async function loadActivePlans() {
+            try {
+                setPlansLoading(true);
+                const plans = await db.studyPlans.getActive();
+
+                if (!cancelled) {
+                    // Fetch statistics for each plan
+                    const plansWithStats = await Promise.all(
+                        plans.map(async (plan) => {
+                            const stats = await getStudyPlanStatistics(plan.id);
+                            return { ...plan, stats };
+                        })
+                    );
+                    setActivePlans(plansWithStats as any[]);
+                }
+            } catch (error) {
+                console.error("Failed to load active study plans", error);
+            } finally {
+                if (!cancelled) setPlansLoading(false);
+            }
+        }
+
+        loadActivePlans();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isAuthenticated]);
 
     const container = {
         hidden: { opacity: 0 },
@@ -40,6 +78,10 @@ export default function StudyHubPage() {
         return <LoadingSpinner text="Loading Your Study Hub..." />;
     }
 
+    if (!isAuthenticated) {
+        return <LoadingSpinner text="Please sign in to view your Study Hub" />;
+    }
+
     return (
         <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans">
             <motion.div variants={container} initial="hidden" animate="show" className="max-w-7xl mx-auto space-y-12">
@@ -50,7 +92,7 @@ export default function StudyHubPage() {
                 >
                     <div className="space-y-2">
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                            Welcome back, <span className="text-primary">{user?.firstName || "Student"}</span>
+                            Welcome back, <span className="text-primary">{clerkUser?.firstName || "Student"}</span>
                         </h1>
                         <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl">
                             Ready to continue your learning journey? Here's what's happening today.
@@ -135,7 +177,7 @@ export default function StudyHubPage() {
                                 Active Study Plans
                             </h2>
                             <Link
-                                href="/plans"
+                                href="/study-plans"
                                 className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
                             >
                                 View All <ArrowRight className="w-4 h-4" />
@@ -143,51 +185,63 @@ export default function StudyHubPage() {
                         </div>
 
                         <div className="grid gap-4">
-                            {[
-                                {
-                                    title: "Physics: Mechanics Mastery",
-                                    progress: 65,
-                                    next: "Newton's Laws Practice",
-                                    due: "Tomorrow",
-                                },
-                                {
-                                    title: "Calculus Integration",
-                                    progress: 30,
-                                    next: "Integration by Parts",
-                                    due: "In 3 days",
-                                },
-                            ].map((plan, i) => (
-                                <div
-                                    key={i}
-                                    className="group bg-white dark:bg-neutral-900 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-primary/50 transition-all cursor-pointer"
-                                >
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                                        <div>
-                                            <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
-                                                {plan.title}
-                                            </h3>
-                                            <p className="text-neutral-500 text-sm mt-1">Next: {plan.next}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                                                Due {plan.due}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-sm font-medium">
-                                            <span>Progress</span>
-                                            <span>{plan.progress}%</span>
-                                        </div>
-                                        <div className="h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
-                                                style={{ width: `${plan.progress}%` }}
-                                            />
-                                        </div>
-                                    </div>
+                            {plansLoading && (
+                                <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                                    Loading active plans...
                                 </div>
-                            ))}
+                            )}
+
+                            {!plansLoading && activePlans.length === 0 && (
+                                <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                                    No active plans yet. Create one to get started.
+                                </div>
+                            )}
+
+                            {!plansLoading &&
+                                activePlans.map((plan, i) => {
+                                    const start = new Date(plan.startDate as any);
+                                    const end = new Date(plan.endDate as any);
+                                    const progress = Math.round(plan.stats?.completionPercentage || 0);
+
+                                    return (
+                                        <Link key={plan.id ?? i} href={`/study-plans/${plan.id}`} className="group">
+                                            <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-primary/50 transition-all cursor-pointer">
+                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                                    <div>
+                                                        <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                                                            {plan.name}
+                                                        </h3>
+                                                        <p className="text-neutral-500 text-sm mt-1">
+                                                            {plan.settings?.goal
+                                                                ? `Goal: ${String(plan.settings.goal).replace(
+                                                                      "_",
+                                                                      " "
+                                                                  )}`
+                                                                : "AI-generated study plan"}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                                            Ends {end.toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-sm font-medium">
+                                                        <span>Progress</span>
+                                                        <span>{progress}%</span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+                                                            style={{ width: `${progress}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
                         </div>
                     </motion.div>
 

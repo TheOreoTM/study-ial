@@ -115,7 +115,7 @@ export const questions = pgTable(
         hasDiagram: boolean("has_diagram").default(false).notNull(),
         hasMath: boolean("has_math").default(false).notNull(),
         hasTable: boolean("has_table").default(false).notNull(),
-        embedding: vector("embedding", { dimensions: 768 }), // Gemini embedding dimension
+        embedding: vector("embedding", { dimensions: 1536 }), // OpenAI embedding dimension
         metadata: jsonb("metadata"), // tags, skills, examiner keywords, etc.
         sourcePaperId: uuid("source_paper_id").references(() => sourcePapers.id, {
             onDelete: "set null",
@@ -329,3 +329,43 @@ export type UserQuestionProgressInsert = typeof userQuestionProgress.$inferInser
 
 export type IngestionJob = typeof ingestionJobs.$inferSelect;
 export type IngestionJobInsert = typeof ingestionJobs.$inferInsert;
+
+// Resources (uploaded PDFs)
+export const resources = pgTable(
+    "resources",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        userId: varchar("user_id").notNull(), // from Clerk
+        fileName: varchar("file_name", { length: 255 }).notNull(),
+        fileSize: integer("file_size").notNull(),
+        pageCount: integer("page_count"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+    },
+    (table) => ({
+        userIdx: index("resources_user_idx").on(table.userId),
+    })
+);
+
+// Resource Chunks (for RAG)
+export const resourceChunks = pgTable(
+    "resource_chunks",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        resourceId: uuid("resource_id")
+            .notNull()
+            .references(() => resources.id, { onDelete: "cascade" }),
+        content: text("content").notNull(),
+        embedding: vector("embedding", { dimensions: 1536 }), // OpenAI embedding dimension
+        metadata: jsonb("metadata"), // page number, section title, etc.
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+    },
+    (table) => ({
+        resourceIdx: index("resource_chunks_resource_idx").on(table.resourceId),
+    })
+);
+
+export type Resource = typeof resources.$inferSelect;
+export type ResourceInsert = typeof resources.$inferInsert;
+
+export type ResourceChunk = typeof resourceChunks.$inferSelect;
+export type ResourceChunkInsert = typeof resourceChunks.$inferInsert;

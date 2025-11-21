@@ -13,6 +13,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
+        console.log(body);
         const { subjectCode, subjectName, goal, duration, hoursPerDay, topics } = body;
 
         if (!subjectCode || !subjectName) {
@@ -21,7 +22,6 @@ export async function POST(req: Request) {
 
         const db = getDb();
 
-        // 0. Resolve Subject ID
         let subjectId: string;
         const existingSubject = await db.query.subjects.findFirst({
             where: eq(subjects.code, subjectCode),
@@ -43,6 +43,7 @@ export async function POST(req: Request) {
 
         // 1. Generate the plan using AI
         const generatedPlan = await generateStudyPlan({
+            userId,
             subject: subjectName,
             goal,
             durationWeeks: duration,
