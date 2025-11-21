@@ -1,4 +1,4 @@
-"use cilent";
+"use client";
 
 import React, { useRef } from "react";
 
@@ -23,7 +23,7 @@ const GlareHover: React.FC<GlareHoverProps> = ({
     width = "500px",
     height = "500px",
     background = "#000",
-    borderRadius = "10px",
+    borderRadius = "1px",
     borderColor = "#333",
     children,
     glareColor = "#ffffff",

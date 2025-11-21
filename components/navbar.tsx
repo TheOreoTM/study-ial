@@ -4,6 +4,7 @@ import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export default function Navbar() {
     return (
@@ -31,6 +32,7 @@ export default function Navbar() {
                     </Link>
                 </nav>
                 <div className="flex items-center space-x-3">
+                    <ModeToggle />
                     <SignedOut>
                         <SignInButton mode="modal">
                             <Button variant="outline" className="hover:bg-background cursor-pointer">
@@ -44,7 +46,7 @@ export default function Navbar() {
                     <SignedIn>
                         <div className="flex space-x-2 border py-1 pr-4 pl-1 rounded-sm bg-linear-to-br border-primary/5 transition-all">
                             <Button variant="ghost" size="default" asChild>
-                                <Link href="/dashboard">Dashboard</Link>
+                                <Link href="/study-hub">Study Hub</Link>
                             </Button>
                             <UserButton />
                         </div>
