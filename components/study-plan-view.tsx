@@ -516,6 +516,7 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                                                         isSelected={selectedItems.has(item.id)}
                                                         onSelect={handleSelect}
                                                         selectionMode={selectedItems.size > 0}
+                                                        planId={plan.id}
                                                     />
                                                 ))}
                                             </div>

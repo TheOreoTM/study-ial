@@ -17,6 +17,12 @@ import { getStudyPlanStatistics, getUserStudyPlans } from "@/lib/actions/studyPl
 import type { StudyPlan } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
 import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Study Plans",
+    description: "Create and manage your AI-powered personalized study plans.",
+};
 
 function parseDate(value: string | Date | null | undefined) {
     if (!value) return null;

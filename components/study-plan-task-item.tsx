@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Circle, Clock, FileText, PauseCircle, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ interface StudyPlanTaskItemProps {
     isSelected?: boolean;
     onSelect?: (itemId: string, selected: boolean) => void;
     selectionMode?: boolean;
+    planId: string;
 }
 
 export function StudyPlanTaskItem({
@@ -22,8 +24,10 @@ export function StudyPlanTaskItem({
     isSelected = false,
     onSelect,
     selectionMode = false,
+    planId,
 }: StudyPlanTaskItemProps) {
     const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     async function handleStatusChange(newStatus: "pending" | "in_progress" | "done" | "skipped") {
         if (isLoading || !onStatusChange) return;
@@ -36,6 +40,12 @@ export function StudyPlanTaskItem({
             setIsLoading(false);
         }
     }
+
+    const handleItemClick = () => {
+        if (!selectionMode) {
+            router.push(`/study-plans/${planId}/tasks/${item.id}`);
+        }
+    };
 
     const statusConfig = {
         done: {
@@ -80,8 +90,9 @@ export function StudyPlanTaskItem({
             layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            onClick={handleItemClick}
             className={cn(
-                "group relative overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md",
+                "group relative overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md cursor-pointer",
                 item.status === "done" ? "opacity-75 hover:opacity-100" : "",
                 currentConfig.border,
                 isSelected && "ring-2 ring-primary ring-offset-2"
@@ -143,7 +154,7 @@ export function StudyPlanTaskItem({
                         >
                             <span className="capitalize">{item.taskType.replace(/_/g, " ")}</span>
                         </h3>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             {/* Status Badge with Select */}
                             <Select
                                 value={item.status}
