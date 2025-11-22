@@ -72,7 +72,7 @@ export default function HomePage() {
                         <br />
                         with
                         <br />
-                        <span className="bg-gradient-to-r from-primary to-secondary/90 bg-clip-text text-transparent">
+                        <span className="bg-linear-to-r from-primary to-secondary/90 bg-clip-text text-transparent">
                             Intelligent Learning
                         </span>
                     </motion.h1>
@@ -227,7 +227,7 @@ export default function HomePage() {
             {/* CTA Section */}
             <section className="py-32 px-4 relative overflow-hidden">
                 <div className="absolute inset-0 bg-primary/5 -z-10" />
-                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-primary/20 to-transparent" />
 
                 <div className="container mx-auto text-center">
                     <h2 className="text-4xl md:text-6xl font-bold mb-8">Ready to Transform Your Studies?</h2>
@@ -374,7 +374,7 @@ function SubjectCard({
         <Link href="/subjects" className="group block h-full">
             <div className="relative h-full rounded-2xl border border-border bg-card p-8 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden">
                 <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+                    className={`absolute inset-0 bg-linear-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
                 />
                 <div className="relative z-10">
                     <h3 className={`text-2xl font-bold ${textColor} mb-2`}>{title}</h3>

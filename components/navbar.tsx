@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+    const currentPath = usePathname();
+
     return (
         <header>
             <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -14,19 +17,41 @@ export default function Navbar() {
                 <nav className="hidden md:flex items-center space-x-8">
                     <Link
                         href="/subjects"
-                        className="text-muted-foreground hover:text-primary font-medium transition-colors"
+                        className={
+                            currentPath.startsWith("/subjects")
+                                ? "text-primary font-medium transition-colors"
+                                : "text-muted-foreground hover:text-primary font-medium transition-colors"
+                        }
                     >
                         Subjects
                     </Link>
                     <Link
                         href="/study-plans"
-                        className="text-muted-foreground hover:text-primary font-medium transition-colors"
+                        className={
+                            currentPath === "/study-plans"
+                                ? "text-primary font-medium transition-colors"
+                                : "text-muted-foreground hover:text-primary font-medium transition-colors"
+                        }
                     >
-                        Study Plans
+                        Marketplace
+                    </Link>
+                    <Link
+                        href="/study-plans/me"
+                        className={
+                            currentPath.startsWith("/study-plans/me")
+                                ? "text-primary font-medium transition-colors"
+                                : "text-muted-foreground hover:text-primary font-medium transition-colors"
+                        }
+                    >
+                        My Plans
                     </Link>
                     <Link
                         href="/search"
-                        className="text-muted-foreground hover:text-primary font-medium transition-colors"
+                        className={
+                            currentPath.startsWith("/search")
+                                ? "text-primary font-medium transition-colors"
+                                : "text-muted-foreground hover:text-primary font-medium transition-colors"
+                        }
                     >
                         Search
                     </Link>

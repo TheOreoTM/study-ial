@@ -230,6 +230,11 @@ export async function getStudyPlanStatistics(planId: string) {
     const pending = items.filter((i) => i.status === "pending").length;
     const skipped = items.filter((i) => i.status === "skipped").length;
 
+    const totalMinutes = items.reduce((acc, item) => acc + (item.targetMinutes || 0), 0);
+    const completedMinutes = items
+        .filter((i) => i.status === "done")
+        .reduce((acc, item) => acc + (item.targetMinutes || 0), 0);
+
     const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
 
     return {
@@ -239,6 +244,11 @@ export async function getStudyPlanStatistics(planId: string) {
         pending,
         skipped,
         completionPercentage,
+        // New properties for StudyPlanView
+        totalTasks: total,
+        completedTasks: completed,
+        totalMinutes,
+        completedMinutes,
     };
 }
 
@@ -309,4 +319,88 @@ export async function getStudyPlanItem(itemId: string) {
     const topicList = topicIds.length ? await dbClient.select().from(topics).where(inArray(topics.id, topicIds)) : [];
 
     return { ...item, topics: topicList };
+}
+
+/**
+ * Get all public study plans (Marketplace)
+ */
+export async function getPublicStudyPlans(limit = 50) {
+    const plans = await dbClient
+        .select()
+        .from(studyPlans)
+        .where(eq(studyPlans.isPublic, true))
+        .orderBy(desc(studyPlans.createdAt))
+        .limit(limit);
+
+    return plans;
+}
+
+/**
+ * Toggle study plan privacy
+ */
+export async function toggleStudyPlanPrivacy(planId: string, isPublic: boolean) {
+    const [updated] = await dbClient
+        .update(studyPlans)
+        .set({
+            isPublic,
+            updatedAt: new Date(),
+        })
+        .where(eq(studyPlans.id, planId))
+        .returning();
+
+    return updated;
+}
+
+/**
+ * Copy a study plan to the current user
+ */
+export async function copyStudyPlan(planId: string, userId: string) {
+    // 1. Fetch the original plan
+    const originalPlan = await getStudyPlanWithItems(planId);
+    if (!originalPlan) throw new Error("Study plan not found");
+
+    // 2. Create the new plan
+    const newPlanData: StudyPlanInsert = {
+        userId,
+        name: `${originalPlan.name} (Copy)`,
+        subjectId: originalPlan.subjectId,
+        startDate: new Date(), // Start today
+        endDate: new Date(
+            Date.now() + (new Date(originalPlan.endDate).getTime() - new Date(originalPlan.startDate).getTime())
+        ), // Maintain duration
+        totalTargetHours: originalPlan.totalTargetHours,
+        settings: originalPlan.settings,
+        generatedByModel: originalPlan.generatedByModel,
+        isPublic: false, // Default to private
+    };
+
+    const [newPlan] = await dbClient.insert(studyPlans).values(newPlanData).returning();
+
+    // 3. Copy items
+    if (originalPlan.items && originalPlan.items.length > 0) {
+        const newItemsData: StudyPlanItemInsert[] = originalPlan.items.map((item) => {
+            // Calculate relative due date
+            const originalStart = new Date(originalPlan.startDate).getTime();
+            const itemDue = new Date(item.dueDate).getTime();
+            const offset = itemDue - originalStart;
+            const newDueDate = new Date(newPlan.startDate.getTime() + offset);
+
+            return {
+                planId: newPlan.id,
+                subjectId: item.subjectId,
+                topicIds: item.topicIds,
+                questionIds: item.questionIds,
+                taskType: item.taskType,
+                status: "pending", // Reset status
+                dueDate: newDueDate,
+                targetQuestionsCount: item.targetQuestionsCount,
+                targetMinutes: item.targetMinutes,
+                metadata: item.metadata,
+            };
+        });
+
+        await dbClient.insert(studyPlanItems).values(newItemsData);
+    }
+
+    return newPlan;
 }

@@ -1,33 +1,41 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
     Calendar,
     Clock,
-    ArrowLeft,
-    CheckCircle2,
-    TrendingUp,
-    BookOpen,
+    MoreHorizontal,
     Pencil,
     Trash2,
+    BookOpen,
+    CheckCircle2,
+    Circle,
+    ArrowLeft,
+    BarChart3,
+    Target,
+    Sparkles,
+    Lock,
+    Globe,
+    TrendingUp,
     AlertTriangle,
     CheckSquare,
     X,
     ArrowUpDown,
     Filter,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { StudyPlanTaskItem } from "@/components/study-plan-task-item";
-import {
-    updateStudyPlanItemStatus,
-    updateStudyPlan,
-    deleteStudyPlan,
-    deleteStudyPlanItem,
-} from "@/lib/actions/studyPlans";
-import type { StudyPlan, StudyPlanItem } from "@/lib/db/schema";
+import { format } from "date-fns";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
     Dialog,
     DialogContent,
@@ -37,27 +45,34 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
+import {
+    updateStudyPlan,
+    deleteStudyPlan,
+    toggleStudyPlanPrivacy,
+    updateStudyPlanItemStatus,
+    deleteStudyPlanItem,
+} from "@/lib/actions/studyPlans";
+import type { StudyPlan, StudyPlanItem } from "@/lib/db/schema";
+import { StudyPlanTaskItem } from "@/components/study-plan-task-item";
+import { cn } from "@/lib/utils";
+
 interface StudyPlanViewProps {
-    plan: StudyPlan & { items: (StudyPlanItem & { topics?: any[] })[] };
+    plan: StudyPlan & { items: StudyPlanItem[] };
     initialStats: {
-        total: number;
-        completed: number;
-        inProgress: number;
-        pending: number;
-        skipped: number;
+        totalTasks: number;
+        completedTasks: number;
         completionPercentage: number;
+        totalMinutes: number;
+        completedMinutes: number;
     };
 }
 
@@ -71,8 +86,8 @@ function formatDate(date: Date | string | null | undefined) {
     });
 }
 
-function groupItemsByDay(items: (StudyPlanItem & { topics?: any[] })[]) {
-    const groups: Record<string, typeof items> = {};
+function groupItemsByDay(items: StudyPlanItem[]) {
+    const groups: Record<string, StudyPlanItem[]> = {};
     for (const item of items) {
         const d = item.dueDate instanceof Date ? item.dueDate : new Date(item.dueDate);
         const key = d.toISOString().split("T")[0];
@@ -93,10 +108,14 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
     const [newName, setNewName] = useState(plan.name);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
+    const [isPublic, setIsPublic] = useState(plan.isPublic || false);
+    const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
 
     // Bulk Actions & Sorting State
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
     const [sortOption, setSortOption] = useState<SortOption>("date");
+
+    const settings: any = plan.settings || {};
 
     // Derived stats from local state
     const stats = useMemo(() => {
@@ -139,9 +158,8 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
     }, [items, sortOption]);
 
     const grouped = useMemo(() => groupItemsByDay(sortedItems), [sortedItems]);
-    const dateKeys = Object.keys(grouped); // Already sorted if sortOption is 'date', otherwise just grouped keys
+    const dateKeys = Object.keys(grouped);
 
-    // If sorting by date, ensure keys are sorted chronologically
     if (sortOption === "date") {
         dateKeys.sort();
     }
@@ -157,6 +175,7 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
             await updateStudyPlanItemStatus(itemId, newStatus);
         } catch (error) {
             console.error("Failed to update status", error);
+            toast.error("Failed to update status");
         }
     }
 
@@ -170,9 +189,14 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
         try {
             await updateStudyPlan(plan.id, { name: newName });
             setPlanName(newName);
+            toast.success("Plan renamed", {
+                description: "Study plan name has been updated successfully.",
+            });
             setIsRenameOpen(false);
         } catch (error) {
-            console.error("Failed to rename plan", error);
+            toast.error("Error", {
+                description: "Failed to rename study plan.",
+            });
         } finally {
             setIsRenaming(false);
         }
@@ -182,10 +206,38 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
         setIsDeleting(true);
         try {
             await deleteStudyPlan(plan.id);
-            router.push("/study-hub");
+            toast.success("Plan deleted", {
+                description: "Study plan has been deleted successfully.",
+            });
+            router.push("/study-plans/me");
         } catch (error) {
-            console.error("Failed to delete plan", error);
+            toast.error("Error", {
+                description: "Failed to delete study plan.",
+            });
             setIsDeleting(false);
+        }
+    }
+
+    async function handlePrivacyToggle(checked: boolean) {
+        setIsTogglingPrivacy(true);
+        // Optimistic update
+        setIsPublic(checked);
+
+        try {
+            await toggleStudyPlanPrivacy(plan.id, checked);
+            toast.success(checked ? "Plan is now Public" : "Plan is now Private", {
+                description: checked
+                    ? "Your study plan is visible in the marketplace."
+                    : "Your study plan is only visible to you.",
+            });
+        } catch (error) {
+            // Revert on failure
+            setIsPublic(!checked);
+            toast.error("Error", {
+                description: "Failed to update privacy settings.",
+            });
+        } finally {
+            setIsTogglingPrivacy(false);
         }
     }
 
@@ -217,8 +269,10 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
 
         try {
             await Promise.all(itemIds.map((id) => updateStudyPlanItemStatus(id, status)));
+            toast.success("Tasks updated");
         } catch (error) {
             console.error("Failed to bulk update status", error);
+            toast.error("Failed to update tasks");
         }
     }
 
@@ -231,146 +285,124 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
 
         try {
             await Promise.all(itemIds.map((id) => deleteStudyPlanItem(id)));
+            toast.success("Tasks deleted");
         } catch (error) {
             console.error("Failed to bulk delete items", error);
+            toast.error("Failed to delete tasks");
         }
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans pb-32">
-            <div className="max-w-5xl mx-auto space-y-10">
-                {/* Navigation & Header */}
-                <header className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <Link
-                            href="/study-hub"
-                            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Back to Study Hub
-                        </Link>
-
-                        <div className="flex items-center gap-2">
-                            <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
-                                <DialogTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                        <span className="sr-only">Rename Plan</span>
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Rename Study Plan</DialogTitle>
-                                        <DialogDescription>Enter a new name for your study plan.</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="name">Name</Label>
-                                            <Input
-                                                id="name"
-                                                value={newName}
-                                                onChange={(e) => setNewName(e.target.value)}
-                                                placeholder="My Study Plan"
-                                            />
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <Button variant="outline" onClick={() => setIsRenameOpen(false)}>
-                                            Cancel
-                                        </Button>
-                                        <Button onClick={handleRename} disabled={isRenaming}>
-                                            {isRenaming ? "Saving..." : "Save Changes"}
-                                        </Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-
-                            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                                <DialogTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="sr-only">Delete Plan</span>
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle className="flex items-center gap-2 text-destructive">
-                                            <AlertTriangle className="h-5 w-5" />
-                                            Delete Study Plan
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                            Are you sure you want to delete <strong>{planName}</strong>? This action
-                                            cannot be undone and will remove all associated tasks and progress.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <DialogFooter>
-                                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
-                                            Cancel
-                                        </Button>
-                                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                                            {isDeleting ? "Deleting..." : "Delete Plan"}
-                                        </Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+        <div className="min-h-screen bg-background pb-20">
+            {/* Header Section */}
+            <div className="bg-card border-b border-border sticky top-0 z-10">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+                    <div className="flex items-center gap-4 mb-4">
+                        <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
+                            <Link href="/study-plans/me">
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Back
+                            </Link>
+                        </Button>
                     </div>
 
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                        <div className="space-y-2">
+                        <div className="space-y-2 flex-1">
                             <div className="flex items-center gap-3">
-                                <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-                                    Study Plan
-                                </span>
+                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{planName}</h1>
+                                <Badge variant="outline" className="gap-1.5 py-1">
+                                    {isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                                    {isPublic ? "Public" : "Private"}
+                                </Badge>
                                 {plan.generatedByModel && (
                                     <span className="text-xs text-muted-foreground border border-border px-2 py-0.5 rounded-full">
                                         AI Generated
                                     </span>
                                 )}
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{planName}</h1>
-                            <div className="flex flex-wrap gap-4 items-center text-sm text-muted-foreground pt-1">
-                                <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1.5">
                                     <Calendar className="w-4 h-4" />
                                     <span>
-                                        {new Date(start).toLocaleDateString()} – {new Date(end).toLocaleDateString()}
+                                        {format(new Date(start), "MMM d")} - {format(new Date(end), "MMM d, yyyy")}
                                     </span>
                                 </div>
-                                {plan.totalTargetHours && (
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4" />
-                                        <span>{String(plan.totalTargetHours)} hours target</span>
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="w-4 h-4" />
+                                    <span>{plan.totalTargetHours}h total</span>
+                                </div>
+                                {settings.goal && (
+                                    <div className="flex items-center gap-1.5">
+                                        <Target className="w-4 h-4" />
+                                        <span className="capitalize">{settings.goal.replace(/_/g, " ")}</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Overall Progress */}
-                        <div className="w-full md:w-64 bg-card border border-border rounded-2xl p-4 shadow-sm">
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-sm font-medium text-muted-foreground">Overall Progress</span>
-                                <span className="text-2xl font-bold text-primary">
-                                    {stats.completionPercentage.toFixed(0)}%
-                                </span>
-                            </div>
-                            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
-                                    style={{ width: `${stats.completionPercentage}%` }}
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 mr-2 bg-muted/50 p-2 rounded-lg border border-border">
+                                <Switch
+                                    id="privacy-mode"
+                                    checked={isPublic}
+                                    onCheckedChange={handlePrivacyToggle}
+                                    disabled={isTogglingPrivacy}
                                 />
+                                <Label
+                                    htmlFor="privacy-mode"
+                                    className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                                >
+                                    {isPublic ? (
+                                        <>
+                                            <Globe className="w-4 h-4 text-primary" />
+                                            <span className="hidden sm:inline">Public</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Lock className="w-4 h-4 text-muted-foreground" />
+                                            <span className="hidden sm:inline">Private</span>
+                                        </>
+                                    )}
+                                </Label>
                             </div>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon">
+                                        <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setIsRenameOpen(true)}>
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Rename Plan
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive"
+                                        onClick={() => setIsDeleteOpen(true)}
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete Plan
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
-                </header>
 
+                    {/* Progress Bar */}
+                    <div className="mt-8 space-y-2">
+                        <div className="flex justify-between text-sm font-medium">
+                            <span className="text-muted-foreground">Overall Progress</span>
+                            <span className="text-primary">{stats.completionPercentage.toFixed(0)}%</span>
+                        </div>
+                        <Progress value={stats.completionPercentage} className="h-2" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
                 {/* Stats Grid */}
                 <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
@@ -595,6 +627,55 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Rename Dialog */}
+            <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rename Study Plan</DialogTitle>
+                        <DialogDescription>Enter a new name for your study plan.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="name" className="mb-2 block">
+                            Name
+                        </Label>
+                        <Input
+                            id="name"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            placeholder="Enter plan name"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsRenameOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleRename} disabled={isRenaming}>
+                            {isRenaming ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Dialog */}
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Study Plan</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this study plan? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                            {isDeleting ? "Deleting..." : "Delete Plan"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -208,6 +208,7 @@ export const studyPlans = pgTable(
         totalTargetHours: numeric("total_target_hours", { precision: 10, scale: 2 }),
         settings: jsonb("settings"), // exam date, preferred days, daily max hours, focus topics, etc.
         generatedByModel: varchar("generated_by_model", { length: 100 }),
+        isPublic: boolean("is_public").default(false).notNull(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at").defaultNow().notNull(),
     },
