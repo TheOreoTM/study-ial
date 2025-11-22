@@ -66,7 +66,7 @@ export default function HomePage() {
 
                     <motion.h1
                         variants={itemVariants}
-                        className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground mb-8 leading-tight tracking-tight"
+                        className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-8 leading-tight tracking-tight"
                     >
                         Master Your IAL A-Levels
                         <br />
@@ -336,9 +336,8 @@ function FeatureCard({
 }) {
     return (
         <GlareHover
-            borderRadius="rounded-3xl"
+            borderRadius="24px"
             borderColor="border-boder"
-            className="bg-primary-foreground"
             background="#121212"
             width="100%"
             height="100%"
