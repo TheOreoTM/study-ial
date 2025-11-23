@@ -240,7 +240,7 @@ export default function HomePage() {
                         className="text-lg px-10 py-8 rounded-full shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all"
                         asChild
                     >
-                        <Link href="/auth/register">
+                        <Link href="/sign-up">
                             Start Your Free Trial
                             <ArrowRight className="ml-2 h-5 w-5" />
                         </Link>

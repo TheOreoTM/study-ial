@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Circle, Clock, FileText, PauseCircle, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, FileText, PauseCircle, SkipForward } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { StudyPlanItem } from "@/lib/db/schema";
@@ -16,6 +16,7 @@ interface StudyPlanTaskItemProps {
     onSelect?: (itemId: string, selected: boolean) => void;
     selectionMode?: boolean;
     planId: string;
+    isReadOnly?: boolean;
 }
 
 export function StudyPlanTaskItem({
@@ -25,6 +26,7 @@ export function StudyPlanTaskItem({
     onSelect,
     selectionMode = false,
     planId,
+    isReadOnly = false,
 }: StudyPlanTaskItemProps) {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
@@ -63,7 +65,7 @@ export function StudyPlanTaskItem({
             label: "In Progress",
         },
         skipped: {
-            icon: XCircle,
+            icon: SkipForward,
             color: "text-amber-500",
             bg: "bg-amber-500/10",
             border: "border-amber-500/20",
@@ -110,12 +112,13 @@ export function StudyPlanTaskItem({
                             }
                             handleStatusChange(nextStatus);
                         }}
-                        disabled={isLoading}
+                        disabled={isLoading || isReadOnly}
                         className={cn(
-                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 hover:cursor-pointer",
+                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                             item.status === "pending" &&
                                 "border-2 border-neutral-300 hover:border-primary dark:border-neutral-600",
-                            item.status !== "pending" && currentConfig.color
+                            item.status !== "pending" && currentConfig.color,
+                            isReadOnly && "cursor-not-allowed"
                         )}
                     >
                         {isLoading ? (
@@ -126,21 +129,23 @@ export function StudyPlanTaskItem({
                     </button>
 
                     {/* Selection Checkbox */}
-                    <div
-                        className={cn(
-                            "flex items-center justify-center transition-all duration-200 overflow-hidden",
-                            selectionMode || isSelected
-                                ? "h-6 opacity-100"
-                                : "h-0 opacity-0 group-hover:h-6 group-hover:opacity-100"
-                        )}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={(checked) => onSelect?.(item.id, checked as boolean)}
-                            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                        />
-                    </div>
+                    {!isReadOnly && (
+                        <div
+                            className={cn(
+                                "flex items-center justify-center transition-all duration-200 overflow-hidden",
+                                selectionMode || isSelected
+                                    ? "h-6 opacity-100"
+                                    : "h-0 opacity-0 group-hover:h-6 group-hover:opacity-100"
+                            )}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => onSelect?.(item.id, checked as boolean)}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground hover:cursor-pointer"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Content */}
@@ -159,7 +164,7 @@ export function StudyPlanTaskItem({
                             <Select
                                 value={item.status}
                                 onValueChange={(val) => handleStatusChange(val as any)}
-                                disabled={isLoading}
+                                disabled={isLoading || isReadOnly}
                             >
                                 <SelectTrigger
                                     className={cn(

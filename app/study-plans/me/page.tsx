@@ -40,19 +40,6 @@ function getPlanStatus(plan: StudyPlan) {
     return "active" as const;
 }
 
-function getTimeProgress(plan: StudyPlan) {
-    const start = parseDate(plan.startDate);
-    const end = parseDate(plan.endDate);
-    if (!start || !end) return 0;
-
-    const total = end.getTime() - start.getTime();
-    if (total <= 0) return 0;
-
-    const now = Date.now();
-    const elapsed = Math.min(Math.max(now - start.getTime(), 0), total);
-    return Math.round((elapsed / total) * 100);
-}
-
 function formatDate(date: Date | null) {
     if (!date) return "-";
     return date.toLocaleDateString(undefined, {

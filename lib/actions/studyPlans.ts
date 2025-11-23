@@ -194,6 +194,27 @@ export async function updateStudyPlanItemStatus(
 }
 
 /**
+ * Update multiple study plan items status
+ */
+export async function updateStudyPlanItemsStatus(
+    itemIds: string[],
+    status: "pending" | "in_progress" | "done" | "skipped"
+) {
+    if (itemIds.length === 0) return [];
+
+    const updated = await dbClient
+        .update(studyPlanItems)
+        .set({
+            status,
+            completedAt: status === "done" ? new Date() : null,
+        })
+        .where(inArray(studyPlanItems.id, itemIds))
+        .returning();
+
+    return updated;
+}
+
+/**
  * Create a new study plan item
  */
 export async function createStudyPlanItem(data: StudyPlanItemInsert) {

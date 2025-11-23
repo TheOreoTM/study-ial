@@ -38,7 +38,7 @@ export function CopyStudyPlanButton({ planId, userId }: CopyStudyPlanButtonProps
     }
 
     return (
-        <Button variant="secondary" size="sm" className="gap-2" onClick={handleCopy} disabled={isLoading}>
+        <Button variant="ghost" size="sm" className="gap-2" onClick={handleCopy} disabled={isLoading}>
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
             Copy to My Plans
         </Button>

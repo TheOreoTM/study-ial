@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { TaskStatusActions } from "@/components/task-status-actions";
 
-export default async function TaskDetailsPage({ params }: { params: { id: string; taskId: string } }) {
-    const task = await getStudyPlanItem(params.taskId);
+export default async function TaskDetailsPage({ params }: { params: Promise<{ id: string; taskId: string }> }) {
+    const { taskId, id } = await params;
+    const task = await getStudyPlanItem(taskId);
 
     if (!task) {
         notFound();
@@ -21,7 +22,7 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
         <div className="container max-w-3xl py-8 space-y-8">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Link href={`/study-plans/${params.id}`}>
+                <Link href={`/study-plans/${id}`}>
                     <Button variant="ghost" size="icon" className="rounded-full">
                         <ArrowLeft className="h-5 w-5" />
                     </Button>

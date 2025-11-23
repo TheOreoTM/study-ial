@@ -13,17 +13,14 @@ import {
     CheckCircle2,
     Circle,
     ArrowLeft,
-    BarChart3,
     Target,
-    Sparkles,
     Lock,
     Globe,
     TrendingUp,
-    AlertTriangle,
-    CheckSquare,
     X,
     ArrowUpDown,
-    Filter,
+    SkipForward,
+    ChevronsUpDown,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -48,7 +45,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -59,6 +55,7 @@ import {
     deleteStudyPlan,
     toggleStudyPlanPrivacy,
     updateStudyPlanItemStatus,
+    updateStudyPlanItemsStatus,
     deleteStudyPlanItem,
 } from "@/lib/actions/studyPlans";
 import type { StudyPlan, StudyPlanItem } from "@/lib/db/schema";
@@ -74,6 +71,7 @@ interface StudyPlanViewProps {
         totalMinutes: number;
         completedMinutes: number;
     };
+    isReadOnly?: boolean;
 }
 
 function formatDate(date: Date | string | null | undefined) {
@@ -99,9 +97,13 @@ function groupItemsByDay(items: StudyPlanItem[]) {
 
 type SortOption = "date" | "status" | "type";
 
-export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
+export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyPlanViewProps) {
     const router = useRouter();
-    const [items, setItems] = useState(plan.items || []);
+    const [items, setItems] = useState<StudyPlanItem[]>(
+        isReadOnly
+            ? (plan.items || []).map((item) => ({ ...item, status: "pending" as StudyPlanItem["status"] }))
+            : plan.items || []
+    );
     const [planName, setPlanName] = useState(plan.name);
     const [isRenameOpen, setIsRenameOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -268,7 +270,7 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
         setSelectedItems(new Set());
 
         try {
-            await Promise.all(itemIds.map((id) => updateStudyPlanItemStatus(id, status)));
+            await updateStudyPlanItemsStatus(itemIds, status);
             toast.success("Tasks updated");
         } catch (error) {
             console.error("Failed to bulk update status", error);
@@ -306,87 +308,92 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                         </Button>
                     </div>
 
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                        <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{planName}</h1>
-                                <Badge variant="outline" className="gap-1.5 py-1">
-                                    {isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                                    {isPublic ? "Public" : "Private"}
-                                </Badge>
-                                {plan.generatedByModel && (
+                    <div className="space-y-4">
+                        <div>
+                            {plan.generatedByModel && (
+                                <div>
                                     <span className="text-xs text-muted-foreground border border-border px-2 py-0.5 rounded-full">
                                         AI Generated
                                     </span>
-                                )}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1.5">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>
-                                        {format(new Date(start), "MMM d")} - {format(new Date(end), "MMM d, yyyy")}
-                                    </span>
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="w-4 h-4" />
-                                    <span>{plan.totalTargetHours}h total</span>
+                            )}
+
+                            <div className="flex items-center justify-between gap-4">
+                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{planName}</h1>
+
+                                <div className="flex items-center gap-3 shrink-0">
+                                    {!isReadOnly && (
+                                        <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg border border-border">
+                                            <Switch
+                                                id="privacy-mode"
+                                                checked={isPublic}
+                                                onCheckedChange={handlePrivacyToggle}
+                                                disabled={isTogglingPrivacy || isReadOnly}
+                                            />
+                                            <Label
+                                                htmlFor="privacy-mode"
+                                                className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                                            >
+                                                {isPublic ? (
+                                                    <>
+                                                        <Globe className="w-4 h-4 text-primary" />
+                                                        <span className="hidden sm:inline">Public</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Lock className="w-4 h-4 text-muted-foreground" />
+                                                        <span className="hidden sm:inline">Private</span>
+                                                    </>
+                                                )}
+                                            </Label>
+                                        </div>
+                                    )}
+
+                                    {!isReadOnly && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" size="icon">
+                                                    <MoreHorizontal className="w-4 h-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => setIsRenameOpen(true)}>
+                                                    <Pencil className="w-4 h-4 mr-2" />
+                                                    Rename Plan
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    className="text-destructive focus:text-destructive"
+                                                    onClick={() => setIsDeleteOpen(true)}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Delete Plan
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </div>
-                                {settings.goal && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Target className="w-4 h-4" />
-                                        <span className="capitalize">{settings.goal.replace(/_/g, " ")}</span>
-                                    </div>
-                                )}
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 mr-2 bg-muted/50 p-2 rounded-lg border border-border">
-                                <Switch
-                                    id="privacy-mode"
-                                    checked={isPublic}
-                                    onCheckedChange={handlePrivacyToggle}
-                                    disabled={isTogglingPrivacy}
-                                />
-                                <Label
-                                    htmlFor="privacy-mode"
-                                    className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                                >
-                                    {isPublic ? (
-                                        <>
-                                            <Globe className="w-4 h-4 text-primary" />
-                                            <span className="hidden sm:inline">Public</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock className="w-4 h-4 text-muted-foreground" />
-                                            <span className="hidden sm:inline">Private</span>
-                                        </>
-                                    )}
-                                </Label>
+                        {/* Additional info below */}
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                                <Calendar className="w-4 h-4" />
+                                <span>
+                                    {format(new Date(start), "MMM d")} - {format(new Date(end), "MMM d, yyyy")}
+                                </span>
                             </div>
-
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="icon">
-                                        <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setIsRenameOpen(true)}>
-                                        <Pencil className="w-4 h-4 mr-2" />
-                                        Rename Plan
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive"
-                                        onClick={() => setIsDeleteOpen(true)}
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Delete Plan
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="flex items-center gap-1.5">
+                                <Clock className="w-4 h-4" />
+                                <span>{plan.totalTargetHours}h total</span>
+                            </div>
+                            {settings.goal && (
+                                <div className="flex items-center gap-1.5">
+                                    <Target className="w-4 h-4" />
+                                    <span className="capitalize">{settings.goal.replace(/_/g, " ")}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -460,14 +467,21 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                         <div className="flex items-center gap-4">
                             <h2 className="text-2xl font-semibold tracking-tight">Your Schedule</h2>
                             <div className="flex items-center gap-2">
-                                <Checkbox
-                                    checked={selectedItems.size === items.length && items.length > 0}
-                                    onCheckedChange={handleSelectAll}
-                                    id="select-all"
-                                />
-                                <Label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
-                                    Select All
-                                </Label>
+                                {!isReadOnly && (
+                                    <>
+                                        <Checkbox
+                                            checked={selectedItems.size === items.length && items.length > 0}
+                                            onCheckedChange={handleSelectAll}
+                                            id="select-all"
+                                        />
+                                        <Label
+                                            htmlFor="select-all"
+                                            className="text-sm text-muted-foreground cursor-pointer"
+                                        >
+                                            Select All
+                                        </Label>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -495,9 +509,11 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                     ) : (
                         <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:left-[8.75rem] md:before:ml-0 md:before:right-auto before:h-full before:w-0.5 before:bg-border">
                             {dateKeys.map((dateKey) => {
-                                const dayItems = grouped[dateKey];
                                 const dateObj = new Date(dateKey);
-                                const isToday = new Date().toISOString().split("T")[0] === dateKey;
+                                const dayItems = grouped[dateKey];
+                                const today = new Date().toISOString().split("T")[0];
+                                const isToday = dateKey === today;
+                                const isPast = dateKey < today;
 
                                 return (
                                     <div key={dateKey} className="relative flex items-start md:gap-6 group">
@@ -507,13 +523,20 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                                         {/* Date Column (Desktop) */}
                                         <div className="hidden md:flex flex-col items-end w-32 shrink-0 pt-1">
                                             <span
-                                                className={`text-sm font-bold ${
-                                                    isToday ? "text-primary" : "text-foreground"
-                                                }`}
+                                                className={cn(
+                                                    "text-sm font-bold",
+                                                    isToday ? "text-primary" : "text-foreground",
+                                                    isPast ? "text-muted-foreground/60" : ""
+                                                )}
                                             >
                                                 {dateObj.toLocaleDateString(undefined, { weekday: "long" })}
                                             </span>
-                                            <span className="text-xs text-muted-foreground">
+                                            <span
+                                                className={cn(
+                                                    "text-xs text-muted-foreground",
+                                                    isPast ? "text-muted-foreground/60" : ""
+                                                )}
+                                            >
                                                 {dateObj.toLocaleDateString(undefined, {
                                                     month: "short",
                                                     day: "numeric",
@@ -526,9 +549,11 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                                             {/* Date Header (Mobile) */}
                                             <div className="md:hidden mb-3 flex items-center gap-2">
                                                 <span
-                                                    className={`text-sm font-bold ${
-                                                        isToday ? "text-primary" : "text-foreground"
-                                                    }`}
+                                                    className={cn(
+                                                        "text-sm font-bold",
+                                                        isToday ? "text-primary" : "text-foreground",
+                                                        isPast ? "text-muted-foreground" : ""
+                                                    )}
                                                 >
                                                     {formatDate(dateObj)}
                                                 </span>
@@ -544,11 +569,14 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                                                     <StudyPlanTaskItem
                                                         key={item.id}
                                                         item={item}
-                                                        onStatusChange={handleStatusChange}
+                                                        onStatusChange={
+                                                            isReadOnly ? async () => {} : handleStatusChange
+                                                        }
                                                         isSelected={selectedItems.has(item.id)}
                                                         onSelect={handleSelect}
                                                         selectionMode={selectedItems.size > 0}
                                                         planId={plan.id}
+                                                        isReadOnly={isReadOnly}
                                                     />
                                                 ))}
                                             </div>
@@ -568,9 +596,9 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 100, opacity: 0 }}
-                        className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50"
+                        className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50"
                     >
-                        <div className="bg-background text-foreground rounded-full shadow-lg p-2 pl-6 flex items-center justify-between gap-4">
+                        <div className="bg-secondary-foreground border text-foreground rounded-full shadow-lg p-2 pl-6 flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
                                 <span className="font-medium whitespace-nowrap">{selectedItems.size} selected</span>
                                 <div className="h-4 w-px bg-background/20" />
@@ -586,33 +614,79 @@ export function StudyPlanView({ plan, initialStats }: StudyPlanViewProps) {
                             </div>
 
                             <div className="flex items-center gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
-                                    onClick={() => handleBulkStatusChange("done")}
-                                >
-                                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                                    Done
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
-                                    onClick={() => handleBulkStatusChange("in_progress")}
-                                >
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    In Progress
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
-                                    onClick={() => handleBulkStatusChange("skipped")}
-                                >
-                                    <ArrowUpDown className="h-4 w-4 mr-1" />
-                                    Skip
-                                </Button>
+                                {/* Desktop View */}
+                                <div className="hidden md:flex items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
+                                        onClick={() => handleBulkStatusChange("done")}
+                                    >
+                                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                                        Done
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
+                                        onClick={() => handleBulkStatusChange("in_progress")}
+                                    >
+                                        <Clock className="h-4 w-4 mr-1" />
+                                        In Progress
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
+                                        onClick={() => handleBulkStatusChange("pending")}
+                                    >
+                                        <Circle className="h-4 w-4 mr-1" />
+                                        Pending
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
+                                        onClick={() => handleBulkStatusChange("skipped")}
+                                    >
+                                        <SkipForward className="h-4 w-4 mr-1" />
+                                        Skip
+                                    </Button>
+                                </div>
+
+                                {/* Mobile View */}
+                                <div className="md:hidden">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
+                                            >
+                                                <ChevronsUpDown className="h-4 w-4 mr-1" />
+                                                Status
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("done")}>
+                                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                                Done
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("in_progress")}>
+                                                <Clock className="h-4 w-4 mr-2" />
+                                                In Progress
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("pending")}>
+                                                <Circle className="h-4 w-4 mr-2" />
+                                                Pending
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("skipped")}>
+                                                <SkipForward className="h-4 w-4 mr-2" />
+                                                Skip
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
                                 <div className="h-4 w-px bg-background/20 mx-1" />
                                 <Button
                                     variant="ghost"

@@ -23,11 +23,21 @@ export default async function StudyPlanDetailPage({ params }: { params: Promise<
     }
 
     const plan = await getStudyPlanWithItems(id);
-    if (!plan || (plan as any).userId !== userId) {
+
+    if (!plan) {
         notFound();
     }
 
+    const isOwner = (plan as any).userId === userId;
+    const isPublic = (plan as any).isPublic;
+
+    if (!isOwner && !isPublic) {
+        notFound();
+    }
+
+    const isReadOnly = !isOwner;
+
     const stats = await getStudyPlanStatistics(id);
 
-    return <StudyPlanView plan={plan as any} initialStats={stats} />;
+    return <StudyPlanView plan={plan as any} initialStats={stats} isReadOnly={isReadOnly} />;
 }
