@@ -331,15 +331,26 @@ export async function getTodaysStudyTasks(userId: string) {
  * Get a single study plan item with details
  */
 export async function getStudyPlanItem(itemId: string) {
-    const [item] = await dbClient.select().from(studyPlanItems).where(eq(studyPlanItems.id, itemId));
+    const result = await dbClient
+        .select({
+            item: studyPlanItems,
+            planName: studyPlans.name,
+            userId: studyPlans.userId,
+            isPublic: studyPlans.isPublic,
+        })
+        .from(studyPlanItems)
+        .innerJoin(studyPlans, eq(studyPlanItems.planId, studyPlans.id))
+        .where(eq(studyPlanItems.id, itemId));
 
-    if (!item) return null;
+    if (result.length === 0) return null;
+
+    const { item, planName, userId, isPublic } = result[0];
 
     // Enrich with topic information
     const topicIds = (item.topicIds as string[]) || [];
     const topicList = topicIds.length ? await dbClient.select().from(topics).where(inArray(topics.id, topicIds)) : [];
 
-    return { ...item, topics: topicList };
+    return { ...item, topics: topicList, planName, userId, isPublic };
 }
 
 /**
