@@ -60,6 +60,7 @@ import {
 } from "@/lib/actions/studyPlans";
 import type { StudyPlan, StudyPlanItem } from "@/lib/db/schema";
 import { StudyPlanTaskItem } from "@/components/study-plan-task-item";
+import { RenameStudyPlanDialog } from "@/components/rename-study-plan-dialog";
 import { cn } from "@/lib/utils";
 
 interface StudyPlanViewProps {
@@ -107,9 +108,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
     const [planName, setPlanName] = useState(plan.name);
     const [isRenameOpen, setIsRenameOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [newName, setNewName] = useState(plan.name);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isRenaming, setIsRenaming] = useState(false);
     const [isPublic, setIsPublic] = useState(plan.isPublic || false);
     const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
 
@@ -181,26 +180,18 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
         }
     }
 
-    async function handleRename() {
-        if (!newName.trim() || newName === planName) {
-            setIsRenameOpen(false);
-            return;
-        }
-
-        setIsRenaming(true);
+    async function handleRename(newName: string) {
         try {
             await updateStudyPlan(plan.id, { name: newName });
             setPlanName(newName);
             toast.success("Plan renamed", {
                 description: "Study plan name has been updated successfully.",
             });
-            setIsRenameOpen(false);
         } catch (error) {
             toast.error("Error", {
                 description: "Failed to rename study plan.",
             });
-        } finally {
-            setIsRenaming(false);
+            throw error; // Re-throw so the dialog knows it failed
         }
     }
 
@@ -703,33 +694,12 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
             </AnimatePresence>
 
             {/* Rename Dialog */}
-            <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Rename Study Plan</DialogTitle>
-                        <DialogDescription>Enter a new name for your study plan.</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="name" className="mb-2 block">
-                            Name
-                        </Label>
-                        <Input
-                            id="name"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            placeholder="Enter plan name"
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsRenameOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleRename} disabled={isRenaming}>
-                            {isRenaming ? "Saving..." : "Save Changes"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <RenameStudyPlanDialog
+                open={isRenameOpen}
+                onOpenChange={setIsRenameOpen}
+                currentName={planName}
+                onRename={handleRename}
+            />
 
             {/* Delete Dialog */}
             <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
