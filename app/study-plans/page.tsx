@@ -9,6 +9,7 @@ import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
 import { CopyStudyPlanButton } from "@/components/copy-study-plan-button";
 import { Metadata } from "next";
 import { Input } from "@/components/ui/input";
+import { CommunityPlanFilters } from "@/components/community-plan-filters";
 
 export const metadata: Metadata = {
     title: "Study Plan Marketplace",
@@ -22,14 +23,24 @@ function formatHours(hours: string | number | null) {
     return `${num.toFixed(1)}h`;
 }
 
-export default async function MarketplacePage() {
+export default async function MarketplacePage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
     const { userId } = await auth();
 
     if (!userId) {
         redirect("/auth/sign-in?redirect_url=/study-plans");
     }
 
-    const plans = await getPublicStudyPlans();
+    const resolvedSearchParams = await searchParams;
+    const search = typeof resolvedSearchParams.search === "string" ? resolvedSearchParams.search : undefined;
+    const sortBy = typeof resolvedSearchParams.sortBy === "string" ? (resolvedSearchParams.sortBy as any) : undefined;
+    const sortOrder =
+        typeof resolvedSearchParams.sortOrder === "string" ? (resolvedSearchParams.sortOrder as any) : undefined;
+
+    const plans = await getPublicStudyPlans({ search, sortBy, sortOrder });
 
     return (
         <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans">
@@ -59,11 +70,8 @@ export default async function MarketplacePage() {
                     </div>
                 </header>
 
-                {/* Search (Visual only for now) */}
-                <div className="relative max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input placeholder="Search for study plans..." className="pl-9 bg-card" />
-                </div>
+                {/* Search and Filters */}
+                <CommunityPlanFilters />
 
                 {plans.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card border border-dashed border-border rounded-3xl space-y-6">

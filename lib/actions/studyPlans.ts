@@ -1,11 +1,12 @@
 "use server";
 
-import { eq, and, desc, gte, lte, inArray, asc } from "drizzle-orm";
+import { eq, and, desc, gte, lte, inArray, asc, ilike, getTableColumns, sql } from "drizzle-orm";
 import { dbClient } from "../db/client";
 import {
     studyPlans,
     studyPlanItems,
     topics,
+    subjects,
     StudyPlan,
     StudyPlanInsert,
     StudyPlanItem,
@@ -356,12 +357,56 @@ export async function getStudyPlanItem(itemId: string) {
 /**
  * Get all public study plans (Marketplace)
  */
-export async function getPublicStudyPlans(limit = 50) {
+export async function getPublicStudyPlans(
+    options: {
+        search?: string;
+        sortBy?: "createdAt" | "name" | "totalTargetHours" | "subject" | "goal";
+        sortOrder?: "asc" | "desc";
+        subjectId?: string;
+        limit?: number;
+    } = {}
+) {
+    const { search, sortBy = "createdAt", sortOrder = "desc", subjectId, limit = 50 } = options;
+
+    const conditions = [eq(studyPlans.isPublic, true)];
+
+    if (search) {
+        conditions.push(ilike(studyPlans.name, `%${search}%`));
+    }
+
+    if (subjectId) {
+        conditions.push(eq(studyPlans.subjectId, subjectId));
+    }
+
+    let orderBy;
+    switch (sortBy) {
+        case "name":
+            orderBy = sortOrder === "asc" ? asc(studyPlans.name) : desc(studyPlans.name);
+            break;
+        case "totalTargetHours":
+            orderBy = sortOrder === "asc" ? asc(studyPlans.totalTargetHours) : desc(studyPlans.totalTargetHours);
+            break;
+        case "subject":
+            orderBy = sortOrder === "asc" ? asc(subjects.name) : desc(subjects.name);
+            break;
+        case "goal":
+            orderBy = sortOrder === "asc" ? asc(sql`settings->>'goal'`) : desc(sql`settings->>'goal'`);
+            break;
+        case "createdAt":
+        default:
+            orderBy = sortOrder === "asc" ? asc(studyPlans.createdAt) : desc(studyPlans.createdAt);
+            break;
+    }
+
     const plans = await dbClient
-        .select()
+        .select({
+            ...getTableColumns(studyPlans),
+            subjectName: subjects.name,
+        })
         .from(studyPlans)
-        .where(eq(studyPlans.isPublic, true))
-        .orderBy(desc(studyPlans.createdAt))
+        .leftJoin(subjects, eq(studyPlans.subjectId, subjects.id))
+        .where(and(...conditions))
+        .orderBy(orderBy)
         .limit(limit);
 
     return plans;
