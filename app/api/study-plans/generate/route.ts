@@ -86,7 +86,7 @@ export async function POST(req: Request) {
             await db.insert(studyPlanItems).values(itemsToInsert);
         }
 
-        return NextResponse.json({ planId: plan.id });
+        return NextResponse.json({ id: plan.id });
     } catch (error) {
         console.error("Error generating plan:", error);
         return new NextResponse("Internal Server Error", { status: 500 });

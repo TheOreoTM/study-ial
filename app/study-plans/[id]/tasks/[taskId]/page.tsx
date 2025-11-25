@@ -11,6 +11,7 @@ import {
     Link as LinkIcon,
     CheckCircle2,
     AlertCircle,
+    Play,
 } from "lucide-react";
 import { getStudyPlanItem } from "@/lib/actions/studyPlans";
 import { Button } from "@/components/ui/button";
@@ -211,6 +212,18 @@ export default async function TaskDetailsPage({ params }: { params: Promise<{ id
 
                     {/* Sidebar */}
                     <div className="space-y-6">
+                        {/* Focus Button */}
+                        <Button
+                            className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg transition-all hover:scale-[1.02]"
+                            size="lg"
+                            asChild
+                        >
+                            <Link href={`/focus?taskId=${task.id}&planId=${id}`}>
+                                <Play className="h-4 w-4 mr-2 fill-current" />
+                                Start Focus Session
+                            </Link>
+                        </Button>
+
                         {/* Stats Card */}
                         <Card>
                             <CardHeader>

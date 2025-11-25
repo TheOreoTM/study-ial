@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
     Dialog,
     DialogContent,
@@ -19,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, ArrowRight, ArrowLeft, Check, Calendar, BookOpen, Target, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { LoadingAnimation } from "./loading-animation";
+import { toast } from "sonner";
 
 const SUBJECTS = [
     { id: "math", name: "Mathematics", icon: "📐", color: "bg-orange-500/10 text-orange-500 border-orange-200" },
@@ -107,10 +109,16 @@ export function CreateStudyPlanModal() {
     };
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isBackgroundProcessing, setIsBackgroundProcessing] = useState(false);
+    const isBackgroundProcessingRef = useRef(false);
     const router = useRouter();
 
     const handleCreate = async () => {
         setIsLoading(true);
+        setIsBackgroundProcessing(false);
+        isBackgroundProcessingRef.current = false;
+        setOpen(false); // Close modal immediately, show full-screen animation
+
         try {
             const subjectObj = SUBJECTS.find((s) => s.id === formData.subject);
             if (!subjectObj) throw new Error("Invalid subject");
@@ -133,15 +141,39 @@ export function CreateStudyPlanModal() {
             if (!res.ok) throw new Error("Failed to create plan");
 
             const data = await res.json();
-            setOpen(false);
-            resetForm();
-            router.refresh();
+
+            // Check the ref for the most up-to-date value
+            if (isBackgroundProcessingRef.current) {
+                toast.success("Study plan created successfully!", {
+                    action: {
+                        label: "View Plan",
+                        onClick: () => router.push(`/study-plans/${data.id}`),
+                    },
+                });
+            } else {
+                // Normal flow - just reset and refresh/redirect
+                resetForm();
+                router.refresh();
+                // Optional: Redirect immediately
+                // router.push(`/study-plans/${data.id}`);
+            }
         } catch (error) {
             console.error("Error creating plan:", error);
-            alert("Failed to create study plan. Please try again.");
+            toast.error("Failed to create study plan. Please try again.");
         } finally {
             setIsLoading(false);
+            setIsBackgroundProcessing(false);
+            isBackgroundProcessingRef.current = false;
         }
+    };
+
+    const handleDismissAnimation = () => {
+        setIsBackgroundProcessing(true);
+        isBackgroundProcessingRef.current = true;
+        setOpen(false); // Close the modal to "run in background"
+        toast.info("Creating plan in background...", {
+            description: "We'll notify you when it's ready.",
+        });
     };
 
     return (
@@ -498,6 +530,7 @@ export function CreateStudyPlanModal() {
                     )}
                 </DialogFooter>
             </DialogContent>
+            <LoadingAnimation isLoading={isLoading && !isBackgroundProcessing} onDismiss={handleDismissAnimation} />
         </Dialog>
     );
 }

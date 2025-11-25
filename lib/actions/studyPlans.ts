@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, and, desc, gte, lte, inArray, asc, ilike, getTableColumns, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, inArray, asc, ilike, getTableColumns, sql, gt, lt } from "drizzle-orm";
 import { dbClient } from "../db/client";
 import {
     studyPlans,
@@ -73,15 +73,96 @@ export async function getStudyPlanWithItems(planId: string) {
 /**
  * Get all study plans for a user
  */
-export async function getUserStudyPlans(userId: string, limit = 50) {
+/**
+ * Get all study plans for a user with filtering and sorting
+ */
+export async function getUserStudyPlans(
+    userId: string,
+    options: {
+        search?: string;
+        sortBy?: "createdAt" | "name" | "endDate";
+        sortOrder?: "asc" | "desc";
+        filterStatus?: "active" | "upcoming" | "completed" | "archived" | "all";
+        limit?: number;
+    } = {}
+) {
+    const { search, sortBy = "createdAt", sortOrder = "desc", filterStatus = "all", limit = 50 } = options;
+
+    const conditions = [eq(studyPlans.userId, userId)];
+
+    if (search) {
+        conditions.push(ilike(studyPlans.name, `%${search}%`));
+    }
+
+    const now = new Date();
+
+    // Status filtering logic
+    if (filterStatus !== "all") {
+        if (filterStatus === "archived") {
+            // Check if settings->>'isArchived' is true
+            conditions.push(sql`(${studyPlans.settings}->>'isArchived')::boolean IS TRUE`);
+        } else {
+            // For other statuses, ensure it's NOT archived
+            conditions.push(sql`(${studyPlans.settings}->>'isArchived')::boolean IS NOT TRUE`);
+
+            if (filterStatus === "active") {
+                conditions.push(and(lte(studyPlans.startDate, now), gte(studyPlans.endDate, now)));
+            } else if (filterStatus === "upcoming") {
+                conditions.push(gt(studyPlans.startDate, now));
+            } else if (filterStatus === "completed") {
+                conditions.push(lt(studyPlans.endDate, now));
+            }
+        }
+    }
+
+    let orderBy: any;
+    switch (sortBy) {
+        case "name":
+            orderBy = sortOrder === "asc" ? asc(studyPlans.name) : desc(studyPlans.name);
+            break;
+        case "endDate":
+            orderBy = sortOrder === "asc" ? asc(studyPlans.endDate) : desc(studyPlans.endDate);
+            break;
+        case "createdAt":
+        default:
+            orderBy = sortOrder === "asc" ? asc(studyPlans.createdAt) : desc(studyPlans.createdAt);
+            break;
+    }
+
     const plans = await dbClient
         .select()
         .from(studyPlans)
-        .where(eq(studyPlans.userId, userId))
-        .orderBy(desc(studyPlans.createdAt))
+        .where(and(...conditions))
+        .orderBy(orderBy!)
         .limit(limit);
 
     return plans;
+}
+
+/**
+ * Toggle study plan archive status
+ */
+export async function toggleStudyPlanArchive(planId: string, isArchived: boolean) {
+    // First get the current settings
+    const [plan] = await dbClient
+        .select({ settings: studyPlans.settings })
+        .from(studyPlans)
+        .where(eq(studyPlans.id, planId));
+
+    if (!plan) throw new Error("Study plan not found");
+
+    const currentSettings = (plan.settings as Record<string, any>) || {};
+
+    const [updated] = await dbClient
+        .update(studyPlans)
+        .set({
+            settings: { ...currentSettings, isArchived },
+            updatedAt: new Date(),
+        })
+        .where(eq(studyPlans.id, planId))
+        .returning();
+
+    return updated;
 }
 
 /**
