@@ -1,440 +1,387 @@
 "use server";
 
-import { eq, and, inArray, like, desc, asc } from "drizzle-orm";
-import { dbClient } from "../db/client";
-import {
-  questions,
-  questionParts,
-  answerOptions,
-  questionAssets,
-  Question,
-  QuestionInsert,
-  QuestionPart,
-  QuestionPartInsert,
-  QuestionPartInsert as QuestionPartInsertType,
-  AnswerOptionInsert,
-  QuestionAssetInsert,
-} from "../db/schema";
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client/client";
+import { Difficulty, QuestionType, AssetType } from "@/generated/prisma/client/enums";
+
+// Re-export types for compatibility
+export type Question = Prisma.QuestionGetPayload<{}>;
+export type QuestionInsert = Prisma.QuestionCreateInput;
+export type QuestionPart = Prisma.QuestionPartGetPayload<{}>;
+export type QuestionPartInsert = Prisma.QuestionPartCreateInput;
+export type AnswerOptionInsert = Prisma.AnswerOptionCreateInput;
+export type QuestionAssetInsert = Prisma.QuestionAssetCreateInput;
 
 /**
  * Create a new question with all its parts and assets
  */
-export async function createQuestion(
-  data: QuestionInsert & {
-    parts?: (QuestionPartInsert & {
-      options?: AnswerOptionInsert[];
-    })[];
-    assets?: QuestionAssetInsert[];
-  }
-) {
-  const { parts, assets, ...questionData } = data;
+export async function createQuestion(data: any) {
+    const { parts, assets, ...questionData } = data;
 
-  // Create the main question
-  const [question] = await dbClient
-    .insert(questions)
-    .values(questionData)
-    .returning();
+    const question = await prisma.question.create({
+        data: {
+            subjectId: questionData.subjectId,
+            unitId: questionData.unitId,
+            primaryTopicId: questionData.primaryTopicId,
+            difficulty: questionData.difficulty as Difficulty,
+            questionType: questionData.questionType as QuestionType,
+            hasDiagram: questionData.hasDiagram ?? false,
+            hasMath: questionData.hasMath ?? false,
+            hasTable: questionData.hasTable ?? false,
+            metadata: questionData.metadata ?? Prisma.JsonNull,
+            sourcePaperId: questionData.sourcePaperId,
+            sourcePage: questionData.sourcePage,
+            sourceQuestionNumber: questionData.sourceQuestionNumber,
+            questionParts: {
+                create: parts?.map((part: any, index: number) => ({
+                    label: part.label,
+                    promptPlain: part.promptPlain,
+                    promptRich: part.promptRich ?? Prisma.JsonNull,
+                    marks: part.marks,
+                    answerExplanationRich: part.answerExplanationRich ?? Prisma.JsonNull,
+                    order: index,
+                    answerOptions: {
+                        create: part.options?.map((opt: any) => ({
+                            label: opt.label,
+                            contentRich: opt.contentRich ?? Prisma.JsonNull,
+                            contentPlain: opt.contentPlain,
+                            isCorrect: opt.isCorrect,
+                        })),
+                    },
+                })),
+            },
+            questionAssets: {
+                create: assets?.map((asset: any) => ({
+                    type: asset.type as AssetType,
+                    storageUrl: asset.storageUrl,
+                    altText: asset.altText,
+                    bboxData: asset.bboxData ?? Prisma.JsonNull,
+                    metadata: asset.metadata ?? Prisma.JsonNull,
+                })),
+            },
+        },
+        include: {
+            questionParts: {
+                include: {
+                    answerOptions: true,
+                },
+            },
+            questionAssets: true,
+        },
+    });
 
-  // Create question parts if provided
-  const createdParts: QuestionPart[] = [];
-  if (parts && parts.length > 0) {
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      const [createdPart] = await dbClient
-        .insert(questionParts)
-        .values({
-          ...part,
-          questionId: question.id,
-          order: i,
-        })
-        .returning();
-
-      createdParts.push(createdPart);
-
-      // Create answer options if this is an MCQ
-      if (part.options && part.options.length > 0) {
-        await dbClient
-          .insert(answerOptions)
-          .values(
-            part.options.map((opt) => ({
-              ...opt,
-              questionPartId: createdPart.id,
-            }))
-          );
-      }
-    }
-  }
-
-  // Create question assets if provided
-  if (assets && assets.length > 0) {
-    await dbClient
-      .insert(questionAssets)
-      .values(
-        assets.map((asset) => ({
-          ...asset,
-          questionId: question.id,
-        }))
-      );
-  }
-
-  return { question, parts: createdParts };
+    return { question, parts: question.questionParts };
 }
 
 /**
  * Get a question with all its related data
  */
 export async function getQuestionWithDetails(questionId: string) {
-  const [question] = await dbClient
-    .select()
-    .from(questions)
-    .where(eq(questions.id, questionId));
+    const question = await prisma.question.findUnique({
+        where: { id: questionId },
+        include: {
+            questionParts: {
+                orderBy: { order: "asc" },
+                include: {
+                    answerOptions: true,
+                },
+            },
+            questionAssets: true,
+        },
+    });
 
-  if (!question) return null;
+    if (!question) return null;
 
-  const parts = await dbClient
-    .select()
-    .from(questionParts)
-    .where(eq(questionParts.questionId, questionId))
-    .orderBy(asc(questionParts.order));
-
-  // For each part, get options if it's an MCQ
-  const partsWithOptions = await Promise.all(
-    parts.map(async (part) => {
-      const options = await dbClient
-        .select()
-        .from(answerOptions)
-        .where(eq(answerOptions.questionPartId, part.id));
-
-      return { ...part, options };
-    })
-  );
-
-  const assets = await dbClient
-    .select()
-    .from(questionAssets)
-    .where(eq(questionAssets.questionId, questionId));
-
-  return {
-    ...question,
-    parts: partsWithOptions,
-    assets,
-  };
+    return {
+        ...question,
+        parts: question.questionParts.map((part) => ({
+            ...part,
+            options: part.answerOptions,
+        })),
+        assets: question.questionAssets,
+    };
 }
 
 /**
  * Search questions by various filters
  */
 export async function searchQuestions(filters: {
-  subjectId?: string;
-  topicId?: string;
-  difficulty?: string;
-  questionType?: string;
-  hasDiagram?: boolean;
-  hasMath?: boolean;
-  hasTable?: boolean;
-  searchText?: string;
-  limit?: number;
-  offset?: number;
+    subjectId?: string;
+    topicId?: string;
+    difficulty?: string;
+    questionType?: string;
+    hasDiagram?: boolean;
+    hasMath?: boolean;
+    hasTable?: boolean;
+    searchText?: string;
+    limit?: number;
+    offset?: number;
 }) {
-  const {
-    subjectId,
-    topicId,
-    difficulty,
-    questionType,
-    hasDiagram,
-    hasMath,
-    hasTable,
-    searchText,
-    limit = 20,
-    offset = 0,
-  } = filters;
+    const {
+        subjectId,
+        topicId,
+        difficulty,
+        questionType,
+        hasDiagram,
+        hasMath,
+        hasTable,
+        searchText,
+        limit = 20,
+        offset = 0,
+    } = filters;
 
-  const conditions = [];
+    const where: Prisma.QuestionWhereInput = {};
 
-  if (subjectId) {
-    conditions.push(eq(questions.subjectId, subjectId));
-  }
+    if (subjectId) where.subjectId = subjectId;
+    if (topicId) where.primaryTopicId = topicId;
+    if (difficulty) where.difficulty = difficulty as Difficulty;
+    if (questionType) where.questionType = questionType as QuestionType;
+    if (hasDiagram !== undefined) where.hasDiagram = hasDiagram;
+    if (hasMath !== undefined) where.hasMath = hasMath;
+    if (hasTable !== undefined) where.hasTable = hasTable;
 
-  if (topicId) {
-    conditions.push(eq(questions.primaryTopicId, topicId));
-  }
-
-  if (difficulty) {
-    conditions.push(eq(questions.difficulty, difficulty as any));
-  }
-
-  if (questionType) {
-    conditions.push(eq(questions.questionType, questionType as any));
-  }
-
-  if (hasDiagram !== undefined) {
-    conditions.push(eq(questions.hasDiagram, hasDiagram));
-  }
-
-  if (hasMath !== undefined) {
-    conditions.push(eq(questions.hasMath, hasMath));
-  }
-
-  if (hasTable !== undefined) {
-    conditions.push(eq(questions.hasTable, hasTable));
-  }
-
-  // For full-text search on question parts
-  if (searchText) {
-    // This is a basic implementation; for production, use proper full-text search
-    const partsWithText = await dbClient
-      .select({ questionId: questionParts.questionId })
-      .from(questionParts)
-      .where(like(questionParts.promptPlain, `%${searchText}%`));
-
-    const questionIds = [...new Set(partsWithText.map((p) => p.questionId))];
-    if (questionIds.length > 0) {
-      conditions.push(inArray(questions.id, questionIds));
-    } else {
-      return { questions: [], total: 0 };
+    if (searchText) {
+        where.questionParts = {
+            some: {
+                promptPlain: {
+                    contains: searchText,
+                    mode: "insensitive",
+                },
+            },
+        };
     }
-  }
 
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const [questions, total] = await Promise.all([
+        prisma.question.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            skip: offset,
+        }),
+        prisma.question.count({ where }),
+    ]);
 
-  const result = await dbClient
-    .select()
-    .from(questions)
-    .where(whereClause)
-    .orderBy(desc(questions.createdAt))
-    .limit(limit)
-    .offset(offset);
-
-  // Get total count
-  const [{ count }] = await dbClient
-    .select({ count: dbClient.$count(questions.id) as any })
-    .from(questions)
-    .where(whereClause);
-
-  return { questions: result, total: count || 0 };
+    return { questions, total };
 }
 
 /**
  * Get questions by topic for a subject
  */
-export async function getQuestionsByTopic(
-  subjectId: string,
-  topicId: string,
-  limit = 50
-) {
-  const result = await dbClient
-    .select()
-    .from(questions)
-    .where(
-      and(eq(questions.subjectId, subjectId), eq(questions.primaryTopicId, topicId))
-    )
-    .limit(limit);
+export async function getQuestionsByTopic(subjectId: string, topicId: string, limit = 50) {
+    const result = await prisma.question.findMany({
+        where: {
+            subjectId,
+            primaryTopicId: topicId,
+        },
+        take: limit,
+    });
 
-  return result;
+    return result;
 }
 
 /**
  * Update question metadata and properties
  */
-export async function updateQuestion(
-  questionId: string,
-  data: Partial<Question>
-) {
-  const [updated] = await dbClient
-    .update(questions)
-    .set({
-      ...data,
-      updatedAt: new Date(),
-    })
-    .where(eq(questions.id, questionId))
-    .returning();
+export async function updateQuestion(questionId: string, data: Partial<Question>) {
+    const updated = await prisma.question.update({
+        where: { id: questionId },
+        data: {
+            ...data,
+            metadata: data.metadata ?? undefined,
+            difficulty: data.difficulty as Difficulty,
+            questionType: data.questionType as QuestionType,
+        },
+    });
 
-  return updated;
+    return updated;
 }
 
 /**
  * Bulk update questions (useful for tagging, difficulty updates, etc.)
  */
-export async function bulkUpdateQuestions(
-  questionIds: string[],
-  updates: Partial<Question>
-) {
-  const result = await dbClient
-    .update(questions)
-    .set({
-      ...updates,
-      updatedAt: new Date(),
-    })
-    .where(inArray(questions.id, questionIds))
-    .returning();
+export async function bulkUpdateQuestions(questionIds: string[], updates: Partial<Question>) {
+    const result = await prisma.question.updateMany({
+        where: {
+            id: { in: questionIds },
+        },
+        data: {
+            ...updates,
+            metadata: updates.metadata ?? undefined,
+            difficulty: updates.difficulty as Difficulty,
+            questionType: updates.questionType as QuestionType,
+            updatedAt: new Date(),
+        },
+    });
 
-  return result;
+    return result;
 }
 
 /**
  * Delete a question and all related data
  */
 export async function deleteQuestion(questionId: string) {
-  await dbClient.delete(questions).where(eq(questions.id, questionId));
-  // Cascade delete handles parts and assets
+    await prisma.question.delete({
+        where: { id: questionId },
+    });
 }
 
 /**
  * Add a question asset (diagram, graph, etc.)
  */
-export async function addQuestionAsset(data: QuestionAssetInsert) {
-  const [asset] = await dbClient
-    .insert(questionAssets)
-    .values(data)
-    .returning();
+export async function addQuestionAsset(data: any) {
+    const asset = await prisma.questionAsset.create({
+        data: {
+            questionId: data.questionId,
+            questionPartId: data.questionPartId,
+            type: data.type as AssetType,
+            storageUrl: data.storageUrl,
+            altText: data.altText,
+            bboxData: data.bboxData ?? Prisma.JsonNull,
+            metadata: data.metadata ?? Prisma.JsonNull,
+        },
+    });
 
-  return asset;
+    return asset;
 }
 
 /**
  * Get questions by source paper
  */
-export async function getQuestionsBySourcePaper(
-  sourcePaperId: string,
-  limit = 100
-) {
-  const result = await dbClient
-    .select()
-    .from(questions)
-    .where(eq(questions.sourcePaperId, sourcePaperId))
-    .orderBy(asc(questions.sourcePage), asc(questions.sourceQuestionNumber))
-    .limit(limit);
+export async function getQuestionsBySourcePaper(sourcePaperId: string, limit = 100) {
+    const result = await prisma.question.findMany({
+        where: { sourcePaperId },
+        orderBy: [{ sourcePage: "asc" }, { sourceQuestionNumber: "asc" }],
+        take: limit,
+    });
 
-  return result;
+    return result;
 }
 
 /**
  * Get question statistics for a subject
  */
 export async function getQuestionStatistics(subjectId: string) {
-  const stats = await dbClient
-    .select({
-      total: dbClient.$count(questions.id),
-      byDifficulty: {
-        easy: dbClient.$count(questions.id),
-        medium: dbClient.$count(questions.id),
-        hard: dbClient.$count(questions.id),
-        very_hard: dbClient.$count(questions.id),
-      },
-      withDiagrams: dbClient.$count(questions.id),
-      withMath: dbClient.$count(questions.id),
-      byType: {
-        mcq: dbClient.$count(questions.id),
-        structured: dbClient.$count(questions.id),
-        essay: dbClient.$count(questions.id),
-        mixed: dbClient.$count(questions.id),
-      },
-    })
-    .from(questions)
-    .where(eq(questions.subjectId, subjectId));
+    // Prisma doesn't support complex aggregations in a single query like Drizzle's $count in select
+    // We need to run multiple counts or a raw query.
+    // For simplicity and readability, we'll use multiple counts here,
+    // but for performance on large datasets, a raw query or separate stats table is better.
 
-  return stats[0] || null;
+    const [total, easy, medium, hard, veryHard, withDiagrams, withMath, mcq, structured, essay, mixed] =
+        await Promise.all([
+            prisma.question.count({ where: { subjectId } }),
+            prisma.question.count({ where: { subjectId, difficulty: Difficulty.easy } }),
+            prisma.question.count({ where: { subjectId, difficulty: Difficulty.medium } }),
+            prisma.question.count({ where: { subjectId, difficulty: Difficulty.hard } }),
+            prisma.question.count({ where: { subjectId, difficulty: Difficulty.very_hard } }),
+            prisma.question.count({ where: { subjectId, hasDiagram: true } }),
+            prisma.question.count({ where: { subjectId, hasMath: true } }),
+            prisma.question.count({ where: { subjectId, questionType: QuestionType.mcq } }),
+            prisma.question.count({ where: { subjectId, questionType: QuestionType.structured } }),
+            prisma.question.count({ where: { subjectId, questionType: QuestionType.essay } }),
+            prisma.question.count({ where: { subjectId, questionType: QuestionType.mixed } }),
+        ]);
+
+    return {
+        total,
+        byDifficulty: {
+            easy,
+            medium,
+            hard,
+            very_hard: veryHard,
+        },
+        withDiagrams,
+        withMath,
+        byType: {
+            mcq,
+            structured,
+            essay,
+            mixed,
+        },
+    };
 }
 
 /**
  * Get questions with filter for complexity (has multiple parts, assets, etc.)
  */
-export async function getComplexQuestions(
-  subjectId: string,
-  minParts = 2
-) {
-  // Get all questions and their part counts
-  const questionsWithParts = await dbClient
-    .select({ questionId: questionParts.questionId })
-    .from(questionParts)
-    .groupBy(questionParts.questionId);
+export async function getComplexQuestions(subjectId: string, minParts = 2) {
+    // Prisma doesn't support filtering by relation count directly in findMany yet (without raw query or extensions)
+    // We can fetch questions and filter in memory, or use groupBy first.
 
-  // Filter client-side for parts count (Drizzle limitation with having)
-  const questionIds = questionsWithParts.reduce(
-    (acc, q) => {
-      if (!acc[q.questionId]) acc[q.questionId] = 0;
-      acc[q.questionId]++;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+    const questionsWithParts = await prisma.questionPart.groupBy({
+        by: ["questionId"],
+        _count: {
+            id: true,
+        },
+        having: {
+            id: {
+                _count: {
+                    gte: minParts,
+                },
+            },
+        },
+    });
 
-  const complexIds = Object.entries(questionIds)
-    .filter(([_, count]) => count >= minParts)
-    .map(([id]) => id);
+    const complexIds = questionsWithParts.map((q) => q.questionId);
 
-  if (complexIds.length === 0) return [];
+    if (complexIds.length === 0) return [];
 
-  const result = await dbClient
-    .select()
-    .from(questions)
-    .where(
-      and(eq(questions.subjectId, subjectId), inArray(questions.id, complexIds))
-    );
+    const result = await prisma.question.findMany({
+        where: {
+            subjectId,
+            id: { in: complexIds },
+        },
+    });
 
-  return result;
+    return result;
 }
 
 /**
  * Create a question part with options
  */
-export async function createQuestionPart(
-  questionId: string,
-  data: QuestionPartInsert & { options?: AnswerOptionInsert[] }
-) {
-  const { options, ...partData } = data;
+export async function createQuestionPart(questionId: string, data: any) {
+    const { options, ...partData } = data;
 
-  const [part] = await dbClient
-    .insert(questionParts)
-    .values({
-      ...partData,
-      questionId,
-    })
-    .returning();
+    const part = await prisma.questionPart.create({
+        data: {
+            questionId,
+            label: partData.label,
+            promptPlain: partData.promptPlain,
+            promptRich: partData.promptRich ?? Prisma.JsonNull,
+            marks: partData.marks,
+            answerExplanationRich: partData.answerExplanationRich ?? Prisma.JsonNull,
+            order: partData.order,
+            answerOptions: {
+                create: options?.map((opt: any) => ({
+                    label: opt.label,
+                    contentRich: opt.contentRich ?? Prisma.JsonNull,
+                    contentPlain: opt.contentPlain,
+                    isCorrect: opt.isCorrect,
+                })),
+            },
+        },
+    });
 
-  if (options && options.length > 0) {
-    await dbClient
-      .insert(answerOptions)
-      .values(
-        options.map((opt) => ({
-          ...opt,
-          questionPartId: part.id,
-        }))
-      );
-  }
-
-  return part;
+    return part;
 }
 
 /**
  * Export questions in various formats for ingestion results
  */
 export async function exportQuestionsData(questionIds: string[]) {
-  const result = await dbClient
-    .select()
-    .from(questions)
-    .where(inArray(questions.id, questionIds));
+    const result = await prisma.question.findMany({
+        where: {
+            id: { in: questionIds },
+        },
+        include: {
+            questionParts: true,
+            questionAssets: true,
+        },
+    });
 
-  // Enrich with related data
-  const enriched = await Promise.all(
-    result.map(async (q) => {
-      const parts = await dbClient
-        .select()
-        .from(questionParts)
-        .where(eq(questionParts.questionId, q.id));
-
-      const assets = await dbClient
-        .select()
-        .from(questionAssets)
-        .where(eq(questionAssets.questionId, q.id));
-
-      return {
+    // Map to match the expected structure if needed (Prisma returns relations as properties)
+    return result.map((q) => ({
         ...q,
-        parts,
-        assets,
-      };
-    })
-  );
-
-  return enriched;
+        parts: q.questionParts,
+        assets: q.questionAssets,
+    }));
 }

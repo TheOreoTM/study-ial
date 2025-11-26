@@ -4,8 +4,14 @@
  */
 
 import "dotenv/config";
-import { dbClient } from "./client";
-import { subjects, units, topics } from "./schema";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
+import { PrismaClient } from "@/generated/prisma/client/client";
+
+const connectionString = `${process.env.DATABASE_URL}`;
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function seed() {
     try {
@@ -36,12 +42,16 @@ async function seed() {
             },
         ];
 
-        const insertedSubjects = await dbClient.insert(subjects).values(subjectData).onConflictDoNothing().returning();
+        for (const s of subjectData) {
+            await prisma.subject.upsert({
+                where: { code: s.code },
+                update: {},
+                create: s,
+            });
+        }
 
-        console.log(`✅ Inserted ${insertedSubjects.length} subjects`);
-
-        // Get subjects for unit/topic creation
-        const allSubjects = await dbClient.select().from(subjects);
+        const allSubjects = await prisma.subject.findMany();
+        console.log(`✅ Inserted/Verified ${allSubjects.length} subjects`);
 
         if (allSubjects.length === 0) {
             console.error("❌ No subjects found after insertion");
@@ -63,14 +73,27 @@ async function seed() {
             ];
 
             for (const unitData of chemUnits) {
-                const [unit] = await dbClient
-                    .insert(units)
-                    .values({
-                        ...unitData,
+                // Upsert unit based on code and subjectId (assuming unique constraint or logic)
+                // Since there isn't a unique constraint on (subjectId, code) in the schema explicitly shown in previous turns (or maybe there is),
+                // we'll use findFirst to check existence or just create if not exists.
+                // Better to rely on a unique identifier if possible.
+                // Let's assume we want to avoid duplicates.
+
+                let unit = await prisma.unit.findFirst({
+                    where: {
                         subjectId: chemSubject.id,
-                    })
-                    .onConflictDoNothing()
-                    .returning();
+                        code: unitData.code,
+                    },
+                });
+
+                if (!unit) {
+                    unit = await prisma.unit.create({
+                        data: {
+                            ...unitData,
+                            subjectId: chemSubject.id,
+                        },
+                    });
+                }
 
                 if (unit) {
                     // Add topics for each unit
@@ -89,7 +112,13 @@ async function seed() {
                         },
                     ];
 
-                    await dbClient.insert(topics).values(topicsData).onConflictDoNothing();
+                    for (const topic of topicsData) {
+                        await prisma.topic.upsert({
+                            where: { slug: topic.slug },
+                            update: {},
+                            create: topic,
+                        });
+                    }
                 }
             }
 
@@ -111,14 +140,21 @@ async function seed() {
             ];
 
             for (const unitData of bioUnits) {
-                const [unit] = await dbClient
-                    .insert(units)
-                    .values({
-                        ...unitData,
+                let unit = await prisma.unit.findFirst({
+                    where: {
                         subjectId: bioSubject.id,
-                    })
-                    .onConflictDoNothing()
-                    .returning();
+                        code: unitData.code,
+                    },
+                });
+
+                if (!unit) {
+                    unit = await prisma.unit.create({
+                        data: {
+                            ...unitData,
+                            subjectId: bioSubject.id,
+                        },
+                    });
+                }
 
                 if (unit) {
                     const topicsData = [
@@ -136,7 +172,13 @@ async function seed() {
                         },
                     ];
 
-                    await dbClient.insert(topics).values(topicsData).onConflictDoNothing();
+                    for (const topic of topicsData) {
+                        await prisma.topic.upsert({
+                            where: { slug: topic.slug },
+                            update: {},
+                            create: topic,
+                        });
+                    }
                 }
             }
 
@@ -158,14 +200,21 @@ async function seed() {
             ];
 
             for (const unitData of physUnits) {
-                const [unit] = await dbClient
-                    .insert(units)
-                    .values({
-                        ...unitData,
+                let unit = await prisma.unit.findFirst({
+                    where: {
                         subjectId: physSubject.id,
-                    })
-                    .onConflictDoNothing()
-                    .returning();
+                        code: unitData.code,
+                    },
+                });
+
+                if (!unit) {
+                    unit = await prisma.unit.create({
+                        data: {
+                            ...unitData,
+                            subjectId: physSubject.id,
+                        },
+                    });
+                }
 
                 if (unit) {
                     const topicsData = [
@@ -183,7 +232,13 @@ async function seed() {
                         },
                     ];
 
-                    await dbClient.insert(topics).values(topicsData).onConflictDoNothing();
+                    for (const topic of topicsData) {
+                        await prisma.topic.upsert({
+                            where: { slug: topic.slug },
+                            update: {},
+                            create: topic,
+                        });
+                    }
                 }
             }
 
@@ -205,14 +260,21 @@ async function seed() {
             ];
 
             for (const unitData of mathUnits) {
-                const [unit] = await dbClient
-                    .insert(units)
-                    .values({
-                        ...unitData,
+                let unit = await prisma.unit.findFirst({
+                    where: {
                         subjectId: mathSubject.id,
-                    })
-                    .onConflictDoNothing()
-                    .returning();
+                        code: unitData.code,
+                    },
+                });
+
+                if (!unit) {
+                    unit = await prisma.unit.create({
+                        data: {
+                            ...unitData,
+                            subjectId: mathSubject.id,
+                        },
+                    });
+                }
 
                 if (unit) {
                     const topicsData = [
@@ -230,7 +292,13 @@ async function seed() {
                         },
                     ];
 
-                    await dbClient.insert(topics).values(topicsData).onConflictDoNothing();
+                    for (const topic of topicsData) {
+                        await prisma.topic.upsert({
+                            where: { slug: topic.slug },
+                            update: {},
+                            create: topic,
+                        });
+                    }
                 }
             }
 
@@ -241,6 +309,8 @@ async function seed() {
     } catch (error) {
         console.error("❌ Seed failed:", error);
         process.exit(1);
+    } finally {
+        await prisma.$disconnect();
     }
 }
 

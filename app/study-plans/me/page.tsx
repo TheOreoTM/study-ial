@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, Clock, Target, ArrowRight, Sparkles } from "lucide-react";
 
-import { getStudyPlanStatistics, getUserStudyPlans } from "@/lib/actions/studyPlans";
-import type { StudyPlan } from "@/lib/db/schema";
+import { getStudyPlanStatistics, getUserStudyPlans, type StudyPlan } from "@/lib/actions/studyPlans";
 import { Button } from "@/components/ui/button";
 import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
 import { MyStudyPlanFilters } from "@/components/my-study-plan-filters";

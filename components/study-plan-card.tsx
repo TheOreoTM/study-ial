@@ -23,8 +23,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { StudyPlan } from "@/lib/db/schema";
-import { deleteStudyPlan, toggleStudyPlanArchive, getStudyPlanStatistics } from "@/lib/actions/studyPlans";
+import { deleteStudyPlan, toggleStudyPlanArchive, getStudyPlanStatistics, type StudyPlan } from "@/lib/actions/studyPlans";
 
 interface StudyPlanCardProps {
     plan: StudyPlan;

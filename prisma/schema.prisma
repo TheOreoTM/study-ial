@@ -1,14 +1,331 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client"
+  output          = "../generated/prisma/client"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+// Enums
+enum Difficulty {
+  easy
+  medium
+  hard
+  very_hard
+  @@map("difficulty")
+}
+
+enum QuestionType {
+  mcq
+  structured
+  essay
+  graph
+  table
+  mixed
+  diagram
+  calculation
+  @@map("question_type")
+}
+
+enum TaskType {
+  read
+  revise
+  practice_questions
+  mock_paper
+  review
+  @@map("task_type")
+}
+
+enum Status {
+  pending
+  in_progress
+  done
+  skipped
+  @@map("status")
+}
+
+enum ProgressStatus {
+  not_attempted
+  attempted
+  correct
+  incorrect
+  @@map("progress_status")
+}
+
+enum AssetType {
+  diagram
+  graph
+  table_image
+  formula_image
+  photo
+  @@map("asset_type")
+}
+
+// Models
+
+model Subject {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  units        Unit[]
+  topics       Topic[]
+  sourcePapers SourcePaper[]
+  questions    Question[]
+  studyPlans   StudyPlan[]
+  studyPlanItems StudyPlanItem[]
+
+  @@map("subjects")
+}
+
+model Unit {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectId   String   @map("subject_id") @db.Uuid
+  code        String   @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  subject   Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  topics    Topic[]
+  questions Question[]
+
+  @@map("units")
+}
+
+model Topic {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectId     String   @map("subject_id") @db.Uuid
+  unitId        String   @map("unit_id") @db.Uuid
+  slug          String   @db.VarChar(150) @unique
+  name          String   @db.VarChar(100)
+  parentTopicId String?  @map("parent_topic_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  subject   Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  unit      Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  questions Question[]
+
+  @@index([subjectId, unitId])
+  @@index([slug])
+  @@map("topics")
+}
+
+model SourcePaper {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectId        String   @map("subject_id") @db.Uuid
+  year             Int
+  session          String   @db.VarChar(20)
+  variant          Int?
+  paper            Int?
+  storageUrl       String   @map("storage_url")
+  markingSchemeUrl String?  @map("marking_scheme_url")
+  pageCount        Int?     @map("page_count")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions     Question[]
+  ingestionJobs IngestionJob[]
+
+  @@index([subjectId, year, session])
+  @@map("source_papers")
+}
+
+model Question {
+  id                   String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectId            String                       @map("subject_id") @db.Uuid
+  unitId               String?                      @map("unit_id") @db.Uuid
+  primaryTopicId       String                       @map("primary_topic_id") @db.Uuid
+  difficulty           Difficulty                   @default(medium)
+  questionType         QuestionType                 @default(mixed) @map("question_type")
+  hasDiagram           Boolean                      @default(false) @map("has_diagram")
+  hasMath              Boolean                      @default(false) @map("has_math")
+  hasTable             Boolean                      @default(false) @map("has_table")
+  embedding            Unsupported("vector(1536)")?
+  metadata             Json?
+  sourcePaperId        String?                      @map("source_paper_id") @db.Uuid
+  sourcePage           Int?                         @map("source_page")
+  sourceQuestionNumber String?                      @map("source_question_number") @db.VarChar(20)
+  createdAt            DateTime                     @default(now()) @map("created_at")
+  updatedAt            DateTime                     @default(now()) @updatedAt @map("updated_at")
+
+  subject              Subject                @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  unit                 Unit?                  @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  primaryTopic         Topic                  @relation(fields: [primaryTopicId], references: [id], onDelete: Restrict)
+  sourcePaper          SourcePaper?           @relation(fields: [sourcePaperId], references: [id], onDelete: SetNull)
+  questionParts        QuestionPart[]
+  questionAssets       QuestionAsset[]
+  userQuestionProgress UserQuestionProgress[]
+
+  @@index([subjectId, primaryTopicId])
+  @@index([difficulty])
+  @@index([sourcePaperId, sourceQuestionNumber])
+  @@map("questions")
+}
+
+model QuestionPart {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId            String   @map("question_id") @db.Uuid
+  label                 String   @db.VarChar(10)
+  promptPlain           String?  @map("prompt_plain")
+  promptRich            Json?    @map("prompt_rich")
+  marks                 Int?
+  answerExplanationRich Json?    @map("answer_explanation_rich")
+  order                 Int
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  question       Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerOptions  AnswerOption[]
+  questionAssets QuestionAsset[]
+
+  @@index([questionId])
+  @@map("question_parts")
+}
+
+model AnswerOption {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionPartId String   @map("question_part_id") @db.Uuid
+  label          String   @db.VarChar(10)
+  contentRich    Json     @map("content_rich")
+  contentPlain   String?  @map("content_plain")
+  isCorrect      Boolean  @map("is_correct")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  questionPart QuestionPart @relation(fields: [questionPartId], references: [id], onDelete: Cascade)
+
+  @@index([questionPartId])
+  @@map("answer_options")
+}
+
+model QuestionAsset {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId     String    @map("question_id") @db.Uuid
+  questionPartId String?   @map("question_part_id") @db.Uuid
+  type           AssetType
+  storageUrl     String    @map("storage_url")
+  altText        String?   @map("alt_text")
+  bboxData       Json?     @map("bbox_data")
+  metadata       Json?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  question     Question      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionPart QuestionPart? @relation(fields: [questionPartId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@map("question_assets")
+}
+
+model StudyPlan {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @map("user_id") @db.VarChar
+  name             String   @db.VarChar(200)
+  subjectId        String?  @map("subject_id") @db.Uuid
+  startDate        DateTime @map("start_date")
+  endDate          DateTime @map("end_date")
+  totalTargetHours Int?     @map("total_target_hours")
+  settings         Json?
+  generatedByModel String?  @map("generated_by_model") @db.VarChar(100)
+  isPublic         Boolean  @default(false) @map("is_public")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  subject        Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  studyPlanItems StudyPlanItem[]
+
+  @@index([userId])
+  @@map("study_plans")
+}
+
+model StudyPlanItem {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  planId               String    @map("plan_id") @db.Uuid
+  subjectId            String    @map("subject_id") @db.Uuid
+  topicIds             Json?     @map("topic_ids")
+  questionIds          Json?     @map("question_ids")
+  taskType             TaskType  @map("task_type")
+  status               Status    @default(pending)
+  dueDate              DateTime  @map("due_date")
+  targetQuestionsCount Int?      @map("target_questions_count")
+  targetMinutes        Int?      @map("target_minutes")
+  metadata             Json?
+  completedAt          DateTime? @map("completed_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  studyPlan Subject   @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  plan      StudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([dueDate])
+  @@map("study_plan_items")
+}
+
+model UserQuestionProgress {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String         @map("user_id") @db.VarChar
+  questionId         String         @map("question_id") @db.Uuid
+  status             ProgressStatus @default(not_attempted)
+  lastAnsweredAt     DateTime?      @map("last_answered_at")
+  timesAttempted     Int            @default(0) @map("times_attempted")
+  timesCorrect       Int            @default(0) @map("times_correct")
+  difficultyEstimate Decimal?       @map("difficulty_estimate") @db.Decimal(3, 2)
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, questionId])
+  @@index([userId])
+  @@map("user_question_progress")
+}
+
+model IngestionJob {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePaperId      String    @map("source_paper_id") @db.Uuid
+  status             String    @default("pending") @db.VarChar(50)
+  totalQuestions     Int?      @map("total_questions")
+  processedQuestions Int       @default(0) @map("processed_questions")
+  errorLog           Json?     @map("error_log")
+  rawGeminiOutput    Json?     @map("raw_gemini_output")
+  startedAt          DateTime? @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  sourcePaper SourcePaper @relation(fields: [sourcePaperId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([sourcePaperId])
+  @@map("ingestion_jobs")
+}
+
+model Resource {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.VarChar
+  fileName  String   @map("file_name") @db.VarChar(255)
+  fileSize  Int      @map("file_size")
+  pageCount Int?     @map("page_count")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  resourceChunks ResourceChunk[]
+
+  @@index([userId])
+  @@map("resources")
+}
+
+model ResourceChunk {
+  id         String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  resourceId String                       @map("resource_id") @db.Uuid
+  content    String
+  embedding  Unsupported("vector(1536)")?
+  metadata   Json?
+  createdAt  DateTime                     @default(now()) @map("created_at")
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
+  @@map("resource_chunks")
 }

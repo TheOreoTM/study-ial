@@ -57,8 +57,9 @@ import {
     updateStudyPlanItemStatus,
     updateStudyPlanItemsStatus,
     deleteStudyPlanItem,
+    type StudyPlan,
+    type StudyPlanItem,
 } from "@/lib/actions/studyPlans";
-import type { StudyPlan, StudyPlanItem } from "@/lib/db/schema";
 import { StudyPlanTaskItem } from "@/components/study-plan-task-item";
 import { RenameStudyPlanDialog } from "@/components/rename-study-plan-dialog";
 import { cn } from "@/lib/utils";
