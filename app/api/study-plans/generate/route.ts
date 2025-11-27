@@ -55,7 +55,7 @@ export async function POST(req: Request) {
                 subjectId: subjectId,
                 startDate: new Date(),
                 endDate: new Date(Date.now() + duration * 7 * 24 * 60 * 60 * 1000),
-                totalTargetHours: duration * 7 * hoursPerDay,
+                totalTargetHours: Math.round(duration * 7 * hoursPerDay),
                 settings: { goal, hoursPerDay, topics },
                 generatedByModel: "gemini-2.5-flash-lite",
             },

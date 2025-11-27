@@ -9,6 +9,7 @@ export type StudyPlan = Prisma.StudyPlanGetPayload<{}>;
 export type StudyPlanInsert = Prisma.StudyPlanCreateInput;
 export type StudyPlanItem = Prisma.StudyPlanItemGetPayload<{}>;
 export type StudyPlanItemInsert = Prisma.StudyPlanItemCreateInput;
+export type Topic = Prisma.TopicGetPayload<{}>;
 
 /**
  * Create a new study plan

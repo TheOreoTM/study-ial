@@ -59,13 +59,14 @@ import {
     deleteStudyPlanItem,
     type StudyPlan,
     type StudyPlanItem,
+    type Topic,
 } from "@/lib/actions/studyPlans";
 import { StudyPlanTaskItem } from "@/components/study-plan-task-item";
 import { RenameStudyPlanDialog } from "@/components/rename-study-plan-dialog";
 import { cn } from "@/lib/utils";
 
 interface StudyPlanViewProps {
-    plan: StudyPlan & { items: StudyPlanItem[] };
+    plan: StudyPlan & { items: (StudyPlanItem & { topics?: Topic[] })[] };
     initialStats: {
         totalTasks: number;
         completedTasks: number;
@@ -86,8 +87,8 @@ function formatDate(date: Date | string | null | undefined) {
     });
 }
 
-function groupItemsByDay(items: StudyPlanItem[]) {
-    const groups: Record<string, StudyPlanItem[]> = {};
+function groupItemsByDay(items: (StudyPlanItem & { topics?: Topic[] })[]) {
+    const groups: Record<string, (StudyPlanItem & { topics?: Topic[] })[]> = {};
     for (const item of items) {
         const d = item.dueDate instanceof Date ? item.dueDate : new Date(item.dueDate);
         const key = d.toISOString().split("T")[0];
@@ -101,7 +102,7 @@ type SortOption = "date" | "status" | "type";
 
 export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyPlanViewProps) {
     const router = useRouter();
-    const [items, setItems] = useState<StudyPlanItem[]>(
+    const [items, setItems] = useState<(StudyPlanItem & { topics?: Topic[] })[]>(
         isReadOnly
             ? (plan.items || []).map((item) => ({ ...item, status: "pending" as StudyPlanItem["status"] }))
             : plan.items || []

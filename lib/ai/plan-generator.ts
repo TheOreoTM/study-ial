@@ -1,6 +1,6 @@
 import { openai, MODELS, generateEmbedding } from "./client";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client/client";
 
 interface StudyPlanParams {
     userId: string;

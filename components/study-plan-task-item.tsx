@@ -7,10 +7,10 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { StudyPlanItem } from "@/lib/actions/studyPlans";
+import type { StudyPlanItem, Topic } from "@/lib/actions/studyPlans";
 
 interface StudyPlanTaskItemProps {
-    item: StudyPlanItem & { topics?: any[] };
+    item: StudyPlanItem & { topics?: Topic[] };
     onStatusChange?: (itemId: string, newStatus: "pending" | "in_progress" | "done" | "skipped") => Promise<void>;
     isSelected?: boolean;
     onSelect?: (itemId: string, selected: boolean) => void;
