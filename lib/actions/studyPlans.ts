@@ -106,7 +106,7 @@ export async function getUserStudyPlans(
             conditions.push(sql`(${studyPlans.settings}->>'isArchived')::boolean IS NOT TRUE`);
 
             if (filterStatus === "active") {
-                conditions.push(and(lte(studyPlans.startDate, now), gte(studyPlans.endDate, now)));
+                conditions.push(lte(studyPlans.startDate, now), gte(studyPlans.endDate, now));
             } else if (filterStatus === "upcoming") {
                 conditions.push(gt(studyPlans.startDate, now));
             } else if (filterStatus === "completed") {
