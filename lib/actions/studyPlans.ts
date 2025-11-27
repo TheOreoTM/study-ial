@@ -126,36 +126,41 @@ export async function getUserStudyPlans(
 
     const now = new Date();
 
-    // Status filtering logic
-    if (filterStatus !== "all") {
-        if (filterStatus === "archived") {
-            where.settings = { path: ["isArchived"], equals: true };
-        } else {
-            // For other statuses, ensure it's NOT archived
-            // Prisma JSON filtering for "not true" is tricky, usually implies checking for false or null
-            // Simplified: we'll filter in application code if complex JSON logic is needed,
-            // but Prisma supports basic JSON path filtering.
-            // Assuming isArchived is a boolean in the JSON.
-            where.AND = [
-                {
-                    OR: [
-                        { settings: { path: ["isArchived"], equals: false } },
-                        { settings: { path: ["isArchived"], equals: Prisma.JsonNull } }, // or missing
-                        // Prisma doesn't easily support "key missing" in all providers, but for PG it works
-                    ],
-                },
-            ];
+     // Status filtering logic
+     if (filterStatus !== "all") {
+         if (filterStatus === "archived") {
+             where.settings = { path: ["isArchived"], equals: true };
+         } else {
+             // For other statuses, ensure it's NOT archived
+             // CRITICAL FIX: Include userId in AND to prevent losing the user filter
+             where.AND = [
+                 { userId }, // Keep user filter
+                 {
+                     OR: [
+                         { settings: { path: ["isArchived"], equals: false } },
+                         { settings: { path: ["isArchived"], equals: Prisma.JsonNull } },
+                     ],
+                 },
+             ];
+             // Remove userId from top level since it's now in the AND clause
+             delete (where as any).userId;
 
-            if (filterStatus === "active") {
-                where.startDate = { lte: now };
-                where.endDate = { gte: now };
-            } else if (filterStatus === "upcoming") {
-                where.startDate = { gt: now };
-            } else if (filterStatus === "completed") {
-                where.endDate = { lt: now };
-            }
-        }
-    }
+             if (filterStatus === "active") {
+                 (where.AND as any).push({
+                     startDate: { lte: now },
+                     endDate: { gte: now },
+                 });
+             } else if (filterStatus === "upcoming") {
+                 (where.AND as any).push({
+                     startDate: { gt: now },
+                 });
+             } else if (filterStatus === "completed") {
+                 (where.AND as any).push({
+                     endDate: { lt: now },
+                 });
+             }
+         }
+     }
 
     const plans = await prisma.studyPlan.findMany({
         where,

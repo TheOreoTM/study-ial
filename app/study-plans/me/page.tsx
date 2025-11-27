@@ -63,7 +63,7 @@ function splitPlans(plans: StudyPlan[]) {
 export default async function MyStudyPlansPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const { userId } = await auth();
 
@@ -71,10 +71,12 @@ export default async function MyStudyPlansPage({
         redirect("/auth/sign-in?redirect_url=/study-plans/me");
     }
 
-    const search = typeof searchParams.search === "string" ? searchParams.search : undefined;
-    const status = typeof searchParams.status === "string" ? searchParams.status : "active";
-    const sort = typeof searchParams.sort === "string" ? (searchParams.sort as any) : "createdAt";
-    const order = typeof searchParams.order === "string" ? (searchParams.order as any) : "desc";
+    const params = await searchParams;
+
+    const search = typeof params.search === "string" ? params.search : undefined;
+    const status = typeof params.status === "string" ? params.status : "active";
+    const sort = typeof params.sort === "string" ? (params.sort as any) : "createdAt";
+    const order = typeof params.order === "string" ? (params.order as any) : "desc";
 
     const plans = await getUserStudyPlans(userId, {
         search,
