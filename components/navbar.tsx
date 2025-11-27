@@ -9,6 +9,11 @@ import { usePathname } from "next/navigation";
 
 export default function Navbar() {
     const currentPath = usePathname();
+    const isAuthPath = currentPath.startsWith("/handler");
+
+    if (isAuthPath) {
+        return null;
+    }
 
     return (
         <header>
