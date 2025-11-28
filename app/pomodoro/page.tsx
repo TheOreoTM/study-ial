@@ -30,7 +30,7 @@ export default async function FocusPage({ searchParams }: FocusPageProps) {
         // Security check: Ensure task belongs to the user
         if (!task || task.userId !== userId) {
             // If task doesn't exist or doesn't belong to user, redirect to standalone focus mode (remove params)
-            redirect("/focus");
+            redirect("/pomodoro");
         }
     }
 
