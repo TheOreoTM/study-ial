@@ -5,22 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserButton, useUser } from "@stackframe/stack";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
-import {
-    Menu,
-    BookOpen,
-    Store,
-    FolderHeart,
-    Search,
-    Users,
-    Library,
-    Settings,
-    GraduationCap,
-    Brain,
-    Target,
-    Timer,
-    BarChart3,
-    Sparkles,
-} from "lucide-react";
+import { Menu, GraduationCap, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
     NavigationMenu,
@@ -32,6 +17,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/lib/config";
 import React from "react";
 
 const ListItem = React.forwardRef<
@@ -74,93 +60,9 @@ export default function Navbar() {
         return null;
     }
 
-    const studyLinks = [
-        {
-            href: "/subjects",
-            label: "Subjects",
-            icon: BookOpen,
-            description: "Browse all available subjects and topics",
-        },
-        {
-            href: "/study-plans",
-            label: "Marketplace",
-            icon: Store,
-            description: "Discover and clone community study plans",
-        },
-        {
-            href: "/study-plans/me",
-            label: "My Plans",
-            icon: FolderHeart,
-            description: "Manage your personal study plans",
-        },
-        {
-            href: "/search",
-            label: "Search",
-            icon: Search,
-            description: "Find questions, topics, and resources",
-        },
-    ];
-
-    const toolsLinks = [
-        {
-            href: "/ai-tutor",
-            label: "AI Tutor",
-            icon: Brain,
-            description: "Get instant help with any concept",
-            disabled: true,
-        },
-        {
-            href: "/quiz",
-            label: "Quiz Generator",
-            icon: Target,
-            description: "Practice your weak areas",
-            disabled: true,
-        },
-        {
-            href: "/flashcards",
-            label: "Flashcards",
-            icon: Sparkles,
-            description: "Spaced repetition learning",
-            disabled: true,
-        },
-        {
-            href: "/pomodoro",
-            label: "Focus Timer",
-            icon: Timer,
-            description: "Pomodoro technique timer",
-        },
-    ];
-
-    const moreLinks = [
-        {
-            href: "/community",
-            label: "Community",
-            icon: Users,
-            description: "Connect with other students",
-            disabled: true,
-        },
-        {
-            href: "/resources",
-            label: "Resources",
-            icon: Library,
-            description: "Textbooks and learning materials",
-            disabled: true,
-        },
-        {
-            href: "/analytics",
-            label: "Analytics",
-            icon: BarChart3,
-            description: "Track your progress and performance",
-            disabled: true,
-        },
-        {
-            href: "/settings",
-            label: "Settings",
-            icon: Settings,
-            description: "Customize your experience",
-            disabled: false,
-        },
-    ];
+    const studyLinks = siteConfig.nav.study;
+    const toolsLinks = siteConfig.nav.tools;
+    const moreLinks = siteConfig.nav.more;
 
     // Combined links for mobile
     const allNavLinks = [...studyLinks];
