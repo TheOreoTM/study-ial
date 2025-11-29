@@ -24,5 +24,22 @@ export async function getCurrentUser() {
         },
     });
 
+    if (dbUser.apiKeys.length === 0) {
+        const newKey = `sk_student_${crypto.randomUUID().replace(/-/g, "")}`;
+        await prisma.apiKey.create({
+            data: {
+                key: newKey,
+                userId: dbUser.id,
+            },
+        });
+
+        // Return the user with the new key (simulated push since we just created it)
+        // Or re-fetch. Re-fetching is safer.
+        return await prisma.user.findUnique({
+            where: { id: dbUser.id },
+            include: { apiKeys: true },
+        });
+    }
+
     return dbUser;
 }
