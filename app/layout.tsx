@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { UserProvider } from "@/lib/auth/UserProvider";
-import { ClerkProvider } from "@clerk/nextjs";
+
 import Navbar from "@/components/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { NavbarSkeleton } from "@/components/skeletons/navbar-skeleton";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -90,18 +93,20 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <ClerkProvider>
-            <UserProvider>
-                <html lang="en">
-                    <body>
+        <html lang="en">
+            <body>
+                <StackProvider app={stackClientApp}>
+                    <StackTheme>
                         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                            <Navbar />
+                            <Suspense fallback={<NavbarSkeleton />}>
+                                <Navbar />
+                            </Suspense>
                             {children}
                             <Toaster />
                         </ThemeProvider>
-                    </body>
-                </html>
-            </UserProvider>
-        </ClerkProvider>
+                    </StackTheme>
+                </StackProvider>
+            </body>
+        </html>
     );
 }

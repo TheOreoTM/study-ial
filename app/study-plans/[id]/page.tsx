@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { stackServerApp } from "@/stack/server";
 import { getStudyPlanWithItems, getStudyPlanStatistics } from "@/lib/actions/studyPlans";
 import { StudyPlanView } from "@/components/study-plan-view";
 import { Metadata } from "next";
@@ -16,7 +16,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function StudyPlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const { userId } = await auth();
+    const user = await stackServerApp.getUser();
+    const userId = user?.id;
 
     if (!userId) {
         notFound();

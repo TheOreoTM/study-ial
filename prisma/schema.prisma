@@ -6,58 +6,14 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../lib/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model Subject {
-  id          String   @id @default(nanoid())
-  code        String   @unique   // e.g. "PHYS", "CHEM", "BIOL", "MATH", "ISLM", "DHIV"
-  name        String            // "Physics", "Chemistry", "Biology", "Mathematics", "Islam", "Dhivehi"
-  description String?
-  createdAt   DateTime @default(now())
 
-  units  Unit[]
-  topics Topic[]
-}
-
-model Unit {
-  id          String   @id @default(nanoid())
-  subjectId   String
-  subject     Subject  @relation(fields: [subjectId], references: [id])
-  code        String // Official paper code
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-
-  topics Topic[]
-
-  @@index([subjectId])
-  @@unique([subjectId, code])
-}
-
-model Topic {
-  id            String   @id @default(nanoid())
-  subjectId     String
-  subject       Subject  @relation(fields: [subjectId], references: [id])
-  unitId        String
-  unit          Unit     @relation(fields: [unitId], references: [id])
-  code          String
-  name          String
-  slug          String   @unique
-  parentTopicId String?
-  parentTopic   Topic?  @relation("TopicChildren", fields: [parentTopicId], references: [id])
-  children      Topic[] @relation("TopicChildren")
-
-  createdAt     DateTime @default(now())
-
-  @@index([subjectId])
-  @@index([unitId])
-  @@unique([unitId, code])
-}
 
 
 

@@ -28,16 +28,7 @@ const itemVariants = {
     },
 };
 
-import { useUser } from "@clerk/nextjs";
-import { LoadingSpinner } from "@/components/loading-spinner";
-
 export default function SubjectsPage() {
-    const { isLoaded } = useUser();
-
-    if (!isLoaded) {
-        return <LoadingSpinner text="Loading Subjects..." />;
-    }
-
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <main className="flex-1 pt-15 pb-20 px-4">

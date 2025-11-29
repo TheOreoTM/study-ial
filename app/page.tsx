@@ -30,16 +30,7 @@ const itemVariants = {
     },
 };
 
-import { useUser } from "@clerk/nextjs";
-import { LoadingSpinner } from "@/components/loading-spinner";
-
 export default function HomePage() {
-    const { isLoaded } = useUser();
-
-    if (!isLoaded) {
-        return <LoadingSpinner text="Loading..." />;
-    }
-
     return (
         <div className="min-h-screen bg-background overflow-x-hidden">
             {/* Hero Section */}
