@@ -2,7 +2,7 @@ import { stackServerApp } from "@/stack/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const user = await stackServerApp.getUser();
     const path = request.nextUrl.pathname;
 
