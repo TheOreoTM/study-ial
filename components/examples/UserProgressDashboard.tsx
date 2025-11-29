@@ -8,82 +8,71 @@ import { useEffect, useState } from "react";
  * This demonstrates accessing user progress statistics
  */
 export function UserProgressDashboard() {
-  const { clerkUser, db, isAuthenticated, isLoaded } = useUser();
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    const { user, db, isAuthenticated } = useUser();
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
+    useEffect(() => {
+        if (!isAuthenticated) return;
 
-    async function loadStats() {
-      try {
-        setLoading(true);
-        const userStats = await db.progress.getStats();
-        setStats(userStats);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load stats");
-      } finally {
-        setLoading(false);
-      }
+        async function loadStats() {
+            try {
+                setLoading(true);
+                const userStats = await db.progress.getStats();
+                setStats(userStats);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to load stats");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadStats();
+    }, [isAuthenticated, db.progress]);
+
+    // Handle loading states
+    if (!isAuthenticated) {
+        return <div className="p-4">Please sign in to view your dashboard</div>;
     }
 
-    loadStats();
-  }, [isAuthenticated, db.progress]);
+    if (loading) {
+        return <div className="p-4">Loading statistics...</div>;
+    }
 
-  // Handle loading states
-  if (!isLoaded) {
-    return <div className="p-4">Loading user data...</div>;
-  }
+    if (error) {
+        return <div className="p-4 text-red-500">Error: {error}</div>;
+    }
 
-  if (!isAuthenticated) {
-    return <div className="p-4">Please sign in to view your dashboard</div>;
-  }
+    return (
+        <div className="p-6 bg-white rounded-lg shadow">
+            <h2 className="text-2xl font-bold mb-4">Welcome, {user?.displayName}!</h2>
 
-  if (loading) {
-    return <div className="p-4">Loading statistics...</div>;
-  }
+            {stats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-blue-50 rounded">
+                        <div className="text-sm text-gray-600">Questions Attempted</div>
+                        <div className="text-2xl font-bold text-blue-600">{stats.totalQuestionsAttempted}</div>
+                    </div>
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
-  }
+                    <div className="p-4 bg-green-50 rounded">
+                        <div className="text-sm text-gray-600">Correct</div>
+                        <div className="text-2xl font-bold text-green-600">{stats.totalQuestionsCorrect}</div>
+                    </div>
 
-  return (
-    <div className="p-6 bg-white rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-4">Welcome, {clerkUser?.firstName}!</h2>
+                    <div className="p-4 bg-purple-50 rounded">
+                        <div className="text-sm text-gray-600">Success Rate</div>
+                        <div className="text-2xl font-bold text-purple-600">{stats.successRate.toFixed(1)}%</div>
+                    </div>
 
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-blue-50 rounded">
-            <div className="text-sm text-gray-600">Questions Attempted</div>
-            <div className="text-2xl font-bold text-blue-600">
-              {stats.totalQuestionsAttempted}
-            </div>
-          </div>
-
-          <div className="p-4 bg-green-50 rounded">
-            <div className="text-sm text-gray-600">Correct</div>
-            <div className="text-2xl font-bold text-green-600">
-              {stats.totalQuestionsCorrect}
-            </div>
-          </div>
-
-          <div className="p-4 bg-purple-50 rounded">
-            <div className="text-sm text-gray-600">Success Rate</div>
-            <div className="text-2xl font-bold text-purple-600">
-              {stats.successRate.toFixed(1)}%
-            </div>
-          </div>
-
-          <div className="p-4 bg-orange-50 rounded">
-            <div className="text-sm text-gray-600">Current Streak</div>
-            <div className="text-2xl font-bold text-orange-600">
-              {/* Streak would be loaded separately */}
-              -
-            </div>
-          </div>
+                    <div className="p-4 bg-orange-50 rounded">
+                        <div className="text-sm text-gray-600">Current Streak</div>
+                        <div className="text-2xl font-bold text-orange-600">
+                            {/* Streak would be loaded separately */}-
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 }

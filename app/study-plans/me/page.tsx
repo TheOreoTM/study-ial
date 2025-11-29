@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { stackServerApp } from "@/stack/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, Clock, Target, ArrowRight, Sparkles } from "lucide-react";
@@ -66,10 +66,11 @@ export default async function MyStudyPlansPage({
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const { userId } = await auth();
+    const user = await stackServerApp.getUser();
+    const userId = user?.id;
 
     if (!userId) {
-        redirect("/auth/sign-in?redirect_url=/study-plans/me");
+        redirect("/handler/sign-in?redirect_url=/study-plans/me");
     }
 
     const params = await searchParams;

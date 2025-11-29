@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { ingestPdf } from "@/lib/ai/ingestion";
-import { auth } from "@clerk/nextjs/server";
+import { stackServerApp } from "@/stack/server";
 
 export async function POST(req: Request) {
     try {
-        const { userId } = await auth();
+        const user = await stackServerApp.getUser();
+        const userId = user?.id;
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }

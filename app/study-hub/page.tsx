@@ -21,7 +21,7 @@ import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
 import { getStudyPlanStatistics } from "@/lib/actions/studyPlans";
 
 export default function StudyHubPage() {
-    const { clerkUser, db, isLoaded, isAuthenticated } = useUser();
+    const { user, db, isAuthenticated } = useUser();
     const [activePlans, setActivePlans] = useState<any[]>([]);
     const [plansLoading, setPlansLoading] = useState(false);
 
@@ -74,10 +74,6 @@ export default function StudyHubPage() {
         show: { opacity: 1, y: 0 },
     };
 
-    if (!isLoaded) {
-        return <LoadingSpinner text="Loading Your Study Hub..." />;
-    }
-
     if (!isAuthenticated) {
         return <LoadingSpinner text="Please sign in to view your Study Hub" />;
     }
@@ -92,7 +88,7 @@ export default function StudyHubPage() {
                 >
                     <div className="space-y-2">
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                            Welcome back, <span className="text-primary">{clerkUser?.firstName || "Student"}</span>
+                            Welcome back, <span className="text-primary">{user?.displayName || "Student"}</span>
                         </h1>
                         <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl">
                             Ready to continue your learning journey? Here's what's happening today.

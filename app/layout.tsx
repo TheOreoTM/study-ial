@@ -5,8 +5,7 @@ import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { UserProvider } from "@/lib/auth/UserProvider";
-import { ClerkProvider } from "@clerk/nextjs";
+
 import Navbar from "@/components/navbar";
 import { Toaster } from "@/components/ui/sonner";
 import { NavbarSkeleton } from "@/components/skeletons/navbar-skeleton";
@@ -94,29 +93,20 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <ClerkProvider>
-            <UserProvider>
-                <html lang="en">
-                    <body>
-                        <StackProvider app={stackClientApp}>
-                            <StackTheme>
-                                <ThemeProvider
-                                    attribute="class"
-                                    defaultTheme="system"
-                                    enableSystem
-                                    disableTransitionOnChange
-                                >
-                                    <Suspense fallback={<NavbarSkeleton />}>
-                                        <Navbar />
-                                    </Suspense>
-                                    {children}
-                                    <Toaster />
-                                </ThemeProvider>
-                            </StackTheme>
-                        </StackProvider>
-                    </body>
-                </html>
-            </UserProvider>
-        </ClerkProvider>
+        <html lang="en">
+            <body>
+                <StackProvider app={stackClientApp}>
+                    <StackTheme>
+                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                            <Suspense fallback={<NavbarSkeleton />}>
+                                <Navbar />
+                            </Suspense>
+                            {children}
+                            <Toaster />
+                        </ThemeProvider>
+                    </StackTheme>
+                </StackProvider>
+            </body>
+        </html>
     );
 }
