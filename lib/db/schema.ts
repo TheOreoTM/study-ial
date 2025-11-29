@@ -370,3 +370,22 @@ export type ResourceInsert = typeof resources.$inferInsert;
 
 export type ResourceChunk = typeof resourceChunks.$inferSelect;
 export type ResourceChunkInsert = typeof resourceChunks.$inferInsert;
+
+// API Keys for users
+export const apiKeys = pgTable(
+    "api_keys",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        userId: varchar("user_id").notNull(), // from Stack Auth
+        key: varchar("key", { length: 255 }).notNull().unique(),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        revokedAt: timestamp("revoked_at"),
+    },
+    (table) => ({
+        userIdx: index("api_keys_user_idx").on(table.userId),
+        keyIdx: index("api_keys_key_idx").on(table.key),
+    })
+);
+
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type ApiKeyInsert = typeof apiKeys.$inferInsert;
