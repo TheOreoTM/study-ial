@@ -2,7 +2,8 @@
 
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { UserButton, useUser } from "@stackframe/stack";
+import UserButton from "@/components/user-button";
+import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Menu, GraduationCap, Sparkles } from "lucide-react";
@@ -52,8 +53,9 @@ ListItem.displayName = "ListItem";
 
 export default function Navbar() {
     const currentPath = usePathname();
-    const user = useUser();
-    const isAuthPath = currentPath.startsWith("/handler");
+    const { data: session } = authClient.useSession();
+    const user = session?.user;
+    const isAuthPath = currentPath.startsWith("/sign-in") || currentPath.startsWith("/sign-up");
     const isZenPath = currentPath.startsWith("/pomodoro");
 
     if (isAuthPath || isZenPath) {
@@ -246,12 +248,12 @@ export default function Navbar() {
 
                                 {!user ? (
                                     <div className="grid gap-2">
-                                        <Link href="/handler/sign-in" className="w-full">
+                                        <Link href="/sign-in" className="w-full">
                                             <Button variant="outline" size="sm" className="w-full">
                                                 Sign In
                                             </Button>
                                         </Link>
-                                        <Link href="/handler/sign-up" className="w-full">
+                                        <Link href="/sign-up" className="w-full">
                                             <Button size="sm" className="w-full btn-glow">
                                                 Get Started
                                             </Button>
@@ -275,12 +277,12 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center space-x-3">
                         {!user ? (
                             <>
-                                <Link href="/handler/sign-in">
+                                <Link href="/sign-in">
                                     <Button variant="outline" className="hover:bg-background cursor-pointer">
                                         Sign In
                                     </Button>
                                 </Link>
-                                <Link href="/handler/sign-up">
+                                <Link href="/sign-up">
                                     <Button className="btn-glow cursor-pointer">Get Started</Button>
                                 </Link>
                             </>

@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -47,6 +45,8 @@ export const metadata: Metadata = {
         "Physics",
         "Biology",
         "Mathematics",
+        "Islam",
+        "Dhivehi",
     ],
     authors: [{ name: "Study Hub Team" }],
     creator: "Study Hub",
@@ -95,17 +95,13 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body>
-                <StackProvider app={stackClientApp}>
-                    <StackTheme>
-                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                            <Suspense fallback={<NavbarSkeleton />}>
-                                <Navbar />
-                            </Suspense>
-                            {children}
-                            <Toaster />
-                        </ThemeProvider>
-                    </StackTheme>
-                </StackProvider>
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                    <Suspense fallback={<NavbarSkeleton />}>
+                        <Navbar />
+                    </Suspense>
+                    {children}
+                    <Toaster />
+                </ThemeProvider>
             </body>
         </html>
     );
