@@ -13,56 +13,114 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id      String   @id @default(nanoid())
+  userId String @unique // From StackAuth
+  email   String?
+  apiKeys ApiKey[]
+}
 
+model Subject {
+  id          String   @id @default(nanoid())
+  code        String   @unique // e.g. "PHYS", "CHEM", "BIOL", "MATH", "ISLM", "DHIV"
+  name        String // "Physics", "Chemistry", "Biology", "Mathematics", "Islam", "Dhivehi"
+  description String?
+  createdAt   DateTime @default(now())
 
+  units  Unit[]
+  topics Topic[]
+}
 
+model Unit {
+  id          String   @id @default(nanoid())
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  code        String // Official paper code
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
 
+  topics Topic[]
 
+  @@unique([subjectId, code])
+  @@index([subjectId])
+}
+
+model Topic {
+  id            String  @id @default(nanoid())
+  subjectId     String
+  subject       Subject @relation(fields: [subjectId], references: [id])
+  unitId        String
+  unit          Unit    @relation(fields: [unitId], references: [id])
+  code          String
+  name          String
+  slug          String  @unique
+  parentTopicId String?
+  parentTopic   Topic?  @relation("TopicChildren", fields: [parentTopicId], references: [id])
+  children      Topic[] @relation("TopicChildren")
+
+  createdAt DateTime @default(now())
+
+  @@unique([unitId, code])
+  @@index([subjectId])
+  @@index([unitId])
+}
+
+model ApiKey {
+  id        String    @id @default(nanoid())
+  key       String    @unique
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+
+  @@index([key])
+}
 
 enum Difficulty {
-    EASY
-    MEDIUM
-    HARD
-    VERY_HARD
+  EASY
+  MEDIUM
+  HARD
+  VERY_HARD
 }
 
 enum QuestionType {
-    MCQ
-    STRUCTURED
-    ESSAY
-    GRAPH
-    TABLE
-    MIXED
-    DIAGRAM
-    CALCULATION
+  MCQ
+  STRUCTURED
+  ESSAY
+  GRAPH
+  TABLE
+  MIXED
+  DIAGRAM
+  CALCULATION
 }
 
 enum TaskType {
-    READ
-    REVISE
-    PRACTICE_QUESTIONS
-    MOCK_PAPER
-    REVIEW
+  READ
+  REVISE
+  PRACTICE_QUESTIONS
+  MOCK_PAPER
+  REVIEW
 }
 
 enum Status {
-    PENDING
-    IN_PROGRESS
-    DONE
-    SKIPPED
+  PENDING
+  IN_PROGRESS
+  DONE
+  SKIPPED
 }
 
 enum ProgressStatus {
-    NOT_ATTEMPTED
-    ATTEMPTED
-    CORRECT
-    INCORRECT
+  NOT_ATTEMPTED
+  ATTEMPTED
+  CORRECT
+  INCORRECT
 }
 
 enum AssetType {
-    DIAGRAM
-    GRAPH
-    TABLE_IMAGE
-    FORMULA_IMAGE
-    PHOTO
+  DIAGRAM
+  GRAPH
+  TABLE_IMAGE
+  FORMULA_IMAGE
+  PHOTO
 }
