@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Circle, Clock, FileText, PauseCircle, SkipForward } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import type { StudyPlanItem } from "@/lib/db/schema";
+import type { StudyPlanItem } from "@/lib/generated/prisma/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface StudyPlanTaskItemProps {
     item: StudyPlanItem & { topics?: any[] };
-    onStatusChange?: (itemId: string, newStatus: "pending" | "in_progress" | "done" | "skipped") => Promise<void>;
+    onStatusChange?: (itemId: string, newStatus: "PENDING" | "IN_PROGRESS" | "DONE" | "SKIPPED") => Promise<void>;
     isSelected?: boolean;
     onSelect?: (itemId: string, selected: boolean) => void;
     selectionMode?: boolean;
@@ -31,7 +31,7 @@ export function StudyPlanTaskItem({
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
-    async function handleStatusChange(newStatus: "pending" | "in_progress" | "done" | "skipped") {
+    async function handleStatusChange(newStatus: "PENDING" | "IN_PROGRESS" | "DONE" | "SKIPPED") {
         if (isLoading || !onStatusChange) return;
         setIsLoading(true);
         try {
@@ -50,28 +50,28 @@ export function StudyPlanTaskItem({
     };
 
     const statusConfig = {
-        done: {
+        DONE: {
             icon: CheckCircle2,
             color: "text-emerald-500",
             bg: "bg-emerald-500/10",
             border: "border-emerald-500/20",
             label: "Completed",
         },
-        in_progress: {
+        IN_PROGRESS: {
             icon: PauseCircle,
             color: "text-blue-500",
             bg: "bg-blue-500/10",
             border: "border-blue-500/20",
             label: "In Progress",
         },
-        skipped: {
+        SKIPPED: {
             icon: SkipForward,
             color: "text-amber-500",
             bg: "bg-amber-500/10",
             border: "border-amber-500/20",
             label: "Skipped",
         },
-        pending: {
+        PENDING: {
             icon: Circle,
             color: "text-neutral-400",
             bg: "bg-neutral-100 dark:bg-neutral-800",
@@ -80,7 +80,7 @@ export function StudyPlanTaskItem({
         },
     };
 
-    const currentConfig = statusConfig[item.status as keyof typeof statusConfig] || statusConfig.pending;
+    const currentConfig = statusConfig[item.status as keyof typeof statusConfig] || statusConfig.PENDING;
     const StatusIcon = currentConfig.icon;
 
     const metadata: any = item.metadata || {};
@@ -95,7 +95,7 @@ export function StudyPlanTaskItem({
             onClick={handleItemClick}
             className={cn(
                 "group relative overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md cursor-pointer",
-                item.status === "done" ? "opacity-75 hover:opacity-100" : "",
+                item.status === "DONE" ? "opacity-75 hover:opacity-100" : "",
                 currentConfig.border,
                 isSelected && "ring-2 ring-primary ring-offset-2"
             )}
@@ -106,18 +106,18 @@ export function StudyPlanTaskItem({
                     <button
                         onClick={(e) => {
                             e.stopPropagation(); // Prevent triggering row click if any
-                            let nextStatus: "pending" | "done" = "done";
-                            if (item.status === "done" || item.status === "skipped") {
-                                nextStatus = "pending";
+                            let nextStatus: "PENDING" | "DONE" = "DONE";
+                            if (item.status === "DONE" || item.status === "SKIPPED") {
+                                nextStatus = "PENDING";
                             }
                             handleStatusChange(nextStatus);
                         }}
                         disabled={isLoading || isReadOnly}
                         className={cn(
                             "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                            item.status === "pending" &&
+                            item.status === "PENDING" &&
                                 "border-2 border-neutral-300 hover:border-primary dark:border-neutral-600",
-                            item.status !== "pending" && currentConfig.color,
+                            item.status !== "PENDING" && currentConfig.color,
                             isReadOnly && "cursor-not-allowed"
                         )}
                     >
@@ -154,7 +154,7 @@ export function StudyPlanTaskItem({
                         <h3
                             className={cn(
                                 "font-medium leading-none transition-all",
-                                item.status === "done" ? "text-muted-foreground line-through" : "text-foreground"
+                                item.status === "DONE" ? "text-muted-foreground line-through" : "text-foreground"
                             )}
                         >
                             <span className="capitalize">{item.taskType.replace(/_/g, " ")}</span>
@@ -177,10 +177,10 @@ export function StudyPlanTaskItem({
                                     <span className="mr-1">{currentConfig.label}</span>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="done">Completed</SelectItem>
-                                    <SelectItem value="skipped">Skipped</SelectItem>
+                                    <SelectItem value="PENDING">Pending</SelectItem>
+                                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                                    <SelectItem value="DONE">Completed</SelectItem>
+                                    <SelectItem value="SKIPPED">Skipped</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -226,7 +226,7 @@ export function StudyPlanTaskItem({
             </div>
 
             {/* Progress Bar for "In Progress" items */}
-            {item.status === "in_progress" && (
+            {item.status === "IN_PROGRESS" && (
                 <div className="absolute bottom-0 left-0 h-1 w-full bg-blue-500/10">
                     <motion.div initial={{ width: 0 }} animate={{ width: "50%" }} className="h-full bg-blue-500" />
                 </div>

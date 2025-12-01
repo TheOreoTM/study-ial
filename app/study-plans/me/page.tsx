@@ -1,10 +1,10 @@
-import { stackServerApp } from "@/stack/server";
+import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, Clock, Target, ArrowRight, Sparkles } from "lucide-react";
 
 import { getStudyPlanStatistics, getUserStudyPlans } from "@/lib/actions/studyPlans";
-import type { StudyPlan } from "@/lib/db/schema";
+import type { StudyPlan } from "@/lib/generated/prisma/client";
 import { Button } from "@/components/ui/button";
 import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
 import { MyStudyPlanFilters } from "@/components/my-study-plan-filters";
@@ -41,9 +41,9 @@ function formatDate(date: Date | null) {
     });
 }
 
-function formatHours(hours: string | number | null) {
+function formatHours(hours: string | number | null | object) {
     if (hours == null) return "-";
-    const num = typeof hours === "string" ? parseFloat(hours) : hours;
+    const num = typeof hours === "string" ? parseFloat(hours) : typeof hours === "number" ? hours : Number(hours);
     if (Number.isNaN(num)) return "-";
     return `${num.toFixed(1)}h`;
 }
@@ -66,11 +66,11 @@ export default async function MyStudyPlansPage({
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const user = await stackServerApp.getUser();
+    const user = await getCurrentUser();
     const userId = user?.id;
 
     if (!userId) {
-        redirect("/handler/sign-in?redirect_url=/study-plans/me");
+        redirect("/sign-in?redirect_url=/study-plans/me");
     }
 
     const params = await searchParams;

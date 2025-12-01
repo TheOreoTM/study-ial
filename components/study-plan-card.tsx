@@ -23,7 +23,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { StudyPlan } from "@/lib/db/schema";
+import { StudyPlan } from "@/lib/generated/prisma/client";
 import { deleteStudyPlan, toggleStudyPlanArchive, getStudyPlanStatistics } from "@/lib/actions/studyPlans";
 
 interface StudyPlanCardProps {

@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
-import { stackServerApp } from "@/stack/server";
+import { getCurrentUser } from "@/lib/auth";
+import { redirect, notFound } from "next/navigation";
 import { getStudyPlanWithItems, getStudyPlanStatistics } from "@/lib/actions/studyPlans";
 import { StudyPlanView } from "@/components/study-plan-view";
 import { Metadata } from "next";
@@ -16,11 +16,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function StudyPlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const user = await stackServerApp.getUser();
+    const user = await getCurrentUser();
     const userId = user?.id;
 
     if (!userId) {
-        notFound();
+        redirect("/sign-in");
     }
 
     const plan = await getStudyPlanWithItems(id);

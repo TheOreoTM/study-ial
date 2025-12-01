@@ -58,7 +58,7 @@ import {
     updateStudyPlanItemsStatus,
     deleteStudyPlanItem,
 } from "@/lib/actions/studyPlans";
-import type { StudyPlan, StudyPlanItem } from "@/lib/db/schema";
+import type { StudyPlan, StudyPlanItem } from "@/lib/generated/prisma/client";
 import { StudyPlanTaskItem } from "@/components/study-plan-task-item";
 import { RenameStudyPlanDialog } from "@/components/rename-study-plan-dialog";
 import { cn } from "@/lib/utils";
@@ -102,7 +102,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
     const router = useRouter();
     const [items, setItems] = useState<StudyPlanItem[]>(
         isReadOnly
-            ? (plan.items || []).map((item) => ({ ...item, status: "pending" as StudyPlanItem["status"] }))
+            ? (plan.items || []).map((item) => ({ ...item, status: "PENDING" as StudyPlanItem["status"] }))
             : plan.items || []
     );
     const [planName, setPlanName] = useState(plan.name);
@@ -121,10 +121,10 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
     // Derived stats from local state
     const stats = useMemo(() => {
         const total = items.length;
-        const completed = items.filter((i) => i.status === "done").length;
-        const inProgress = items.filter((i) => i.status === "in_progress").length;
-        const pending = items.filter((i) => i.status === "pending").length;
-        const skipped = items.filter((i) => i.status === "skipped").length;
+        const completed = items.filter((i) => i.status === "DONE").length;
+        const inProgress = items.filter((i) => i.status === "IN_PROGRESS").length;
+        const pending = items.filter((i) => i.status === "PENDING").length;
+        const skipped = items.filter((i) => i.status === "SKIPPED").length;
         const completionPercentage = total > 0 ? (completed / total) * 100 : 0;
 
         return {
@@ -144,7 +144,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                 sorted.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
                 break;
             case "status":
-                const statusOrder = { in_progress: 0, pending: 1, done: 2, skipped: 3 };
+                const statusOrder = { IN_PROGRESS: 0, PENDING: 1, DONE: 2, SKIPPED: 3 };
                 sorted.sort(
                     (a, b) =>
                         (statusOrder[a.status as keyof typeof statusOrder] || 0) -
@@ -168,7 +168,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
     const start = plan.startDate as any;
     const end = plan.endDate as any;
 
-    async function handleStatusChange(itemId: string, newStatus: "pending" | "in_progress" | "done" | "skipped") {
+    async function handleStatusChange(itemId: string, newStatus: "PENDING" | "IN_PROGRESS" | "DONE" | "SKIPPED") {
         // Optimistic update
         setItems((prevItems) => prevItems.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item)));
 
@@ -253,7 +253,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
         }
     }
 
-    async function handleBulkStatusChange(status: "pending" | "in_progress" | "done" | "skipped") {
+    async function handleBulkStatusChange(status: "PENDING" | "IN_PROGRESS" | "DONE" | "SKIPPED") {
         const itemIds = Array.from(selectedItems);
 
         // Optimistic update
@@ -293,6 +293,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                     <div className="flex items-center gap-4 mb-4">
                         <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
                             <Link href="/study-plans/me">
+                                <ArrowLeft className="w-4 h-4 mr-2" />
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Back
                             </Link>
@@ -377,7 +378,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <Clock className="w-4 h-4" />
-                                <span>{plan.totalTargetHours}h total</span>
+                                <span>{String(plan.totalTargetHours)}h total</span>
                             </div>
                             {settings.goal && (
                                 <div className="flex items-center gap-1.5">
@@ -611,7 +612,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                                         variant="ghost"
                                         size="sm"
                                         className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
-                                        onClick={() => handleBulkStatusChange("done")}
+                                        onClick={() => handleBulkStatusChange("DONE")}
                                     >
                                         <CheckCircle2 className="h-4 w-4 mr-1" />
                                         Done
@@ -620,7 +621,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                                         variant="ghost"
                                         size="sm"
                                         className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
-                                        onClick={() => handleBulkStatusChange("in_progress")}
+                                        onClick={() => handleBulkStatusChange("IN_PROGRESS")}
                                     >
                                         <Clock className="h-4 w-4 mr-1" />
                                         In Progress
@@ -629,7 +630,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                                         variant="ghost"
                                         size="sm"
                                         className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
-                                        onClick={() => handleBulkStatusChange("pending")}
+                                        onClick={() => handleBulkStatusChange("PENDING")}
                                     >
                                         <Circle className="h-4 w-4 mr-1" />
                                         Pending
@@ -638,7 +639,7 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                                         variant="ghost"
                                         size="sm"
                                         className="text-foreground hover:text-primary/80 hover:bg-primary/10 h-8 px-2"
-                                        onClick={() => handleBulkStatusChange("skipped")}
+                                        onClick={() => handleBulkStatusChange("SKIPPED")}
                                     >
                                         <SkipForward className="h-4 w-4 mr-1" />
                                         Skip
@@ -659,19 +660,19 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("done")}>
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("DONE")}>
                                                 <CheckCircle2 className="h-4 w-4 mr-2" />
                                                 Done
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("in_progress")}>
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("IN_PROGRESS")}>
                                                 <Clock className="h-4 w-4 mr-2" />
                                                 In Progress
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("pending")}>
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("PENDING")}>
                                                 <Circle className="h-4 w-4 mr-2" />
                                                 Pending
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("skipped")}>
+                                            <DropdownMenuItem onClick={() => handleBulkStatusChange("SKIPPED")}>
                                                 <SkipForward className="h-4 w-4 mr-2" />
                                                 Skip
                                             </DropdownMenuItem>

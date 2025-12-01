@@ -88,7 +88,7 @@ export default function StudyHubPage() {
                 >
                     <div className="space-y-2">
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                            Welcome back, <span className="text-primary">{user?.displayName || "Student"}</span>
+                            Welcome back, <span className="text-primary">{user?.name || "Student"}</span>
                         </h1>
                         <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl">
                             Ready to continue your learning journey? Here's what's happening today.

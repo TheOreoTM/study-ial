@@ -11,9 +11,9 @@ interface PomodoroTimerWrapperProps {
 
 export function PomodoroTimerWrapper({ taskId, initialStatus }: PomodoroTimerWrapperProps) {
     const handleTimerStart = async () => {
-        if (taskId && initialStatus === "pending") {
+        if (taskId && initialStatus === "PENDING") {
             try {
-                await updateStudyPlanItemStatus(taskId, "in_progress");
+                await updateStudyPlanItemStatus(taskId, "IN_PROGRESS");
                 toast.success("Task marked as In Progress");
             } catch (error) {
                 console.error("Failed to update task status:", error);

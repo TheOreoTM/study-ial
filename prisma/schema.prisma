@@ -5,12 +5,14 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 model User {
@@ -25,6 +27,9 @@ model User {
   accounts      Account[]
   
   apiKeys       ApiKey[]
+  studyPlans    StudyPlan[]
+  progress      UserQuestionProgress[]
+  resources     Resource[]
 
   @@unique([email])
   @@map("user")
@@ -82,8 +87,12 @@ model Subject {
   description String?
   createdAt   DateTime @default(now())
 
-  units  Unit[]
-  topics Topic[]
+  units        Unit[]
+  topics       Topic[]
+  sourcePapers SourcePaper[]
+  questions    Question[]
+  studyPlans   StudyPlan[]
+  studyPlanItems StudyPlanItem[]
 }
 
 model Unit {
@@ -95,7 +104,8 @@ model Unit {
   description String?
   createdAt   DateTime @default(now())
 
-  topics Topic[]
+  topics    Topic[]
+  questions Question[]
 
   @@unique([subjectId, code])
   @@index([subjectId])
@@ -116,6 +126,8 @@ model Topic {
 
   createdAt DateTime @default(now())
 
+  questions Question[]
+
   @@unique([unitId, code])
   @@index([subjectId])
   @@index([unitId])
@@ -130,6 +142,217 @@ model ApiKey {
   userId    String
 
   @@index([key])
+}
+
+model SourcePaper {
+  id               String   @id @default(uuid())
+  subjectId        String
+  subject          Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  year             Int
+  session          String // "jan", "may", "sep"
+  variant          Int? // 1, 2, 3, etc.
+  paper            Int? // for subjects with multiple papers
+  storageUrl       String
+  markingSchemeUrl String?
+  pageCount        Int?
+  createdAt        DateTime @default(now())
+
+  questions     Question[]
+  ingestionJobs IngestionJob[]
+
+  @@index([subjectId, year, session])
+  @@map("source_papers")
+}
+
+model Question {
+  id                   String       @id @default(uuid())
+  subjectId            String
+  subject              Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  unitId               String?
+  unit                 Unit?        @relation(fields: [unitId], references: [id])
+  primaryTopicId       String
+  primaryTopic         Topic        @relation(fields: [primaryTopicId], references: [id])
+  difficulty           Difficulty   @default(MEDIUM)
+  questionType         QuestionType @default(MIXED)
+  hasDiagram           Boolean      @default(false)
+  hasMath              Boolean      @default(false)
+  hasTable             Boolean      @default(false)
+  embedding            Unsupported("vector(1536)")?
+  metadata             Json?
+  sourcePaperId        String?
+  sourcePaper          SourcePaper? @relation(fields: [sourcePaperId], references: [id])
+  sourcePage           Int?
+  sourceQuestionNumber String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @default(now()) @updatedAt
+
+  parts    QuestionPart[]
+  assets   QuestionAsset[]
+  progress UserQuestionProgress[]
+
+  @@index([subjectId, primaryTopicId])
+  @@index([difficulty])
+  @@index([sourcePaperId, sourceQuestionNumber])
+  @@map("questions")
+}
+
+model QuestionPart {
+  id                    String   @id @default(uuid())
+  questionId            String
+  question              Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label                 String // "a", "b", "i", "ii", etc.
+  promptPlain           String?
+  promptRich            Json?
+  marks                 Int?
+  answerExplanationRich Json?
+  order                 Int
+  createdAt             DateTime @default(now())
+
+  options AnswerOption[]
+  assets  QuestionAsset[]
+
+  @@index([questionId])
+  @@map("question_parts")
+}
+
+model AnswerOption {
+  id             String       @id @default(uuid())
+  questionPartId String
+  questionPart   QuestionPart @relation(fields: [questionPartId], references: [id], onDelete: Cascade)
+  label          String // "A", "B", "C", "D"
+  contentRich    Json
+  contentPlain   String?
+  isCorrect      Boolean
+  createdAt      DateTime     @default(now())
+
+  @@index([questionPartId])
+  @@map("answer_options")
+}
+
+model QuestionAsset {
+  id             String        @id @default(uuid())
+  questionId     String
+  question       Question      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionPartId String?
+  questionPart   QuestionPart? @relation(fields: [questionPartId], references: [id], onDelete: Cascade)
+  type           AssetType
+  storageUrl     String
+  altText        String?
+  bboxData       Json?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+
+  @@index([questionId])
+  @@map("question_assets")
+}
+
+model StudyPlan {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  subjectId        String?
+  subject          Subject? @relation(fields: [subjectId], references: [id])
+  startDate        DateTime
+  endDate          DateTime
+  totalTargetHours Decimal? @db.Decimal(10, 2)
+  settings         Json?
+  generatedByModel String?
+  isPublic         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  items StudyPlanItem[]
+
+  @@index([userId])
+  @@map("study_plans")
+}
+
+model StudyPlanItem {
+  id                   String    @id @default(uuid())
+  planId               String
+  plan                 StudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  subjectId            String
+  subject              Subject   @relation(fields: [subjectId], references: [id])
+  topicIds             Json?
+  questionIds          Json?
+  taskType             TaskType
+  status               Status    @default(PENDING)
+  dueDate              DateTime
+  targetQuestionsCount Int?
+  targetMinutes        Int?
+  metadata             Json?
+  completedAt          DateTime?
+  createdAt            DateTime  @default(now())
+
+  @@index([planId])
+  @@index([dueDate])
+  @@map("study_plan_items")
+}
+
+model UserQuestionProgress {
+  id                 String         @id @default(uuid())
+  userId             String
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId         String
+  question           Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  status             ProgressStatus @default(NOT_ATTEMPTED)
+  lastAnsweredAt     DateTime?
+  timesAttempted     Int            @default(0)
+  timesCorrect       Int            @default(0)
+  difficultyEstimate Decimal?       @db.Decimal(3, 2)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @default(now()) @updatedAt
+
+  @@index([userId, questionId])
+  @@index([userId])
+  @@map("user_question_progress")
+}
+
+model IngestionJob {
+  id                 String      @id @default(uuid())
+  sourcePaperId      String
+  sourcePaper        SourcePaper @relation(fields: [sourcePaperId], references: [id], onDelete: Cascade)
+  status             String      @default("pending")
+  totalQuestions     Int?
+  processedQuestions Int         @default(0)
+  errorLog           Json?
+  rawGeminiOutput    Json?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime    @default(now())
+
+  @@index([status])
+  @@index([sourcePaperId])
+  @@map("ingestion_jobs")
+}
+
+model Resource {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileSize  Int
+  pageCount Int?
+  createdAt DateTime @default(now())
+
+  chunks ResourceChunk[]
+
+  @@index([userId])
+  @@map("resources")
+}
+
+model ResourceChunk {
+  id         String   @id @default(uuid())
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  content    String
+  embedding  Unsupported("vector(1536)")?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([resourceId])
+  @@map("resource_chunks")
 }
 
 enum Difficulty {

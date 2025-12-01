@@ -29,7 +29,7 @@ import {
     getQuestionsForReview,
     resetQuestionProgress,
 } from "@/lib/actions/progress";
-import { type QuestionInsert, type StudyPlanInsert, type StudyPlanItemInsert } from "@/lib/db";
+import { type Prisma } from "@/lib/generated/prisma/client";
 
 /**
  * Database operations bound to the current user
@@ -44,8 +44,8 @@ interface UserDatabaseOperations {
 
     // Questions - Creating & Modifying
     questionsAdmin: {
-        create: (data: Omit<QuestionInsert, "id">) => ReturnType<typeof createQuestion>;
-        update: (id: string, data: Partial<QuestionInsert>) => ReturnType<typeof updateQuestion>;
+        create: (data: Omit<Prisma.QuestionCreateInput, "id">) => ReturnType<typeof createQuestion>;
+        update: (id: string, data: Partial<Prisma.QuestionCreateInput>) => ReturnType<typeof updateQuestion>;
         delete: (id: string) => ReturnType<typeof deleteQuestion>;
     };
 
@@ -60,10 +60,10 @@ interface UserDatabaseOperations {
 
     // Study Plans - Creating & Modifying
     studyPlansAdmin: {
-        create: (data: Omit<StudyPlanInsert, "userId">) => ReturnType<typeof createStudyPlan>;
+        create: (data: Omit<Prisma.StudyPlanCreateInput, "userId">) => ReturnType<typeof createStudyPlan>;
         createWithItems: (
-            planData: Omit<StudyPlanInsert, "userId">,
-            items: StudyPlanItemInsert[]
+            planData: Omit<Prisma.StudyPlanCreateInput, "userId">,
+            items: Prisma.StudyPlanItemCreateInput[]
         ) => ReturnType<typeof createStudyPlanWithItems>;
         markItemDone: (itemId: string) => ReturnType<typeof updateStudyPlanItemStatus>;
         markItemSkipped: (itemId: string) => ReturnType<typeof updateStudyPlanItemStatus>;
@@ -163,8 +163,8 @@ export function useUser() {
                     items
                 );
             },
-            markItemDone: (itemId) => updateStudyPlanItemStatus(itemId, "done"),
-            markItemSkipped: (itemId) => updateStudyPlanItemStatus(itemId, "skipped"),
+            markItemDone: (itemId) => updateStudyPlanItemStatus(itemId, "DONE"),
+            markItemSkipped: (itemId) => updateStudyPlanItemStatus(itemId, "SKIPPED"),
         },
 
         // Progress - Statistics & Analysis

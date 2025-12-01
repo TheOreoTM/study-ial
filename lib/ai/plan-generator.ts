@@ -1,7 +1,5 @@
 import { openai, MODELS, generateEmbedding } from "./client";
-import { getDb } from "@/lib/db";
-import { questions, resourceChunks, resources } from "@/lib/db/schema";
-import { sql, eq } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
 
 interface StudyPlanParams {
     userId: string;
@@ -82,7 +80,6 @@ async function generateDraft(params: StudyPlanParams): Promise<DailyPlan[]> {
 }
 
 async function enrichWithQuestions(plan: DailyPlan[], subject: string): Promise<DailyPlan[]> {
-    const db = getDb();
     const enrichedPlan = [...plan];
 
     await Promise.all(
@@ -97,12 +94,19 @@ async function enrichWithQuestions(plan: DailyPlan[], subject: string): Promise<
 
                         if (!embedding || embedding.length === 0) return;
 
-                        // Vector search
-                        const similarQuestions = await db
-                            .select({ id: questions.id })
-                            .from(questions)
-                            .orderBy(sql`${questions.embedding} <-> ${JSON.stringify(embedding)}`)
-                            .limit(2);
+                        // Vector search using Prisma raw query
+                        // Note: embedding needs to be cast to vector type in SQL if needed,
+                        // but usually passing array works with pgvector if properly set up.
+                        // However, Prisma raw query parameterization for arrays can be tricky.
+                        // We cast the parameter to vector.
+
+                        const vectorQuery = `[${embedding.join(",")}]`;
+
+                        const similarQuestions = (await prisma.$queryRaw`
+                            SELECT id FROM questions
+                            ORDER BY embedding <-> ${vectorQuery}::vector
+                            LIMIT 2
+                        `) as { id: string }[];
 
                         dayQuestions.push(...similarQuestions.map((q) => q.id));
                     } catch (error) {
@@ -120,7 +124,6 @@ async function enrichWithQuestions(plan: DailyPlan[], subject: string): Promise<
 }
 
 async function enrichWithResources(plan: DailyPlan[], subject: string, userId: string): Promise<DailyPlan[]> {
-    const db = getDb();
     const enrichedPlan = [...plan];
 
     await Promise.all(
@@ -133,14 +136,17 @@ async function enrichWithResources(plan: DailyPlan[], subject: string, userId: s
                         const embedding = await generateEmbedding(`${subject}: ${topic}`);
                         if (!embedding || embedding.length === 0) return;
 
+                        const vectorQuery = `[${embedding.join(",")}]`;
+
                         // Search resource chunks
-                        const similarChunks = await db
-                            .select({ content: resourceChunks.content })
-                            .from(resourceChunks)
-                            .innerJoin(resources, eq(resourceChunks.resourceId, resources.id))
-                            .where(eq(resources.userId, userId))
-                            .orderBy(sql`${resourceChunks.embedding} <-> ${JSON.stringify(embedding)}`)
-                            .limit(2); // Get top 2 chunks per topic
+                        const similarChunks = (await prisma.$queryRaw`
+                            SELECT rc.content 
+                            FROM resource_chunks rc
+                            JOIN resources r ON rc.resource_id = r.id
+                            WHERE r.user_id = ${userId}
+                            ORDER BY rc.embedding <-> ${vectorQuery}::vector
+                            LIMIT 2
+                        `) as { content: string }[];
 
                         dayContext.push(...similarChunks.map((c) => c.content));
                     } catch (error) {

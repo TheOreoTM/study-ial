@@ -1,7 +1,6 @@
 const pdf = require("pdf-parse");
 import { generateEmbedding } from "./client";
-import { getDb } from "@/lib/db";
-import { resources, resourceChunks } from "@/lib/db/schema";
+import { prisma } from "@/lib/prisma";
 
 export async function ingestPdf(fileBuffer: Buffer, fileName: string, userId: string) {
     // 1. Extract Text
@@ -10,16 +9,14 @@ export async function ingestPdf(fileBuffer: Buffer, fileName: string, userId: st
     const pageCount = data.numpages;
 
     // 2. Create Resource Record
-    const db = getDb();
-    const [resource] = await db
-        .insert(resources)
-        .values({
+    const resource = await prisma.resource.create({
+        data: {
             userId,
             fileName,
             fileSize: fileBuffer.length,
             pageCount,
-        })
-        .returning();
+        },
+    });
 
     // 3. Chunk Text
     const chunks = chunkText(text, 1000, 200);
@@ -34,14 +31,21 @@ export async function ingestPdf(fileBuffer: Buffer, fileName: string, userId: st
             batch.map(async (chunk) => {
                 const embedding = await generateEmbedding(chunk);
                 if (embedding.length > 0) {
-                    await db.insert(resourceChunks).values({
-                        resourceId: resource.id,
-                        content: chunk,
-                        embedding,
-                        metadata: {
-                            chunkIndex: i + batch.indexOf(chunk),
-                        },
-                    });
+                    const vectorQuery = `[${embedding.join(",")}]`;
+                    const chunkIndex = i + batch.indexOf(chunk);
+
+                    // Use executeRaw to insert with vector data
+                    await prisma.$executeRaw`
+                        INSERT INTO "resource_chunks" ("id", "resource_id", "content", "embedding", "metadata", "created_at")
+                        VALUES (
+                            gen_random_uuid(), 
+                            ${resource.id}, 
+                            ${chunk}, 
+                            ${vectorQuery}::vector, 
+                            ${{ chunkIndex }}::jsonb, 
+                            NOW()
+                        )
+                    `;
                 }
             })
         );

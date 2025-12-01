@@ -46,7 +46,7 @@ export function UserProgressDashboard() {
 
     return (
         <div className="p-6 bg-white rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-4">Welcome, {user?.displayName}!</h2>
+            <h2 className="text-2xl font-bold mb-4">Welcome, {user?.name}!</h2>
 
             {stats && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { stackServerApp } from "@/stack/server";
+import { getCurrentUser } from "@/lib/auth";
 import {
     ArrowLeft,
     Calendar,
@@ -28,7 +28,7 @@ export default async function TaskDetailsPage({ params }: { params: Promise<{ id
         notFound();
     }
 
-    const user = await stackServerApp.getUser();
+    const user = await getCurrentUser();
     const userId = user?.id;
     const isOwner = (task as any).userId === userId;
     const isPublic = (task as any).isPublic;
@@ -44,15 +44,15 @@ export default async function TaskDetailsPage({ params }: { params: Promise<{ id
     const resources: any[] = metadata.resources || [];
     const notes: string | undefined = metadata.notes;
 
-    const isOverdue = task.status === "pending" && new Date(task.dueDate) < new Date();
-    const isDone = task.status === "done";
+    const isOverdue = task.status === "PENDING" && new Date(task.dueDate) < new Date();
+    const isDone = task.status === "DONE";
 
     // In readonly mode, force status to pending for display if requested,
     // but for task details it might be better to show actual status or pending?
     // User said "all the tasks should be set to pending" for the preview.
     // Let's force display status to pending if readonly to match the preview.
-    const displayStatus = isReadOnly ? "pending" : task.status;
-    const isDisplayDone = displayStatus === "done";
+    const displayStatus = isReadOnly ? "PENDING" : task.status;
+    const isDisplayDone = displayStatus === "DONE";
 
     return (
         <div className="min-h-screen bg-background pb-20">
@@ -88,8 +88,8 @@ export default async function TaskDetailsPage({ params }: { params: Promise<{ id
                                 className={cn(
                                     "px-3 py-1 text-sm capitalize",
                                     isDisplayDone && "bg-emerald-500 hover:bg-emerald-600",
-                                    displayStatus === "in_progress" && "border-blue-500 text-blue-500",
-                                    displayStatus === "skipped" && "border-amber-500 text-amber-500"
+                                    displayStatus === "IN_PROGRESS" && "border-blue-500 text-blue-500",
+                                    displayStatus === "SKIPPED" && "border-amber-500 text-amber-500"
                                 )}
                             >
                                 {displayStatus.replace(/_/g, " ")}

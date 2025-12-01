@@ -1,4 +1,3 @@
-import { stackServerApp } from "@/stack/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import arcjet, { detectBot, shield, tokenBucket, ArcjetNext } from "@arcjet/next";
@@ -86,19 +85,28 @@ export async function proxy(request: NextRequest) {
         }
     }
     // 2. Handle Auth Routes
-    else if (path.startsWith("/sign-in") || path.startsWith("/sign-up") || path.startsWith("/handler")) {
+    else if (path.startsWith("/sign-in") || path.startsWith("/sign-up") || path.startsWith("/api/auth")) {
         const decision = await ajAuth.protect(request);
         if (decision.isDenied()) {
             return NextResponse.json({ error: "Forbidden", reason: decision.reason }, { status: 403 });
         }
     }
 
-    // 3. Standard Auth Check for other routes (Stack Auth)
-    const user = await stackServerApp.getUser();
+    // 3. Standard Auth Check for other routes (Better Auth)
+    // Note: Middleware in Next.js with Better Auth is usually handled via auth.api.getSession
+    // But since we are in a proxy function (likely called from middleware or similar), we can check session.
+    // However, better-auth session check in middleware requires a bit more setup or using the client token.
+    // For now, we will rely on client-side protection and server-side checks in server actions/API routes.
+    // Or we can use the `auth.api.getSession` if this is running in a context where headers are available.
 
     // Define public routes
     const isPublicRoute =
-        path === "/" || path.startsWith("/handler") || path.startsWith("/subjects") || path.startsWith("/api/public");
+        path === "/" ||
+        path.startsWith("/sign-in") ||
+        path.startsWith("/sign-up") ||
+        path.startsWith("/api/auth") ||
+        path.startsWith("/subjects") ||
+        path.startsWith("/api/public");
 
     // Check if it's a static asset or Next.js internal
     const isStatic =
@@ -106,10 +114,28 @@ export async function proxy(request: NextRequest) {
         path.includes(".") || // files like .css, .js, .png
         path === "/favicon.ico";
 
-    if (!user && !isPublicRoute && !isStatic) {
-        const signInUrl = new URL("/handler/sign-in", request.url);
-        signInUrl.searchParams.set("redirect_url", path);
-        return NextResponse.redirect(signInUrl);
+    // If we want to enforce auth in middleware, we would need to fetch session here.
+    // For simplicity in this migration step, we'll allow the request to proceed
+    // and let the page/API level checks handle auth, or implement a proper middleware check later.
+    // If this `proxy` function IS the middleware, we should implement session check.
+
+    // Assuming this is used in middleware.ts
+    if (!isPublicRoute && !isStatic) {
+        const { data: session } = await import("@/lib/auth-client").then((m) =>
+            m.authClient.getSession({
+                fetchOptions: {
+                    headers: {
+                        cookie: request.headers.get("cookie") || "",
+                    },
+                },
+            })
+        );
+
+        if (!session) {
+            const signInUrl = new URL("/sign-in", request.url);
+            // signInUrl.searchParams.set("callbackUrl", path); // Better Auth uses callbackUrl usually
+            return NextResponse.redirect(signInUrl);
+        }
     }
 
     return NextResponse.next();

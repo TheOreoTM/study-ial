@@ -1,4 +1,4 @@
-import { stackServerApp } from "@/stack/server";
+import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, Clock, ArrowRight, Sparkles, BookOpen, Globe, Search } from "lucide-react";
@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     description: "Discover and copy community-created study plans.",
 };
 
-function formatHours(hours: string | number | null) {
+function formatHours(hours: string | number | null | object) {
     if (hours == null) return "-";
-    const num = typeof hours === "string" ? parseFloat(hours) : hours;
+    const num = typeof hours === "string" ? parseFloat(hours) : typeof hours === "number" ? hours : Number(hours);
     if (Number.isNaN(num)) return "-";
     return `${num.toFixed(1)}h`;
 }
@@ -28,11 +28,11 @@ export default async function MarketplacePage({
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const user = await stackServerApp.getUser();
+    const user = await getCurrentUser();
     const userId = user?.id;
 
     if (!userId) {
-        redirect("/handler/sign-in?redirect_url=/study-plans");
+        redirect("/sign-in?redirect_url=/study-plans");
     }
 
     const resolvedSearchParams = await searchParams;
