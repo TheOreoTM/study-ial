@@ -116,8 +116,6 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
     const [sortOption, setSortOption] = useState<SortOption>("date");
 
-    const settings: any = plan.settings || {};
-
     // Derived stats from local state
     const stats = useMemo(() => {
         const total = items.length;
@@ -294,7 +292,6 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                         <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
                             <Link href="/study-plans/me">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
-                                <ArrowLeft className="w-4 h-4 mr-2" />
                                 Back
                             </Link>
                         </Button>
@@ -380,10 +377,10 @@ export function StudyPlanView({ plan, initialStats, isReadOnly = false }: StudyP
                                 <Clock className="w-4 h-4" />
                                 <span>{String(plan.totalTargetHours)}h total</span>
                             </div>
-                            {settings.goal && (
+                            {plan.goal && (
                                 <div className="flex items-center gap-1.5">
                                     <Target className="w-4 h-4" />
-                                    <span className="capitalize">{settings.goal.replace(/_/g, " ")}</span>
+                                    <span className="capitalize">{plan.goal.replace(/_/g, " ")}</span>
                                 </div>
                             )}
                         </div>

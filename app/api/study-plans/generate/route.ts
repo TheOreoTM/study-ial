@@ -57,7 +57,9 @@ export async function POST(req: Request) {
                 startDate: new Date(),
                 endDate: new Date(Date.now() + duration * 7 * 24 * 60 * 60 * 1000),
                 totalTargetHours: new Prisma.Decimal(duration * 7 * hoursPerDay),
-                settings: { goal, hoursPerDay, topics },
+                goal,
+                topics,
+                hoursPerDay: new Prisma.Decimal(hoursPerDay),
                 generatedByModel: "gemini-2.5-flash-lite",
             },
         });

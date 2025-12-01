@@ -114,28 +114,10 @@ export async function getUserStudyPlans(
     // Status filtering logic
     if (filterStatus !== "all") {
         if (filterStatus === "archived") {
-            // Check if settings->>'isArchived' is true
-            // Prisma JSON filtering:
-            where.settings = {
-                path: ["isArchived"],
-                equals: true,
-            };
+            where.isArchived = true;
         } else {
             // For other statuses, ensure it's NOT archived
-            where.AND = [
-                {
-                    OR: [
-                        { settings: { path: ["isArchived"], equals: false } },
-                        { settings: { path: ["isArchived"], equals: Prisma.JsonNull } }, // or missing
-                        // Prisma doesn't strictly support "is not true" for JSON path easily without raw query or specific structure
-                        // But usually checking equals: false or null works if we assume default is false.
-                        // Alternatively, use NOT
-                    ],
-                },
-            ];
-
-            // Actually, cleaner way for "not archived":
-            // where.NOT = { settings: { path: ["isArchived"], equals: true } };
+            where.isArchived = false;
 
             if (filterStatus === "active") {
                 where.startDate = { lte: now };
@@ -170,19 +152,10 @@ export async function getUserStudyPlans(
  * Toggle study plan archive status
  */
 export async function toggleStudyPlanArchive(planId: string, isArchived: boolean) {
-    const plan = await prisma.studyPlan.findUnique({
-        where: { id: planId },
-        select: { settings: true },
-    });
-
-    if (!plan) throw new Error("Study plan not found");
-
-    const currentSettings = (plan.settings as Record<string, any>) || {};
-
     const updated = await prisma.studyPlan.update({
         where: { id: planId },
         data: {
-            settings: { ...currentSettings, isArchived },
+            isArchived,
         },
     });
 
@@ -200,6 +173,7 @@ export async function getActiveStudyPlans(userId: string) {
             userId,
             startDate: { lte: now },
             endDate: { gte: now },
+            isArchived: false,
         },
         orderBy: {
             endDate: "asc",
@@ -441,7 +415,7 @@ export async function getTodaysStudyTasks(userId: string) {
 
     // Get all active plans for the user
     const plans = await prisma.studyPlan.findMany({
-        where: { userId },
+        where: { userId, isArchived: false },
         select: { id: true },
     });
 
@@ -541,10 +515,7 @@ export async function getPublicStudyPlans(
             orderBy.subject = { name: sortOrder };
             break;
         case "goal":
-            // Prisma doesn't support sorting by JSON field easily
-            // We might need raw query or just sort in memory if dataset is small
-            // For now, fallback to createdAt
-            orderBy.createdAt = sortOrder;
+            orderBy.goal = sortOrder;
             break;
         case "createdAt":
         default:
@@ -600,9 +571,12 @@ export async function copyStudyPlan(planId: string, userId: string) {
             Date.now() + (new Date(originalPlan.endDate).getTime() - new Date(originalPlan.startDate).getTime())
         ), // Maintain duration
         totalTargetHours: originalPlan.totalTargetHours,
-        settings: originalPlan.settings ?? Prisma.JsonNull,
+        goal: originalPlan.goal,
+        topics: originalPlan.topics || [],
+        hoursPerDay: originalPlan.hoursPerDay,
         generatedByModel: originalPlan.generatedByModel,
         isPublic: false, // Default to private
+        isArchived: false,
     };
 
     const newPlan = await prisma.studyPlan.create({

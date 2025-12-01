@@ -139,9 +139,9 @@ export function CreateStudyPlanModal() {
             });
 
             if (!res.ok) throw new Error("Failed to create plan");
-
+            
             const data = await res.json();
-
+            
             // Check the ref for the most up-to-date value
             if (isBackgroundProcessingRef.current) {
                 toast.success("Study plan created successfully!", {

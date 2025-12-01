@@ -10,6 +10,7 @@ import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
 import { MyStudyPlanFilters } from "@/components/my-study-plan-filters";
 import { StudyPlanCard } from "@/components/study-plan-card";
 import { Metadata } from "next";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
     title: "My Study Plans",
@@ -86,6 +87,14 @@ export default async function MyStudyPlansPage({
         sortBy: sort,
         sortOrder: order,
     });
+
+    const rawPlans = await prisma.studyPlan.findMany({
+        where: {
+            userId: userId,
+        },
+    });
+
+    console.log(rawPlans);
 
     return (
         <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans">

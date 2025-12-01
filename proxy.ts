@@ -49,39 +49,56 @@ function getArcjetForRoute(path: string, limitConfig: { refillRate: number; inte
 export async function proxy(request: NextRequest) {
     const path = request.nextUrl.pathname;
 
-    // 1. Handle AI Generation Routes (Protected by API Key)
+    // 1. Handle AI Generation Routes (Protected by API Key OR Session)
     if (path.startsWith("/api/study-plans/generate")) {
         const apiKey = extractApiKey(request);
 
-        if (!apiKey) {
-            return NextResponse.json({ error: "Unauthorized: Missing API Key" }, { status: 401 });
-        }
+        if (apiKey) {
+            // Check if it's a student key
+            if (apiKey.startsWith("sk_student_")) {
+                const validKey = await validateStudentApiKey(apiKey);
 
-        // Check if it's a student key
-        if (apiKey.startsWith("sk_student_")) {
-            const validKey = await validateStudentApiKey(apiKey);
-
-            if (!validKey) {
-                return NextResponse.json({ error: "Unauthorized: Invalid or revoked API Key" }, { status: 401 });
-            }
-
-            // Get rate limit config for this route
-            const limitConfig = getStudentKeyRateLimit(path);
-            const aj = getArcjetForRoute(path, limitConfig);
-
-            // Apply protection (deduct 1 token)
-            const decision = await aj.protect(request, { requested: 1 });
-
-            if (decision.isDenied()) {
-                if (decision.reason.isRateLimit()) {
-                    return NextResponse.json({ error: "Too Many Requests", reason: decision.reason }, { status: 429 });
-                } else {
-                    return NextResponse.json({ error: "Forbidden", reason: decision.reason }, { status: 403 });
+                if (!validKey) {
+                    return NextResponse.json({ error: "Unauthorized: Invalid or revoked API Key" }, { status: 401 });
                 }
+
+                // Get rate limit config for this route
+                const limitConfig = getStudentKeyRateLimit(path);
+                const aj = getArcjetForRoute(path, limitConfig);
+
+                // Apply protection (deduct 1 token)
+                const decision = await aj.protect(request, { requested: 1 });
+
+                if (decision.isDenied()) {
+                    if (decision.reason.isRateLimit()) {
+                        return NextResponse.json(
+                            { error: "Too Many Requests", reason: decision.reason },
+                            { status: 429 }
+                        );
+                    } else {
+                        return NextResponse.json({ error: "Forbidden", reason: decision.reason }, { status: 403 });
+                    }
+                }
+            } else {
+                // Handle other key types if necessary, or reject
+                return NextResponse.json({ error: "Unauthorized: Invalid API Key type" }, { status: 401 });
             }
         } else {
-            // Handle other key types if necessary, or reject
-            return NextResponse.json({ error: "Unauthorized: Invalid API Key type" }, { status: 401 });
+            // No API Key provided, check for valid user session
+            const { data: session } = await import("@/lib/auth-client").then((m) =>
+                m.authClient.getSession({
+                    fetchOptions: {
+                        headers: {
+                            cookie: request.headers.get("cookie") || "",
+                        },
+                    },
+                })
+            );
+
+            if (!session) {
+                return NextResponse.json({ error: "Unauthorized: Missing API Key or valid session" }, { status: 401 });
+            }
+            // If session exists, allow request to proceed (rate limiting could be applied here too if needed)
         }
     }
     // 2. Handle Auth Routes
@@ -108,6 +125,7 @@ export async function proxy(request: NextRequest) {
         path.startsWith("/subjects") ||
         path.startsWith("/api/public");
 
+    console.log(path === "/study-plans");
     // Check if it's a static asset or Next.js internal
     const isStatic =
         path.startsWith("/_next") ||

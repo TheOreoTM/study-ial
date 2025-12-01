@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
 import { CopyStudyPlanButton } from "@/components/copy-study-plan-button";
 import { Metadata } from "next";
-import { Input } from "@/components/ui/input";
 import { CommunityPlanFilters } from "@/components/community-plan-filters";
 
 export const metadata: Metadata = {
@@ -91,8 +90,6 @@ export default async function MarketplacePage({
                 ) : (
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {plans.map((plan) => {
-                            const settings: any = plan.settings || {};
-
                             return (
                                 <div
                                     key={plan.id}
@@ -104,8 +101,8 @@ export default async function MarketplacePage({
                                                 {plan.name}
                                             </h3>
                                             <p className="text-sm text-muted-foreground line-clamp-2">
-                                                {settings.goal
-                                                    ? `Goal: ${String(settings.goal).replace(/_/g, " ")}`
+                                                {plan.goal
+                                                    ? `Goal: ${String(plan.goal).replace(/_/g, " ")}`
                                                     : "Custom Study Plan"}
                                             </p>
                                         </div>

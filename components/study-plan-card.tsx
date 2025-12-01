@@ -43,9 +43,6 @@ export function StudyPlanCard({ plan, stats: initialStats }: StudyPlanCardProps)
     // For now, we'll assume stats are passed or we show a simplified view.
     const progress = initialStats?.completionPercentage?.toFixed(0) || "0";
 
-    const settings: any = plan.settings || {};
-    const isArchived = settings.isArchived === true;
-
     async function handleDelete() {
         setIsDeleting(true);
         try {
@@ -63,8 +60,8 @@ export function StudyPlanCard({ plan, stats: initialStats }: StudyPlanCardProps)
     async function handleToggleArchive() {
         setIsArchiving(true);
         try {
-            await toggleStudyPlanArchive(plan.id, !isArchived);
-            toast.success(isArchived ? "Plan restored" : "Plan archived");
+            await toggleStudyPlanArchive(plan.id, !plan.isArchived);
+            toast.success(plan.isArchived ? "Plan restored" : "Plan archived");
             router.refresh();
         } catch (error) {
             toast.error("Failed to update plan");
@@ -87,7 +84,7 @@ export function StudyPlanCard({ plan, stats: initialStats }: StudyPlanCardProps)
                             </h3>
                         </Link>
                         <p className="text-sm text-muted-foreground truncate">
-                            {settings.goal ? `Goal: ${String(settings.goal).replace(/_/g, " ")}` : "Custom Plan"}
+                            {plan.goal ? `Goal: ${String(plan.goal).replace(/_/g, " ")}` : "Custom Plan"}
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -102,7 +99,7 @@ export function StudyPlanCard({ plan, stats: initialStats }: StudyPlanCardProps)
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={handleToggleArchive} disabled={isArchiving}>
-                                    {isArchived ? (
+                                    {plan.isArchived ? (
                                         <>
                                             <ArchiveRestore className="w-4 h-4 mr-2" />
                                             Restore Plan

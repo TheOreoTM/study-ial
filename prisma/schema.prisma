@@ -256,15 +256,19 @@ model StudyPlan {
   startDate        DateTime
   endDate          DateTime
   totalTargetHours Decimal? @db.Decimal(10, 2)
-  settings         Json?
+  goal             String?
+  topics           String[]
+  hoursPerDay      Decimal? @db.Decimal(4, 2)
   generatedByModel String?
   isPublic         Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
+  isArchived       Boolean  @default(false)
 
   items StudyPlanItem[]
 
   @@index([userId])
+  @@index([isArchived])
   @@map("study_plans")
 }
 
