@@ -2,7 +2,6 @@
 
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { UserButton, useUser } from "@stackframe/stack";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Menu, GraduationCap, Sparkles } from "lucide-react";
@@ -18,10 +17,12 @@ import {
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/config";
-import React from "react";
+import React, { Suspense } from "react";
+import { NavbarAuthDesktop, NavbarAuthMobile } from "./navbar-auth";
+import { UserNavSkeleton, UserNavSkeletonMobile } from "./skeletons/user-nav-skeleton";
 
 const ListItem = React.forwardRef<
-    React.ElementRef<"a">,
+    React.ComponentRef<"a">,
     React.ComponentPropsWithoutRef<"a"> & { icon?: React.ElementType; disabled?: boolean }
 >(({ className, title, children, icon: Icon, disabled, href, ...props }, ref) => {
     return (
@@ -52,8 +53,7 @@ ListItem.displayName = "ListItem";
 
 export default function Navbar() {
     const currentPath = usePathname();
-    const user = useUser();
-    const isAuthPath = currentPath.startsWith("/handler");
+    const isAuthPath = currentPath.startsWith("/auth");
     const isZenPath = currentPath.startsWith("/pomodoro");
 
     if (isAuthPath || isZenPath) {
@@ -64,9 +64,7 @@ export default function Navbar() {
     const toolsLinks = siteConfig.nav.tools;
     const moreLinks = siteConfig.nav.more;
 
-    // Combined links for mobile
     const allNavLinks = [...studyLinks];
-    const allMoreLinks = [...toolsLinks, ...moreLinks];
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -76,7 +74,6 @@ export default function Navbar() {
                 {/* Desktop Nav with Hover Dropdowns */}
                 <NavigationMenu className="hidden md:flex">
                     <NavigationMenuList>
-                        {/* Study Dropdown */}
                         <NavigationMenuItem>
                             <NavigationMenuTrigger className="bg-transparent">
                                 <GraduationCap className="h-4 w-4 mr-2" />
@@ -93,7 +90,6 @@ export default function Navbar() {
                             </NavigationMenuContent>
                         </NavigationMenuItem>
 
-                        {/* Tools Dropdown */}
                         <NavigationMenuItem>
                             <NavigationMenuTrigger className="bg-transparent">
                                 <Sparkles className="h-4 w-4 mr-2" />
@@ -116,7 +112,6 @@ export default function Navbar() {
                             </NavigationMenuContent>
                         </NavigationMenuItem>
 
-                        {/* More Dropdown */}
                         <NavigationMenuItem>
                             <NavigationMenuTrigger className="bg-transparent">More</NavigationMenuTrigger>
                             <NavigationMenuContent>
@@ -244,54 +239,15 @@ export default function Navbar() {
 
                                 <div className="h-px bg-border my-3" />
 
-                                {!user ? (
-                                    <div className="grid gap-2">
-                                        <Link href="/handler/sign-in" className="w-full">
-                                            <Button variant="outline" size="sm" className="w-full">
-                                                Sign In
-                                            </Button>
-                                        </Link>
-                                        <Link href="/handler/sign-up" className="w-full">
-                                            <Button size="sm" className="w-full btn-glow">
-                                                Get Started
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <Link href="/study-hub" className="flex-1">
-                                            <Button size="sm" className="w-full btn-glow">
-                                                Go to Study Hub
-                                            </Button>
-                                        </Link>
-                                        <UserButton />
-                                    </div>
-                                )}
+                                {/* Mobile Auth */}
+                                <NavbarAuthMobile />
                             </PopoverContent>
                         </Popover>
                     </div>
 
-                    {/* Desktop Auth Buttons */}
+                    {/* Desktop Auth */}
                     <div className="hidden md:flex items-center space-x-3">
-                        {!user ? (
-                            <>
-                                <Link href="/handler/sign-in">
-                                    <Button variant="outline" className="hover:bg-background cursor-pointer">
-                                        Sign In
-                                    </Button>
-                                </Link>
-                                <Link href="/handler/sign-up">
-                                    <Button className="btn-glow cursor-pointer">Get Started</Button>
-                                </Link>
-                            </>
-                        ) : (
-                            <div className="flex space-x-2 border py-1 pr-4 pl-1 rounded-sm bg-linear-to-br border-primary/5 transition-all">
-                                <Button variant="ghost" size="default" asChild>
-                                    <Link href="/study-hub">Study Hub</Link>
-                                </Button>
-                                <UserButton />
-                            </div>
-                        )}
+                        <NavbarAuthDesktop />
                     </div>
                 </div>
             </div>

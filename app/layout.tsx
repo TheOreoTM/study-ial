@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import Navbar from "@/components/navbar";
 import { Toaster } from "@/components/ui/sonner";
-import { NavbarSkeleton } from "@/components/skeletons/navbar-skeleton";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -95,17 +95,22 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body>
-                <StackProvider app={stackClientApp}>
-                    <StackTheme>
-                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                            <Suspense fallback={<NavbarSkeleton />}>
+                <Providers>
+                    <StackProvider app={stackClientApp}>
+                        <StackTheme>
+                            <ThemeProvider
+                                attribute="class"
+                                defaultTheme="system"
+                                enableSystem
+                                disableTransitionOnChange
+                            >
                                 <Navbar />
-                            </Suspense>
-                            {children}
-                            <Toaster />
-                        </ThemeProvider>
-                    </StackTheme>
-                </StackProvider>
+                                {children}
+                                <Toaster />
+                            </ThemeProvider>
+                        </StackTheme>
+                    </StackProvider>
+                </Providers>
             </body>
         </html>
     );

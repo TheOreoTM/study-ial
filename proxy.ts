@@ -86,7 +86,7 @@ export async function proxy(request: NextRequest) {
         }
     }
     // 2. Handle Auth Routes
-    else if (path.startsWith("/sign-in") || path.startsWith("/sign-up") || path.startsWith("/handler")) {
+    else if (path.startsWith("/auth")) {
         const decision = await ajAuth.protect(request);
         if (decision.isDenied()) {
             return NextResponse.json({ error: "Forbidden", reason: decision.reason }, { status: 403 });
@@ -98,7 +98,7 @@ export async function proxy(request: NextRequest) {
 
     // Define public routes
     const isPublicRoute =
-        path === "/" || path.startsWith("/handler") || path.startsWith("/subjects") || path.startsWith("/api/public");
+        path === "/" || path.startsWith("/auth") || path.startsWith("/subjects") || path.startsWith("/api/public");
 
     // Check if it's a static asset or Next.js internal
     const isStatic =
@@ -107,7 +107,7 @@ export async function proxy(request: NextRequest) {
         path === "/favicon.ico";
 
     if (!user && !isPublicRoute && !isStatic) {
-        const signInUrl = new URL("/handler/sign-in", request.url);
+        const signInUrl = new URL("/auth/sign-in", request.url);
         signInUrl.searchParams.set("redirect_url", path);
         return NextResponse.redirect(signInUrl);
     }

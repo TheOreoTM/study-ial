@@ -1,10 +1,11 @@
 "use client";
 
-import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calculator, Dna, FlaskConical, Atom } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
+import { SUBJECTS, getUnitsBySubject } from "@/lib/data/curriculum";
+import { subjectConfig, defaultSubjectConfig } from "@/lib/config/subjects";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -57,46 +58,24 @@ export default function SubjectsPage() {
                         animate="visible"
                         variants={containerVariants}
                     >
-                        <SubjectDetailCard
-                            title="Mathematics"
-                            icon={<Calculator className="h-8 w-8" />}
-                            description="Master Pure Math, Statistics, and Mechanics with our intelligent problem solver and step-by-step explanations."
-                            units={["P1", "P2", "P3", "P4", "S1", "S2", "M1", "M2"]}
-                            color="text-orange-500"
-                            bgColor="bg-orange-500/10"
-                            borderColor="border-orange-200 dark:border-orange-900"
-                            href="/subjects/mathematics"
-                        />
-                        <SubjectDetailCard
-                            title="Physics"
-                            icon={<Atom className="h-8 w-8" />}
-                            description="Deep dive into Mechanics, Waves, Electricity, and Fields. Visualize concepts and practice with parsed past paper questions."
-                            units={["Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Unit 6"]}
-                            color="text-purple-500"
-                            bgColor="bg-purple-500/10"
-                            borderColor="border-purple-200 dark:border-purple-900"
-                            href="/subjects/physics"
-                        />
-                        <SubjectDetailCard
-                            title="Chemistry"
-                            icon={<FlaskConical className="h-8 w-8" />}
-                            description="Understand Organic, Inorganic, and Physical Chemistry. Access detailed reaction mechanisms and equation balancers."
-                            units={["Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Unit 6"]}
-                            color="text-blue-500"
-                            bgColor="bg-blue-500/10"
-                            borderColor="border-blue-200 dark:border-blue-900"
-                            href="/subjects/chemistry"
-                        />
-                        <SubjectDetailCard
-                            title="Biology"
-                            icon={<Dna className="h-8 w-8" />}
-                            description="Explore Molecular Biology, Genetics, and Ecology. Use our diagram recognition to label and understand complex biological structures."
-                            units={["Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Unit 6"]}
-                            color="text-green-500"
-                            bgColor="bg-green-500/10"
-                            borderColor="border-green-200 dark:border-green-900"
-                            href="/subjects/biology"
-                        />
+                        {SUBJECTS.map((subject) => {
+                            const config = subjectConfig[subject.id] || defaultSubjectConfig;
+                            const units = getUnitsBySubject(subject.id).map((u) => u.code);
+
+                            return (
+                                <SubjectDetailCard
+                                    key={subject.id}
+                                    title={subject.name}
+                                    icon={config.icon}
+                                    description={subject.description || `Study resources for ${subject.name}`}
+                                    units={units}
+                                    color={config.color}
+                                    bgColor={config.bgColor}
+                                    borderColor={config.borderColor}
+                                    href={`/subjects/${subject.id}`}
+                                />
+                            );
+                        })}
                     </motion.div>
                 </div>
             </main>
@@ -129,10 +108,34 @@ function SubjectDetailCard({
     borderColor: string;
     href: string;
 }) {
+    const chipContainerVariants = {
+        hidden: { opacity: 1 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.05,
+                delayChildren: 0.3,
+            },
+        },
+    };
+
+    const chipVariants: Variants = {
+        hidden: { x: -20, opacity: 0 },
+        visible: {
+            x: 0,
+            opacity: 1,
+            transition: {
+                type: "spring",
+                stiffness: 150,
+                damping: 15,
+            },
+        },
+    };
+
     return (
         <motion.div
             variants={itemVariants}
-            className={`group relative overflow-hidden rounded-3xl border ${borderColor} bg-card p-8 transition-all hover:shadow-lg`}
+            className={`group relative overflow-hidden rounded-3xl border ${borderColor} bg-card p-8 transition-shadow hover:shadow-lg`}
         >
             <div
                 className={`absolute top-0 right-0 -mt-4 -mr-4 h-32 w-32 rounded-full ${bgColor} opacity-50 blur-3xl transition-all group-hover:scale-150`}
@@ -152,16 +155,26 @@ function SubjectDetailCard({
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
                         Available Units
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                        {units.map((unit) => (
-                            <span
-                                key={unit}
-                                className="px-3 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium"
-                            >
-                                {unit}
-                            </span>
-                        ))}
-                    </div>
+                    <motion.div
+                        className="flex flex-wrap gap-2"
+                        variants={chipContainerVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        {units.length > 0 ? (
+                            units.map((unit) => (
+                                <motion.span
+                                    key={unit}
+                                    variants={chipVariants}
+                                    className="px-3 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium"
+                                >
+                                    {unit}
+                                </motion.span>
+                            ))
+                        ) : (
+                            <span className="text-muted-foreground text-sm italic">No units available yet</span>
+                        )}
+                    </motion.div>
                 </div>
 
                 <div className="mt-auto pt-6">

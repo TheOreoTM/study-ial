@@ -40,25 +40,25 @@ export type Topic = z.infer<typeof TopicSchema>;
 
 // --- Static Data (Read-Only) ---
 
-export const SUBJECTS = [
+export const SUBJECTS: Subject[] = [
     { id: "phys", code: "PHYS", name: "Physics", description: "Study of matter and energy" },
     { id: "chem", code: "CHEM", name: "Chemistry", description: "Study of substances and their properties" },
     { id: "biol", code: "BIOL", name: "Biology", description: "Study of living organisms" },
     { id: "math", code: "MATH", name: "Mathematics", description: "Study of numbers, quantities, and shapes" },
     { id: "islm", code: "ISLM", name: "Islam", description: "Islamic Studies" },
     { id: "dhiv", code: "DHIV", name: "Dhivehi", description: "Dhivehi Language" },
-] as const;
+];
 
-export const UNITS = [
+export const UNITS: Unit[] = [
     // Example Units - Populate as needed
     { id: "phys-u1", subjectId: "phys", code: "U1", name: "Mechanics and Materials" },
     { id: "phys-u2", subjectId: "phys", code: "U2", name: "Waves and Electricity" },
-] as const;
+];
 
-export const TOPICS = [
+export const TOPICS: Topic[] = [
     // Example Topics - Populate as needed
     { id: "phys-t1", subjectId: "phys", unitId: "phys-u1", code: "1.1", name: "Motion", slug: "motion" },
-] as const;
+];
 
 // Validate data at runtime (optional, but good for sanity checks during dev)
 if (process.env.NODE_ENV === "development") {

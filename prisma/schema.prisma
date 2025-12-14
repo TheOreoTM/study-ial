@@ -14,10 +14,18 @@ datasource db {
 }
 
 model User {
-  id      String   @id @default(nanoid())
-  userId String @unique // From StackAuth
-  email   String?
-  apiKeys ApiKey[]
+  id            String    @id @default(nanoid())
+  email         String?
+  apiKeys       ApiKey[]
+  name          String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
 }
 
 model Subject {
@@ -29,6 +37,8 @@ model Subject {
 
   units  Unit[]
   topics Topic[]
+
+  @@map("subject")
 }
 
 model Unit {
@@ -44,6 +54,7 @@ model Unit {
 
   @@unique([subjectId, code])
   @@index([subjectId])
+  @@map("unit")
 }
 
 model Topic {
@@ -64,6 +75,7 @@ model Topic {
   @@unique([unitId, code])
   @@index([subjectId])
   @@index([unitId])
+  @@map("topic")
 }
 
 model ApiKey {
@@ -75,6 +87,7 @@ model ApiKey {
   userId    String
 
   @@index([key])
+  @@map("api_key")
 }
 
 enum Difficulty {
@@ -123,4 +136,52 @@ enum AssetType {
   TABLE_IMAGE
   FORMULA_IMAGE
   PHOTO
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
