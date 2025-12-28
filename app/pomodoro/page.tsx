@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { stackServerApp } from "@/stack/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getStudyPlanItem } from "@/lib/actions/studyPlans";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,14 @@ interface FocusPageProps {
 }
 
 export default async function FocusPage({ searchParams }: FocusPageProps) {
-    const user = await stackServerApp.getUser();
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+    const user = session?.user;
     const userId = user?.id;
 
     if (!userId) {
-        redirect("/handler/sign-in");
+        redirect("/auth/sign-in");
     }
 
     const params = await searchParams;

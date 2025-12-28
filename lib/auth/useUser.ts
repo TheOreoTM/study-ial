@@ -1,6 +1,4 @@
-"use client";
-
-import { useUser as useStackUser } from "@stackframe/stack";
+import { authClient } from "@/lib/auth-client";
 import {
     createQuestion,
     searchQuestions,
@@ -103,7 +101,8 @@ interface UserDatabaseOperations {
  * ```
  */
 export function useUser() {
-    const user = useStackUser();
+    const { data: session, isPending } = authClient.useSession();
+    const user = session?.user;
     const userId = user?.id;
 
     // Database operations bound to userId
@@ -217,5 +216,6 @@ export function useUser() {
 
         // Helper methods
         isAuthenticated: !!user,
+        isLoaded: !isPending,
     };
 }

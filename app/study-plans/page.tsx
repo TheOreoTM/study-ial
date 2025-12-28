@@ -1,4 +1,5 @@
-import { stackServerApp } from "@/stack/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, Clock, ArrowRight, Sparkles, BookOpen, Globe, Search } from "lucide-react";
@@ -28,11 +29,14 @@ export default async function MarketplacePage({
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const user = await stackServerApp.getUser();
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+    const user = session?.user;
     const userId = user?.id;
 
     if (!userId) {
-        redirect("/handler/sign-in?redirect_url=/study-plans");
+        redirect("/auth/sign-in?redirect_url=/study-plans");
     }
 
     const resolvedSearchParams = await searchParams;

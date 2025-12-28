@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -96,20 +94,11 @@ export default function RootLayout({
         <html lang="en">
             <body>
                 <Providers>
-                    <StackProvider app={stackClientApp}>
-                        <StackTheme>
-                            <ThemeProvider
-                                attribute="class"
-                                defaultTheme="system"
-                                enableSystem
-                                disableTransitionOnChange
-                            >
-                                <Navbar />
-                                {children}
-                                <Toaster />
-                            </ThemeProvider>
-                        </StackTheme>
-                    </StackProvider>
+                    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                        <Navbar />
+                        {children}
+                        <Toaster />
+                    </ThemeProvider>
                 </Providers>
             </body>
         </html>

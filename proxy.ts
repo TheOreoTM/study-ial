@@ -1,4 +1,4 @@
-import { stackServerApp } from "@/stack/server";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import arcjet, { detectBot, shield, tokenBucket, ArcjetNext } from "@arcjet/next";
@@ -93,8 +93,11 @@ export async function proxy(request: NextRequest) {
         }
     }
 
-    // 3. Standard Auth Check for other routes (Stack Auth)
-    const user = await stackServerApp.getUser();
+    // 3. Standard Auth Check for other routes (Better Auth)
+    const session = await auth.api.getSession({
+        headers: request.headers,
+    });
+    const user = session?.user;
 
     // Define public routes
     const isPublicRoute =

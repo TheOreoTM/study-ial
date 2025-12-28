@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { stackServerApp } from "@/stack/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import {
     ArrowLeft,
     Calendar,
@@ -28,7 +29,10 @@ export default async function TaskDetailsPage({ params }: { params: Promise<{ id
         notFound();
     }
 
-    const user = await stackServerApp.getUser();
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+    const user = session?.user;
     const userId = user?.id;
     const isOwner = (task as any).userId === userId;
     const isPublic = (task as any).isPublic;

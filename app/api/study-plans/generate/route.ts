@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { generateStudyPlan } from "@/lib/ai/plan-generator";
 import { getDb } from "@/lib/db";
 import { studyPlans, studyPlanItems, subjects } from "@/lib/db/schema";
-import { stackServerApp } from "@/stack/server";
+import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
     try {
-        const user = await stackServerApp.getUser();
+        const session = await auth.api.getSession({
+            headers: req.headers,
+        });
+        const user = session?.user;
         const userId = user?.id;
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
