@@ -73,7 +73,7 @@ export default async function MyStudyPlansPage({
     const user = session?.user;
     const userId = user?.id;
 
-    if (!userId) {
+    if (!user) {
         redirect("/auth/sign-in?redirect_url=/study-plans/me");
     }
 
@@ -84,7 +84,7 @@ export default async function MyStudyPlansPage({
     const sort = typeof params.sort === "string" ? (params.sort as any) : "createdAt";
     const order = typeof params.order === "string" ? (params.order as any) : "desc";
 
-    const plans = await getUserStudyPlans(userId, {
+    const plans = await getUserStudyPlans(userId!, {
         search,
         filterStatus: status as any,
         sortBy: sort,

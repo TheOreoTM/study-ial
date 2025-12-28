@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { CreateStudyPlanModal } from "@/components/create-study-plan-modal";
 import { CopyStudyPlanButton } from "@/components/copy-study-plan-button";
 import { Metadata } from "next";
-import { Input } from "@/components/ui/input";
 import { CommunityPlanFilters } from "@/components/community-plan-filters";
 
 export const metadata: Metadata = {
@@ -34,8 +33,9 @@ export default async function MarketplacePage({
     });
     const user = session?.user;
     const userId = user?.id;
+    console.log(user);
 
-    if (!userId) {
+    if (!user) {
         redirect("/auth/sign-in?redirect_url=/study-plans");
     }
 
@@ -155,7 +155,7 @@ export default async function MarketplacePage({
                                                 Preview <ArrowRight className="w-4 h-4" />
                                             </Link>
                                         </Button>
-                                        <CopyStudyPlanButton planId={plan.id} userId={userId} />
+                                        <CopyStudyPlanButton planId={plan.id} userId={userId!} />
                                     </div>
                                 </div>
                             );

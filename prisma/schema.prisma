@@ -14,18 +14,19 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(nanoid())
+  id            String      @id @default(nanoid())
   email         String?
-  apiKeys       ApiKey[]
   name          String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean     @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   sessions      Session[]
   accounts      Account[]
+  studyPlans    StudyPlan[]
+  notes         Note[]
 
-  @@map("user")
+  @@map("users")
 }
 
 model Subject {
@@ -35,10 +36,12 @@ model Subject {
   description String?
   createdAt   DateTime @default(now())
 
-  units  Unit[]
-  topics Topic[]
+  units      Unit[]
+  topics     Topic[]
+  studyPlans StudyPlan[]
+  notes      Note[]
 
-  @@map("subject")
+  @@map("subjects")
 }
 
 model Unit {
@@ -54,7 +57,7 @@ model Unit {
 
   @@unique([subjectId, code])
   @@index([subjectId])
-  @@map("unit")
+  @@map("units")
 }
 
 model Topic {
@@ -75,19 +78,83 @@ model Topic {
   @@unique([unitId, code])
   @@index([subjectId])
   @@index([unitId])
-  @@map("topic")
+  @@map("topics")
 }
 
-model ApiKey {
-  id        String    @id @default(nanoid())
-  key       String    @unique
-  createdAt DateTime  @default(now())
-  revokedAt DateTime?
-  user      User      @relation(fields: [userId], references: [id])
-  userId    String
+model StudyPlan {
+  id          String          @id @default(nanoid())
+  name        String
+  description String?
+  user        User            @relation(fields: [userId], references: [id])
+  items       StudyPlanItem[]
 
-  @@index([key])
-  @@map("api_key")
+  startDate DateTime
+  endDate   DateTime
+
+  subject          Subject @relation(fields: [subjectId], references: [id])
+  generatedByModel String
+  isPublic         Boolean @default(false)
+  notes            Note[]
+  paused           Boolean @default(false)
+
+  // Social
+  views Int @default(0)
+  likes Int @default(0)
+  forks Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  subjectId String
+
+  @@index([userId])
+  @@index([name])
+  @@index([isPublic])
+  @@map("study_plans")
+}
+
+model StudyPlanItem {
+  id                  String   @id @default(nanoid())
+  taskType            TaskType
+  status              Status
+  dueDate             DateTime
+  targetQuestionCount Int
+  targetMinutes       Int
+  completedAt         DateTime
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  studyPlan   StudyPlan? @relation(fields: [studyPlanId], references: [id])
+  studyPlanId String?
+
+  @@index([status])
+  @@index([taskType])
+  @@map("study_plan_items")
+}
+
+model Note {
+  id        String @id @default(cuid())
+  name      String
+  objectKey String @unique
+  url       String
+  size      Int
+  mimeType  String @default("application/pdf")
+
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  studyPlanId String?    @map("study_plan_id")
+  studyPlan   StudyPlan? @relation(fields: [studyPlanId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  subjectId String
+
+  @@index([userId])
+  @@index([studyPlanId])
+  @@map("notes")
 }
 
 enum Difficulty {

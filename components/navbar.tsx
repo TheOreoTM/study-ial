@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/config";
 import React, { Suspense } from "react";
 import { NavbarAuthDesktop, NavbarAuthMobile } from "./navbar-auth";
-import { UserNavSkeleton, UserNavSkeletonMobile } from "./skeletons/user-nav-skeleton";
 
 const ListItem = React.forwardRef<
     React.ComponentRef<"a">,

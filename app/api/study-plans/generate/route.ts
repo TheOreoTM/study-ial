@@ -18,7 +18,11 @@ export async function POST(req: Request) {
 
         const body = await req.json();
         console.log(body);
-        const { subjectCode, subjectName, goal, duration, hoursPerDay, topics } = body;
+        const { subjectCode, subjectName, goal, duration, hoursPerDay, topics, fileKeys } = body;
+
+        if (fileKeys && fileKeys.length > 0) {
+            console.log("Received file keys for AI context:", fileKeys);
+        }
 
         if (!subjectCode || !subjectName) {
             return new NextResponse("Missing subjectCode or subjectName", { status: 400 });

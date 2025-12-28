@@ -10,17 +10,31 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, ArrowRight, ArrowLeft, Check, Calendar, BookOpen, Target, Clock } from "lucide-react";
+import {
+    Plus,
+    ArrowRight,
+    ArrowLeft,
+    Check,
+    Calendar,
+    BookOpen,
+    Target,
+    Clock,
+    Trash2,
+    FileText,
+    ChevronUp,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { LoadingAnimation } from "./loading-animation";
 import { toast } from "sonner";
+import { Uploader, type UploadedFile } from "./uploader";
 
 const SUBJECTS = [
     { id: "math", name: "Mathematics", icon: "📐", color: "bg-orange-500/10 text-orange-500 border-orange-200" },
@@ -79,34 +93,7 @@ export function CreateStudyPlanModal() {
     };
 
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const res = await fetch("/api/resources/upload", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!res.ok) throw new Error("Upload failed");
-
-            const data = await res.json();
-            setUploadedFileName(file.name);
-            // We don't strictly need to store resourceId in formData if the backend searches by userId,
-            // but we could if we wanted to be specific. For now, just knowing it's uploaded is enough.
-        } catch (error) {
-            console.error("Upload error:", error);
-        } finally {
-            setIsUploading(false);
-        }
-    };
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isBackgroundProcessing, setIsBackgroundProcessing] = useState(false);
@@ -130,6 +117,7 @@ export function CreateStudyPlanModal() {
                 duration: formData.duration,
                 hoursPerDay: formData.hoursPerDay,
                 topics: formData.topics,
+                fileKeys: uploadedFiles.map((f) => f.key),
             };
 
             const res = await fetch("/api/study-plans/generate", {
@@ -317,35 +305,96 @@ export function CreateStudyPlanModal() {
                                 specifically to your materials.
                             </p>
 
-                            <div className="w-full max-w-sm mt-6">
-                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-accent/50 transition-colors">
-                                    {isUploading ? (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                            <span className="text-sm text-muted-foreground">
-                                                Uploading & Analyzing...
-                                            </span>
+                            <div className="w-full max-w-sm mt-6 space-y-4">
+                                <Uploader
+                                    route="notes"
+                                    accept="application/pdf"
+                                    metadata={{
+                                        originalName,
+                                        userId,
+                                        subjectId,
+                                        studyPlanId,
+                                    }}
+                                    description={{
+                                        fileTypes: "PDF",
+                                        maxFiles: 10,
+                                        maxFileSize: "50MB",
+                                    }}
+                                    onUploadStart={() => {
+                                        console.log("Starting...");
+                                        setIsUploading(true);
+                                    }}
+                                    onUploadComplete={(files) => {
+                                        setIsUploading(false);
+                                        setUploadedFiles(files);
+                                    }}
+                                    onUploadError={(error) => {
+                                        setIsUploading(false);
+                                        console.error(error);
+                                    }}
+                                />
+
+                                {uploadedFiles.length > 0 && (
+                                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-primary/10 p-2 rounded-md">
+                                                <FileText className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div className="flex flex-col items-start">
+                                                <span className="text-sm font-medium">
+                                                    {uploadedFiles.length} files selected
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {(
+                                                        uploadedFiles.reduce((total, file) => total + file.size, 0) /
+                                                        1024 /
+                                                        1024
+                                                    ).toFixed(2)}{" "}
+                                                    MB
+                                                </span>
+                                            </div>
                                         </div>
-                                    ) : uploadedFileName ? (
-                                        <div className="flex flex-col items-center gap-2 text-primary">
-                                            <Check className="w-8 h-8" />
-                                            <span className="font-medium">{uploadedFileName}</span>
-                                            <span className="text-xs text-muted-foreground">Click to change</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                            <Plus className="w-8 h-8" />
-                                            <span className="font-medium">Click to Upload PDF</span>
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="application/pdf"
-                                        className="hidden"
-                                        onChange={handleFileUpload}
-                                        disabled={isUploading}
-                                    />
-                                </label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" size="sm" className="h-8 gap-1">
+                                                    View Files <ChevronUp className="w-3 h-3" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80 p-0" align="end">
+                                                <div className="p-3 border-b border-border bg-muted/30">
+                                                    <h4 className="font-medium text-sm">Uploaded Resources</h4>
+                                                </div>
+                                                <div className="max-h-[300px] overflow-y-auto p-2 space-y-1">
+                                                    {uploadedFiles.map((file, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="flex items-center justify-between p-2 hover:bg-muted rounded-md group transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                                <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                                <span className="text-sm truncate" title={file.name}>
+                                                                    {file.name}
+                                                                </span>
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                onClick={() =>
+                                                                    setUploadedFiles((prev) =>
+                                                                        prev.filter((_, i) => i !== index)
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -447,12 +496,16 @@ export function CreateStudyPlanModal() {
                                     </div>
                                 </div>
 
-                                {uploadedFileName && (
+                                {uploadedFiles.length > 0 && (
                                     <div className="mt-4 pt-4 border-t border-primary/10">
-                                        <p className="text-sm text-muted-foreground">Resource</p>
-                                        <p className="font-semibold text-lg flex items-center gap-2">
-                                            <BookOpen className="w-4 h-4" /> {uploadedFileName}
-                                        </p>
+                                        <p className="text-sm text-muted-foreground mb-2">Resources</p>
+                                        <div className="space-y-1">
+                                            {uploadedFiles.map((file, idx) => (
+                                                <p key={idx} className="font-semibold text-sm flex items-center gap-2">
+                                                    <BookOpen className="w-3 h-3" /> {file.name}
+                                                </p>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
@@ -483,7 +536,7 @@ export function CreateStudyPlanModal() {
                                     <p className="font-medium text-yellow-700 dark:text-yellow-300">AI Optimization</p>
                                     <p className="text-sm text-yellow-600/80 dark:text-yellow-400/80 mt-1">
                                         Our AI will analyze your past performance{" "}
-                                        {uploadedFileName ? "and your textbook " : ""}
+                                        {uploadedFiles.length > 0 ? "and your textbooks " : ""}
                                         and adjust this plan dynamically as you progress.
                                     </p>
                                 </div>
@@ -511,7 +564,8 @@ export function CreateStudyPlanModal() {
                             }
                             className="gap-2 px-8 hover:cursor-pointer"
                         >
-                            {step === 3 && !uploadedFileName ? "Skip" : "Next"} <ArrowRight className="w-4 h-4" />
+                            {step === 3 && uploadedFiles.length === 0 ? "Skip" : "Next"}{" "}
+                            <ArrowRight className="w-4 h-4" />
                         </Button>
                     ) : (
                         <Button
