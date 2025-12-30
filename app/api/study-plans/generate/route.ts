@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateStudyPlan } from "@/lib/ai/plan-generator";
-import { getDb } from "@/lib/db";
-import { studyPlans, studyPlanItems, subjects } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
-import { eq } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
+import { Status, TaskType } from "@/lib/generated/prisma/client";
 
 export async function POST(req: Request) {
     try {
@@ -28,24 +27,21 @@ export async function POST(req: Request) {
             return new NextResponse("Missing subjectCode or subjectName", { status: 400 });
         }
 
-        const db = getDb();
-
         let subjectId: string;
-        const existingSubject = await db.query.subjects.findFirst({
-            where: eq(subjects.code, subjectCode),
+        const existingSubject = await prisma.subject.findUnique({
+            where: { code: subjectCode },
         });
 
         if (existingSubject) {
             subjectId = existingSubject.id;
         } else {
             // Create new subject if it doesn't exist
-            const [newSubject] = await db
-                .insert(subjects)
-                .values({
+            const newSubject = await prisma.subject.create({
+                data: {
                     code: subjectCode,
                     name: subjectName,
-                })
-                .returning();
+                },
+            });
             subjectId = newSubject.id;
         }
 
@@ -60,38 +56,62 @@ export async function POST(req: Request) {
         });
 
         // Create the main plan record
-        const [plan] = await db
-            .insert(studyPlans)
-            .values({
+        const plan = await prisma.studyPlan.create({
+            data: {
                 userId,
                 name: `${subjectName} Study Plan`,
                 subjectId: subjectId,
                 startDate: new Date(),
                 endDate: new Date(Date.now() + duration * 7 * 24 * 60 * 60 * 1000),
-                totalTargetHours: (duration * 7 * hoursPerDay).toString(),
+                totalTargetHours: duration * 7 * hoursPerDay,
                 settings: { goal, hoursPerDay, topics },
                 generatedByModel: "gemini-2.5-flash-lite",
-            })
-            .returning();
+            },
+        });
 
         // Create daily items
         // Note: We are storing the AI-generated topics in metadata for now
         // In a real app, we would try to match these strings to actual Topic IDs in the DB
         const itemsToInsert = generatedPlan.map((day) => ({
-            planId: plan.id,
+            studyPlanId: plan.id,
             subjectId: subjectId,
-            taskType: "revise" as const,
+            taskType: TaskType.REVISE,
+            status: Status.PENDING,
             dueDate: new Date(Date.now() + day.day * 24 * 60 * 60 * 1000),
-            topicIds: [],
-            questionIds: day.questionIds,
+            topicIds: [] as any,
+            questionIds: day.questionIds as any,
             metadata: {
                 description: day.description,
                 topics: day.topics,
-            },
+            } as any,
         }));
 
         if (itemsToInsert.length > 0) {
-            await db.insert(studyPlanItems).values(itemsToInsert);
+            await prisma.studyPlanItem.createMany({
+                data: itemsToInsert,
+            });
+        }
+
+        // Handle file uploads (create Note records)
+        if (body.files && Array.isArray(body.files) && body.files.length > 0) {
+            const files = body.files as any[]; // Type assertion since we don't have the type imported
+
+            await Promise.all(
+                files.map(async (file) => {
+                    await prisma.note.create({
+                        data: {
+                            name: file.name,
+                            objectKey: file.key,
+                            size: file.size,
+                            mimeType: file.type,
+                            url: process.env.R2_ENDPOINT + "/" + file.key,
+                            subjectId: subjectId,
+                            userId: userId,
+                            studyPlanId: plan.id,
+                        },
+                    });
+                })
+            );
         }
 
         return NextResponse.json({ id: plan.id });

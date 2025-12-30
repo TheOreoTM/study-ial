@@ -117,7 +117,7 @@ export function CreateStudyPlanModal() {
                 duration: formData.duration,
                 hoursPerDay: formData.hoursPerDay,
                 topics: formData.topics,
-                fileKeys: uploadedFiles.map((f) => f.key),
+                files: uploadedFiles,
             };
 
             const res = await fetch("/api/study-plans/generate", {
@@ -310,10 +310,7 @@ export function CreateStudyPlanModal() {
                                     route="notes"
                                     accept="application/pdf"
                                     metadata={{
-                                        originalName,
-                                        userId,
-                                        subjectId,
-                                        studyPlanId,
+                                        originalName: "file", // This will be overwritten by the file name in the uploader
                                     }}
                                     description={{
                                         fileTypes: "PDF",

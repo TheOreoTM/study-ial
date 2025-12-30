@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+// import { prisma } from "@/lib/prisma";
 import { route, type Router } from "@better-upload/server";
 import { toRouteHandler } from "@better-upload/server/adapters/next";
 import { cloudflare } from "@better-upload/server/clients";
@@ -7,9 +7,7 @@ import { nanoid } from "nanoid";
 import z from "zod";
 
 export interface ClientMetadata {
-    userId: string;
-    subjectId: string;
-    studyPlanId: string;
+    userId?: string;
     originalName: string;
 }
 
@@ -53,9 +51,7 @@ const router: Router = {
             multipleFiles: true,
             maxFiles: 10,
             clientMetadataSchema: z.object({
-                userId: z.string(),
-                subjectId: z.string(),
-                studyPlanId: z.string(),
+                userId: z.string().optional(),
                 originalName: z.string(),
             }),
             onBeforeUpload: async ({ req }) => {
@@ -75,22 +71,6 @@ const router: Router = {
                 if (!session?.user) {
                     throw new Error("Unauthorized");
                 }
-
-                const { originalName, userId, subjectId, studyPlanId } = clientMetadata;
-                files.forEach((file) => {
-                    prisma.note.create({
-                        data: {
-                            name: originalName,
-                            objectKey: file.objectInfo.key,
-                            size: file.size,
-                            mimeType: file.type,
-                            url: process.env.R2_ENDPOINT + "/" + file.objectInfo.key,
-                            subjectId,
-                            userId,
-                            studyPlanId,
-                        },
-                    });
-                });
 
                 return {
                     metadata: clientMetadata,

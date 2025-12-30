@@ -38,8 +38,9 @@ model Subject {
 
   units      Unit[]
   topics     Topic[]
-  studyPlans StudyPlan[]
-  notes      Note[]
+  studyPlans     StudyPlan[]
+  studyPlanItems StudyPlanItem[]
+  notes          Note[]
 
   @@map("subjects")
 }
@@ -102,10 +103,12 @@ model StudyPlan {
   likes Int @default(0)
   forks Int @default(0)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String
-  subjectId String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  userId           String
+  subjectId        String
+  totalTargetHours Decimal? @db.Decimal(10, 2)
+  settings         Json?
 
   @@index([userId])
   @@index([name])
@@ -118,14 +121,21 @@ model StudyPlanItem {
   taskType            TaskType
   status              Status
   dueDate             DateTime
-  targetQuestionCount Int
-  targetMinutes       Int
-  completedAt         DateTime
+  targetQuestionCount Int?
+  targetMinutes       Int?
+  completedAt         DateTime?
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   studyPlan   StudyPlan? @relation(fields: [studyPlanId], references: [id])
   studyPlanId String?
+
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+
+  topicIds    Json?
+  questionIds Json?
+  metadata    Json?
 
   @@index([status])
   @@index([taskType])
@@ -158,43 +168,43 @@ model Note {
 }
 
 enum Difficulty {
-  EASY
-  MEDIUM
-  HARD
-  VERY_HARD
+  EASY      @map("easy")
+  MEDIUM    @map("medium")
+  HARD      @map("hard")
+  VERY_HARD @map("very_hard")
 }
 
 enum QuestionType {
-  MCQ
-  STRUCTURED
-  ESSAY
-  GRAPH
-  TABLE
-  MIXED
-  DIAGRAM
-  CALCULATION
+  MCQ         @map("mcq")
+  STRUCTURED  @map("structured")
+  ESSAY       @map("essay")
+  GRAPH       @map("graph")
+  TABLE       @map("table")
+  MIXED       @map("mixed")
+  DIAGRAM     @map("diagram")
+  CALCULATION @map("calculation")
 }
 
 enum TaskType {
-  READ
-  REVISE
-  PRACTICE_QUESTIONS
-  MOCK_PAPER
-  REVIEW
+  READ               @map("read")
+  REVISE             @map("revise")
+  PRACTICE_QUESTIONS @map("practice_questions")
+  MOCK_PAPER         @map("mock_paper")
+  REVIEW             @map("review")
 }
 
 enum Status {
-  PENDING
-  IN_PROGRESS
-  DONE
-  SKIPPED
+  PENDING     @map("pending")
+  IN_PROGRESS @map("in_progress")
+  DONE        @map("done")
+  SKIPPED     @map("skipped")
 }
 
 enum ProgressStatus {
-  NOT_ATTEMPTED
-  ATTEMPTED
-  CORRECT
-  INCORRECT
+  NOT_ATTEMPTED @map("not_attempted")
+  ATTEMPTED     @map("attempted")
+  CORRECT       @map("correct")
+  INCORRECT     @map("incorrect")
 }
 
 enum AssetType {
