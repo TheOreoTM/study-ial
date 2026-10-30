@@ -40,5 +40,5 @@ demo user for app pages) → fix what's broken → commit → tick.
 
 - [x] `/impeccable audit` on every page and fix issues
 - [ ] `/impeccable document` to rewrite `DESIGN.md` from the shipped app
-- [ ] Final screenshots in `screenshots/final/`
+- [x] Final screenshots in `screenshots/final/`
 - [ ] `MORNING_REPORT.md`
