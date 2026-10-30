@@ -87,16 +87,16 @@ export function ImportHelp({ units }: { units: UnitRef[] }) {
 
     return (
         <aside className="flex min-w-0 flex-col gap-4">
-            <section className="rounded-xl border bg-card p-4">
+            <section className="rounded-xl bg-muted p-5">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                    <h2 className="text-sm font-semibold">LLM conversion prompt</h2>
+                    <h2 className="text-lg">LLM conversion prompt</h2>
                     <CopyButton text={prompt} label="Copy prompt" />
                 </div>
-                <p className="mb-3 text-xs text-muted-foreground">
+                <p className="mb-3 text-sm text-muted-foreground">
                     Paste into any LLM along with a paper&apos;s questions and mark scheme, then paste its output on the
                     left. Always review the result — LLMs misread diagrams and mark allocations.
                 </p>
-                <Label htmlFor="prompt-unit" className="mb-1.5 text-xs text-muted-foreground">
+                <Label htmlFor="prompt-unit" className="mb-1.5">
                     Unit
                 </Label>
                 <Select value={code} onValueChange={setCode}>
@@ -111,36 +111,40 @@ export function ImportHelp({ units }: { units: UnitRef[] }) {
                         ))}
                     </SelectContent>
                 </Select>
-                <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap">
+                <pre className="max-h-64 overflow-auto rounded-lg border bg-card p-3 text-xs leading-relaxed whitespace-pre-wrap">
                     {prompt}
                 </pre>
             </section>
 
-            <section className="rounded-xl border border-warning/40 bg-warning/5 p-4 text-xs">
-                <h2 className="mb-1 text-sm font-semibold">Copyright</h2>
-                <p className="text-muted-foreground">
+            <section className="rounded-xl bg-warning/10 p-5 text-sm">
+                <h2 className="mb-1 text-lg text-warning">Copyright</h2>
+                <p>
                     Pearson past papers and mark schemes are copyrighted. Don&apos;t upload or re-host the PDFs — set{" "}
                     <code>source: &quot;PAST_PAPER&quot;</code> and put a reference or a link to the official paper in{" "}
                     <code>sourceRef</code>. Prefer writing original questions in the same style.
                 </p>
             </section>
 
-            <section className="rounded-xl border bg-card p-4">
+            <section className="rounded-xl bg-muted p-5">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                    <h2 className="text-sm font-semibold">Example JSON</h2>
+                    <h2 className="text-lg">Example JSON</h2>
                     <CopyButton text={EXAMPLE_JSON} label="Copy" />
                 </div>
-                <p className="mb-2 text-xs text-muted-foreground">
+                <p className="mb-3 text-sm text-muted-foreground">
                     Same shape as the seed data (<code>SeedQuestion</code>). <code>seedKey</code>,{" "}
                     <code>explanation</code>, <code>source</code>, <code>sourceRef</code> are optional;{" "}
                     <code>markScheme</code> is optional for MCQ.
                 </p>
-                <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs">{EXAMPLE_JSON}</pre>
+                <pre className="max-h-72 overflow-auto rounded-lg border bg-card p-3 text-xs leading-relaxed">
+                    {EXAMPLE_JSON}
+                </pre>
             </section>
 
             {unit && (
-                <details className="rounded-xl border bg-card p-4 text-xs">
-                    <summary className="cursor-pointer text-sm font-semibold">Topic slugs for {unit.code}</summary>
+                <details className="rounded-xl bg-muted p-5 text-xs">
+                    <summary className="flex min-h-6 cursor-pointer items-center font-display text-base font-extrabold">
+                        Topic slugs for {unit.code}
+                    </summary>
                     <ul className="mt-2 space-y-0.5">
                         {unit.topics.map((t) => (
                             <li key={t.slug} className="flex gap-2">

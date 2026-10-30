@@ -73,9 +73,9 @@ export function ImportForm() {
 
     return (
         <div className="flex min-w-0 flex-col gap-4">
-            <div className="rounded-xl border bg-card p-4">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <Label htmlFor="import-json" className="text-sm font-semibold">
+            <div className="rounded-xl border bg-card p-5 shadow-card sm:p-6">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <Label htmlFor="import-json" className="font-display text-lg leading-tight font-extrabold">
                         Questions JSON
                     </Label>
                     <div>
@@ -101,7 +101,7 @@ export function ImportForm() {
                     onChange={(e) => reset(e.target.value)}
                     rows={14}
                     placeholder='[{ "unitCode": "WPH11", "topicSlug": "motion", "type": "SHORT", ... }]'
-                    className="max-h-[32rem] min-h-72 font-mono text-xs"
+                    className="max-h-[32rem] min-h-72 font-mono text-[13px] leading-relaxed"
                     spellCheck={false}
                     aria-invalid={Boolean(parseError)}
                     aria-describedby={parseError ? "import-error" : undefined}
@@ -125,7 +125,7 @@ export function ImportForm() {
 
             {result && (
                 <div
-                    className="flex flex-wrap items-center gap-3 rounded-xl border border-success/40 bg-success/5 p-4 text-sm"
+                    className="flex flex-wrap items-center gap-3 rounded-xl bg-success/10 p-4 text-sm font-semibold"
                     role="status"
                 >
                     <CheckCircle2 className="size-5 text-success" />
@@ -140,8 +140,8 @@ export function ImportForm() {
             )}
 
             {rows && (
-                <div className="rounded-xl border bg-card">
-                    <div className="flex flex-wrap items-center gap-3 border-b p-3">
+                <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+                    <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
                         <div className="flex items-center gap-2">
                             <Checkbox
                                 id="import-publish"
@@ -157,7 +157,7 @@ export function ImportForm() {
                             Import {valid} valid row{valid === 1 ? "" : "s"}
                         </Button>
                     </div>
-                    <p className="px-3 pt-2 text-xs text-muted-foreground">
+                    <p className="px-4 pt-3 text-sm text-muted-foreground">
                         Rows matching an existing seedKey are updated; their status only changes if publishing.
                     </p>
                     <Table>
@@ -179,11 +179,11 @@ export function ImportForm() {
                                         </TableCell>
                                         <TableCell className="align-top">
                                             <Badge
-                                                variant="outline"
+                                                variant="secondary"
                                                 className={
                                                     r.action === "update"
-                                                        ? "border-primary/40 text-primary"
-                                                        : "border-success/40 text-success"
+                                                        ? "bg-selected text-selected-foreground"
+                                                        : "bg-success/10 text-success"
                                                 }
                                             >
                                                 {r.action === "update" ? "Update" : "New"}
@@ -218,7 +218,7 @@ export function ImportForm() {
                                             {r.index + 1}
                                         </TableCell>
                                         <TableCell className="align-top">
-                                            <Badge variant="outline" className="border-destructive/40 text-destructive">
+                                            <Badge variant="secondary" className="bg-destructive/10 text-destructive">
                                                 Error
                                             </Badge>
                                         </TableCell>

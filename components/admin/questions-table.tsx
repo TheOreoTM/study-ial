@@ -28,7 +28,7 @@ export type QuestionRow = {
     attempts: number;
 };
 
-const difficultyClass = { EASY: "text-success", MEDIUM: "text-muted-foreground", HARD: "text-destructive" };
+const difficultyLabel = { EASY: "Easy", MEDIUM: "Medium", HARD: "Hard" };
 
 export function QuestionsTable({ questions }: { questions: QuestionRow[] }) {
     const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -65,9 +65,12 @@ export function QuestionsTable({ questions }: { questions: QuestionRow[] }) {
     };
 
     return (
-        <div className="rounded-xl border bg-card">
-            <div className="flex min-h-12 flex-wrap items-center gap-2 border-b px-3 py-2 text-sm">
-                <span className="text-muted-foreground" aria-live="polite">
+        <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+            <div className="flex min-h-14 flex-wrap items-center gap-2 border-b px-4 py-2.5 text-sm">
+                <span
+                    className={cn(ids.length ? "font-bold text-selected-foreground" : "text-muted-foreground")}
+                    aria-live="polite"
+                >
                     {ids.length ? `${ids.length} selected` : "Select questions for bulk actions"}
                 </span>
                 <div className="ml-auto flex gap-2">
@@ -87,7 +90,7 @@ export function QuestionsTable({ questions }: { questions: QuestionRow[] }) {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-10 pl-3">
+                        <TableHead className="w-10 pl-4">
                             <Checkbox
                                 aria-label="Select all on this page"
                                 checked={allSelected ? true : ids.length ? "indeterminate" : false}
@@ -98,8 +101,8 @@ export function QuestionsTable({ questions }: { questions: QuestionRow[] }) {
                         <TableHead className="hidden md:table-cell">Topic</TableHead>
                         <TableHead className="hidden sm:table-cell">Type</TableHead>
                         <TableHead className="text-right">Marks</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="hidden text-right lg:table-cell">Attempts</TableHead>
+                        <TableHead className="hidden sm:table-cell">Status</TableHead>
+                        <TableHead className="hidden pr-4 text-right lg:table-cell">Attempts</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -107,43 +110,50 @@ export function QuestionsTable({ questions }: { questions: QuestionRow[] }) {
                         const checked = selected.has(q.id);
                         return (
                             <TableRow key={q.id} data-state={checked ? "selected" : undefined}>
-                                <TableCell className="pl-3">
+                                <TableCell className="pl-4">
                                     <Checkbox
                                         aria-label="Select question"
                                         checked={checked}
                                         onCheckedChange={(v) => toggle(q.id, v === true)}
                                     />
                                 </TableCell>
-                                <TableCell className="max-w-[16rem] sm:max-w-md">
+                                <TableCell className="max-w-[13.5rem] sm:max-w-md">
                                     <Link
                                         href={`/admin/questions/${q.id}`}
-                                        className="block truncate font-medium hover:underline"
+                                        className="block truncate font-semibold underline-offset-2 hover:underline"
                                         title={q.stem}
                                     >
                                         {q.stem.replace(/\s+/g, " ")}
                                     </Link>
-                                    <div className="mt-0.5 flex gap-2 text-xs text-muted-foreground">
-                                        <span className={difficultyClass[q.difficulty]}>
-                                            {q.difficulty.toLowerCase()}
+                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <StatusBadge status={q.status} className="px-2 py-px sm:hidden" />
+                                        <span className="shrink-0 rounded-full bg-muted px-2 py-px font-semibold text-foreground">
+                                            {difficultyLabel[q.difficulty]}
                                         </span>
-                                        {q.source === "PAST_PAPER" && <span>past paper</span>}
+                                        {q.source === "PAST_PAPER" && (
+                                            <span className="shrink-0 rounded-full border px-2 py-px font-semibold">
+                                                Past paper
+                                            </span>
+                                        )}
                                         {q.seedKey && <span className="truncate font-mono">{q.seedKey}</span>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="hidden max-w-56 truncate md:table-cell" title={q.topic}>
-                                    <span className="font-mono text-xs text-muted-foreground">{q.unitCode}</span>{" "}
+                                    <span className="mr-1 rounded-[8px] bg-selected px-1.5 py-px font-display text-xs font-extrabold text-selected-foreground">
+                                        {q.unitCode}
+                                    </span>
                                     {q.topic}
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
-                                    <Badge variant="secondary" className={cn("font-normal")}>
+                                    <Badge variant="secondary" className="bg-muted font-semibold text-foreground">
                                         {TYPE_LABELS[q.type]}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{q.marks}</TableCell>
-                                <TableCell>
+                                <TableCell className="num text-right text-base">{q.marks}</TableCell>
+                                <TableCell className="hidden sm:table-cell">
                                     <StatusBadge status={q.status} />
                                 </TableCell>
-                                <TableCell className="hidden text-right text-muted-foreground tabular-nums lg:table-cell">
+                                <TableCell className="hidden pr-4 text-right text-muted-foreground tabular-nums lg:table-cell">
                                     {q.attempts}
                                 </TableCell>
                             </TableRow>

@@ -176,11 +176,14 @@ export function QuestionEditor({
             }}
         >
             {meta && (
-                <div className="-mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <div className="-mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
                     <StatusBadge status={initial.status} />
                     {meta.seedKey && (
                         <span>
-                            seedKey <code className="font-mono">{meta.seedKey}</code>
+                            seedKey{" "}
+                            <code className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
+                                {meta.seedKey}
+                            </code>
                         </span>
                     )}
                     <span>
@@ -188,7 +191,10 @@ export function QuestionEditor({
                     </span>
                     <span>Updated {meta.updatedAt}</span>
                     {meta.publicHref && initial.status === "PUBLISHED" && (
-                        <Link href={meta.publicHref} className="inline-flex items-center gap-1 hover:underline">
+                        <Link
+                            href={meta.publicHref}
+                            className="inline-flex min-h-6 items-center gap-1 font-semibold text-selected-foreground underline-offset-2 hover:underline"
+                        >
                             View topic <ExternalLink className="size-3" />
                         </Link>
                     )}
@@ -361,10 +367,10 @@ export function QuestionEditor({
                     isMcq && v.options.some((o) => o.text.trim()) ? (
                         <ol className="mt-3 space-y-1.5">
                             {v.options.map((o) => (
-                                <li key={o.label} className="flex gap-2">
+                                <li key={o.label} className="flex items-baseline gap-2">
                                     <span
                                         className={cn(
-                                            "w-5 shrink-0 font-semibold",
+                                            "w-5 shrink-0 font-display font-extrabold",
                                             o.isCorrect ? "text-success" : "text-muted-foreground",
                                         )}
                                     >
@@ -401,7 +407,10 @@ export function QuestionEditor({
                                     id={`q-correct-${o.label}`}
                                     aria-label={`${o.label} is correct`}
                                 />
-                                <Label htmlFor={`q-opt-${o.label}`} className="w-4 justify-center font-semibold">
+                                <Label
+                                    htmlFor={`q-opt-${o.label}`}
+                                    className="w-5 justify-center font-display font-extrabold"
+                                >
                                     {o.label}
                                 </Label>
                                 <Input
@@ -478,13 +487,9 @@ export function QuestionEditor({
                 }
             >
                 {proposal && (
-                    <div
-                        className="mt-3 rounded-lg border border-primary/40 bg-primary/5 p-3"
-                        role="region"
-                        aria-label="AI proposal"
-                    >
-                        <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                            <Sparkles className="size-4 text-primary" /> AI-drafted mark scheme — review before using
+                    <div className="mt-4 rounded-lg bg-selected/60 p-4" role="region" aria-label="AI proposal">
+                        <div className="mb-2 flex items-center gap-2 text-sm font-bold text-selected-foreground">
+                            <Sparkles className="size-4" /> AI-drafted mark scheme — review before using
                         </div>
                         <Markdown>{proposal.markScheme}</Markdown>
                         {proposal.notes && (
@@ -531,7 +536,7 @@ export function QuestionEditor({
                 rows={6}
             />
 
-            <div className="sticky bottom-0 z-10 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+            <div className="sticky bottom-3 z-10 rounded-xl border bg-card/95 px-4 py-3 shadow-card backdrop-blur sm:px-5">
                 {(attempted && errors.length > 0) || warnings.length > 0 ? (
                     <ul className="mb-3 max-h-32 space-y-1 overflow-y-auto text-sm" aria-live="polite">
                         {attempted &&
@@ -598,9 +603,17 @@ export function QuestionEditor({
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
     return (
-        <fieldset className="rounded-xl border bg-card p-4">
-            <legend className="px-1 text-sm font-semibold">{title}</legend>
-            {description && <p className="mb-3 text-xs text-muted-foreground">{description}</p>}
+        <fieldset className="rounded-xl border bg-card p-5 shadow-card sm:p-6">
+            {/* float makes the legend sit inside the card instead of notching its border */}
+            <legend className="float-left mb-4 w-full font-display text-lg leading-tight font-extrabold">
+                {title}
+                {description && (
+                    <span className="mt-1 block font-sans text-sm font-medium text-muted-foreground">
+                        {description}
+                    </span>
+                )}
+            </legend>
+            <div className="clear-both" />
             {children}
         </fieldset>
     );
@@ -657,14 +670,14 @@ function MarkdownField({
 }) {
     const deferred = useDeferredValue(value);
     return (
-        <div className="rounded-xl border bg-card p-4">
-            <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+        <div className="rounded-xl border bg-card p-5 shadow-card sm:p-6">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
                 <div>
-                    <Label htmlFor={id} className="text-sm font-semibold">
+                    <Label htmlFor={id} className="font-display text-lg leading-tight font-extrabold">
                         {label}
                     </Label>
                     {description && (
-                        <p id={`${id}-desc`} className="mt-1 text-xs text-muted-foreground">
+                        <p id={`${id}-desc`} className="mt-1 text-sm text-muted-foreground">
                             {description}
                         </p>
                     )}
@@ -683,10 +696,13 @@ function MarkdownField({
                     spellCheck
                 />
                 <div
-                    className="min-h-32 overflow-x-auto rounded-md border border-dashed bg-background px-3 py-2"
+                    className="min-h-32 min-w-0 overflow-x-auto rounded-lg bg-muted px-4 py-3"
                     aria-label={`${label} preview`}
                     role="region"
                 >
+                    <p aria-hidden className="mb-1.5 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                        Preview
+                    </p>
                     {deferred.trim() ? (
                         <Markdown>{deferred}</Markdown>
                     ) : (

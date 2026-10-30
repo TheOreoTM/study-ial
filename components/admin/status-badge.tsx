@@ -1,14 +1,18 @@
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+/** Published / Draft pill. Semantic tokens only — never mastery colours. */
 export function StatusBadge({ status, className }: { status: "DRAFT" | "PUBLISHED"; className?: string }) {
-    return status === "PUBLISHED" ? (
-        <Badge variant="outline" className={cn("border-success/40 bg-success/10 text-success", className)}>
-            Published
-        </Badge>
-    ) : (
-        <Badge variant="outline" className={cn("border-warning/40 bg-warning/10 text-warning", className)}>
-            Draft
-        </Badge>
+    const published = status === "PUBLISHED";
+    return (
+        <span
+            className={cn(
+                "inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
+                published ? "bg-success/10 text-success" : "bg-warning/10 text-warning",
+                className,
+            )}
+        >
+            <span aria-hidden className="size-1.5 rounded-full bg-current" />
+            {published ? "Published" : "Draft"}
+        </span>
     );
 }

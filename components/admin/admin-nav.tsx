@@ -14,7 +14,7 @@ const links = [
 export function AdminNav() {
     const pathname = usePathname();
     return (
-        <nav aria-label="Admin" className="-mx-1 mb-6 flex gap-1 overflow-x-auto border-b pb-px text-sm">
+        <nav aria-label="Admin" className="-mx-1 mb-6 flex gap-1 overflow-x-auto px-1 py-0.5">
             {links.map(({ href, label, exact }) => {
                 const active = exact
                     ? pathname === href
@@ -25,10 +25,10 @@ export function AdminNav() {
                         href={href}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                            "-mb-px shrink-0 border-b-2 px-3 py-2 font-medium transition-colors",
+                            "flex min-h-10 shrink-0 items-center rounded-full px-4 font-display text-[0.95rem] font-bold whitespace-nowrap transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",
                             active
-                                ? "border-primary text-foreground"
-                                : "border-transparent text-muted-foreground hover:text-foreground",
+                                ? "bg-selected text-selected-foreground"
+                                : "text-muted-foreground hover:bg-accent hover:text-foreground",
                         )}
                     >
                         {label}

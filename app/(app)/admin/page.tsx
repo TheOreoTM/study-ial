@@ -90,7 +90,7 @@ export default async function AdminOverviewPage() {
             </div>
 
             <section className="mb-10" aria-labelledby="coverage-heading">
-                <h2 id="coverage-heading" className="mb-3 text-lg font-semibold">
+                <h2 id="coverage-heading" className="mb-3 text-xl">
                     Coverage by unit
                 </h2>
                 {tree.length === 0 ? (
@@ -103,10 +103,10 @@ export default async function AdminOverviewPage() {
                     <div className="grid gap-4 xl:grid-cols-2">
                         {tree.map((subject) => (
                             <Card key={subject.id} className="gap-0 py-0">
-                                <CardHeader className="border-b py-3">
-                                    <CardTitle className="text-base">{subject.name}</CardTitle>
+                                <CardHeader className="block border-b px-5 py-4 [.border-b]:pb-4">
+                                    <CardTitle>{subject.name}</CardTitle>
                                 </CardHeader>
-                                <CardContent className="px-2 py-1">
+                                <CardContent className="px-2 pt-1 pb-2">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -127,12 +127,9 @@ export default async function AdminOverviewPage() {
                                                         <TableCell className="max-w-56 truncate">
                                                             <Link
                                                                 href={`/admin/questions?subject=${subject.slug}&unit=${u.code}`}
-                                                                className="hover:underline"
+                                                                className="font-semibold underline-offset-2 hover:underline"
                                                             >
-                                                                <span className="font-mono text-xs text-muted-foreground">
-                                                                    {u.code}
-                                                                </span>{" "}
-                                                                {u.name}
+                                                                <UnitCode code={u.code} /> {u.name}
                                                             </Link>
                                                         </TableCell>
                                                         <TableCell className="text-right tabular-nums">
@@ -165,7 +162,7 @@ export default async function AdminOverviewPage() {
             </section>
 
             <section aria-labelledby="todo-heading">
-                <h2 id="todo-heading" className="mb-1 text-lg font-semibold">
+                <h2 id="todo-heading" className="mb-1 text-xl">
                     Topics with no published questions
                 </h2>
                 <p className="mb-4 text-sm text-muted-foreground">
@@ -178,52 +175,52 @@ export default async function AdminOverviewPage() {
                         description="Nice. Keep adding variety and harder questions."
                     />
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {todo.map(({ subject, unit, topics }) => (
-                            <Card key={unit.id} className="gap-2 py-4">
-                                <CardHeader className="px-4">
-                                    <CardTitle className="text-sm">
-                                        <span className="font-mono text-xs text-muted-foreground">{unit.code}</span>{" "}
-                                        {unit.name}
-                                    </CardTitle>
+                            <div key={unit.id} className="flex flex-col gap-3 rounded-xl bg-muted p-4">
+                                <div className="flex flex-col gap-1.5 px-1">
+                                    <h3 className="text-base leading-snug">
+                                        <UnitCode code={unit.code} /> {unit.name}
+                                    </h3>
                                     <p className="text-xs text-muted-foreground">
                                         {subject} · {topics.length} of {unit.topics.length} topics empty
                                     </p>
-                                </CardHeader>
-                                <CardContent className="px-4">
-                                    <ul className="divide-y text-sm">
-                                        {topics.map((t) => {
-                                            const drafts = topicCounts.get(t.id)?.draft ?? 0;
-                                            return (
-                                                <li key={t.id} className="flex items-center gap-2 py-1.5">
-                                                    <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground">
-                                                        {t.code}
-                                                    </span>
-                                                    <span className="min-w-0 flex-1 truncate" title={t.name}>
-                                                        {t.name}
-                                                    </span>
-                                                    {drafts > 0 && (
-                                                        <Link
-                                                            href={`/admin/questions?unit=${unit.code}&topic=${t.id}&status=DRAFT`}
-                                                            className="shrink-0 text-xs text-warning hover:underline"
-                                                        >
-                                                            {drafts} draft{drafts === 1 ? "" : "s"}
-                                                        </Link>
-                                                    )}
-                                                    <Button asChild size="icon-xs" variant="ghost">
-                                                        <Link
-                                                            href={`/admin/questions/new?topic=${t.id}`}
-                                                            aria-label={`Add question to ${t.name}`}
-                                                        >
-                                                            <Plus />
-                                                        </Link>
-                                                    </Button>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </CardContent>
-                            </Card>
+                                </div>
+                                <ul className="flex flex-col gap-1 text-sm">
+                                    {topics.map((t) => {
+                                        const drafts = topicCounts.get(t.id)?.draft ?? 0;
+                                        return (
+                                            <li
+                                                key={t.id}
+                                                className="flex min-h-11 items-center gap-2 rounded-lg bg-card py-1 pr-1 pl-3"
+                                            >
+                                                <span className="num w-8 shrink-0 text-xs text-muted-foreground">
+                                                    {t.code}
+                                                </span>
+                                                <span className="min-w-0 flex-1 truncate" title={t.name}>
+                                                    {t.name}
+                                                </span>
+                                                {drafts > 0 && (
+                                                    <Link
+                                                        href={`/admin/questions?unit=${unit.code}&topic=${t.id}&status=DRAFT`}
+                                                        className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-bold text-warning hover:underline"
+                                                    >
+                                                        {drafts} draft{drafts === 1 ? "" : "s"}
+                                                    </Link>
+                                                )}
+                                                <Button asChild size="icon-sm" variant="ghost">
+                                                    <Link
+                                                        href={`/admin/questions/new?topic=${t.id}`}
+                                                        aria-label={`Add question to ${t.name}`}
+                                                    >
+                                                        <Plus />
+                                                    </Link>
+                                                </Button>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
                         ))}
                     </div>
                 )}
@@ -245,18 +242,30 @@ function Stat({
 }) {
     const body = (
         <>
-            <div className="text-xs font-medium text-muted-foreground">{label}</div>
-            <div className={cn("mt-1 text-2xl font-semibold tabular-nums", tone === "warning" && "text-warning")}>
-                {value}
-            </div>
+            <div className="text-sm font-semibold text-muted-foreground">{label}</div>
+            <div className={cn("num mt-1 text-3xl", tone === "warning" && "text-warning")}>{value}</div>
         </>
     );
-    const cls = "rounded-xl border bg-card px-4 py-3";
+    const cls = "rounded-xl border bg-card px-5 py-4 shadow-card";
     return href ? (
-        <Link href={href} className={cn(cls, "transition-colors hover:bg-muted/50")}>
+        <Link
+            href={href}
+            className={cn(
+                cls,
+                "transition-colors duration-150 hover:border-border-strong focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",
+            )}
+        >
             {body}
         </Link>
     ) : (
         <div className={cls}>{body}</div>
+    );
+}
+
+function UnitCode({ code }: { code: string }) {
+    return (
+        <span className="mr-0.5 inline-block rounded-[8px] bg-selected px-1.5 font-display text-xs font-extrabold text-selected-foreground">
+            {code}
+        </span>
     );
 }

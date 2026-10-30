@@ -44,7 +44,7 @@ export function QuestionFilters({ tree, values }: { tree: CurriculumTree; values
     return (
         <form
             role="search"
-            className="mb-4 grid grid-cols-2 gap-2 rounded-xl border bg-card p-3 sm:grid-cols-4 lg:grid-cols-8"
+            className="mb-5 grid grid-cols-2 gap-x-2.5 gap-y-3 rounded-xl bg-muted p-4 sm:grid-cols-4 lg:grid-cols-8"
             onSubmit={(e) => {
                 e.preventDefault();
                 set({ q });
@@ -61,7 +61,7 @@ export function QuestionFilters({ tree, values }: { tree: CurriculumTree; values
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
                         placeholder="Text, seedKey or source…"
-                        className="h-8 pl-8"
+                        className="h-9 pl-8"
                     />
                 </div>
             </div>
