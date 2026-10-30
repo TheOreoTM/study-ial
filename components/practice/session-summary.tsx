@@ -6,11 +6,12 @@ import { ArrowRight, RotateCcw, Target } from "lucide-react";
 import type { PracticeQuestion, SessionTopic } from "@/app/(app)/practice/types";
 import { MasteryBadge } from "@/components/mastery/mastery-badge";
 import { MasteryBar } from "@/components/mastery/mastery-bar";
+import { MasteryTile } from "@/components/mastery/mastery-tile";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Mastery } from "@/lib/mastery";
 import { cn } from "@/lib/utils";
 import type { QuestionOutcome } from "./question-view";
+import { SessionProgress } from "./session-progress";
 
 export function SessionSummary({
     questions,
@@ -62,72 +63,74 @@ export function SessionSummary({
                   : "Tough one — that's how you learn";
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardContent className="flex flex-col items-center gap-2 py-4 text-center">
-                    <p className="text-sm text-muted-foreground">{headline}</p>
-                    <p className="text-5xl font-semibold tracking-tight tabular-nums">
-                        {pct === null ? "—" : `${pct}%`}
-                    </p>
-                    <p className="text-sm text-muted-foreground tabular-nums">
+        <div className="grid gap-6">
+            <section
+                aria-label="Session score"
+                className="grid gap-5 rounded-xl border bg-card p-6 text-center shadow-card sm:p-8"
+            >
+                <div className="grid gap-1">
+                    <p className="font-display text-xl leading-tight font-extrabold">{headline}</p>
+                    <p className="num text-[3.5rem] leading-none sm:text-[4rem]">{pct === null ? "—" : `${pct}%`}</p>
+                    <p className="text-[0.9375rem] font-semibold text-muted-foreground tabular-nums">
                         {earned}/{possible} marks · {answered.length} answered
                         {skipped > 0 && ` · ${skipped} skipped`}
                     </p>
-                </CardContent>
-            </Card>
+                </div>
+                <SessionProgress questions={questions} outcomes={outcomes} current={-1} className="mx-auto w-full max-w-md" />
+            </section>
 
             {perTopic.length > 0 && (
-                <Card className="gap-4">
-                    <CardHeader>
-                        <CardTitle>By topic</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul className="divide-y">
-                            {perTopic.map(({ topic, earned, possible, after }) => {
-                                const before = topic.before;
-                                const delta =
-                                    after.score !== null
-                                        ? Math.round(((after.score ?? 0) - (before.score ?? 0)) * 100)
-                                        : 0;
-                                return (
-                                    <li key={topic.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <Link
-                                                href={topic.href}
-                                                className="min-w-0 text-sm font-medium hover:underline"
+                <section className="grid gap-4 rounded-xl bg-muted p-5 sm:p-6" aria-labelledby="by-topic">
+                    <h2 id="by-topic" className="text-lg leading-tight">
+                        By topic
+                    </h2>
+                    <ul className="grid gap-2">
+                        {perTopic.map(({ topic, earned, possible, after }) => {
+                            const before = topic.before;
+                            const delta =
+                                after.score !== null ? Math.round(((after.score ?? 0) - (before.score ?? 0)) * 100) : 0;
+                            return (
+                                <li
+                                    key={topic.id}
+                                    className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg bg-card p-3 sm:p-4"
+                                >
+                                    <MasteryTile code={topic.code} level={after.level} className="row-span-3" />
+                                    <div className="flex items-start justify-between gap-3">
+                                        <Link
+                                            href={topic.href}
+                                            className="min-w-0 text-[0.9375rem] leading-snug font-bold underline decoration-transparent decoration-2 underline-offset-4 transition-colors hover:decoration-border-strong"
+                                        >
+                                            {topic.name}
+                                        </Link>
+                                        <span className="num shrink-0 text-lg leading-none">
+                                            {earned}/{possible}
+                                        </span>
+                                    </div>
+                                    <MasteryBar level={after.level} score={after.score} label={topic.name} />
+                                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                        <MasteryBadge level={before.level} score={before.score} showScore />
+                                        <ArrowRight className="size-3.5" aria-label="now" />
+                                        <MasteryBadge level={after.level} score={after.score} showScore />
+                                        {delta !== 0 && (
+                                            <span
+                                                className={cn(
+                                                    "ml-1 text-sm font-extrabold tabular-nums",
+                                                    delta > 0 ? "text-mastery-strong-text" : "text-mastery-weak-text",
+                                                )}
                                             >
-                                                <span className="text-muted-foreground">{topic.code}</span> {topic.name}
-                                            </Link>
-                                            <span className="shrink-0 text-sm tabular-nums">
-                                                {earned}/{possible}
+                                                {delta > 0 ? "+" : "\u2212"}
+                                                {Math.abs(delta)} pts
                                             </span>
-                                        </div>
-                                        <MasteryBar level={after.level} score={after.score} label={topic.name} />
-                                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                                            <MasteryBadge level={before.level} score={before.score} showScore />
-                                            <ArrowRight className="size-3" aria-label="now" />
-                                            <MasteryBadge level={after.level} score={after.score} showScore />
-                                            {delta !== 0 && (
-                                                <span
-                                                    className={cn(
-                                                        "ml-1 font-medium tabular-nums",
-                                                        delta > 0 ? "text-success" : "text-destructive",
-                                                    )}
-                                                >
-                                                    {delta > 0 ? "+" : ""}
-                                                    {delta} pts
-                                                </span>
-                                            )}
-                                        </div>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </CardContent>
-                </Card>
+                                        )}
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </section>
             )}
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <Button variant="outline" asChild>
                     <Link href={back.href}>{back.label}</Link>
                 </Button>

@@ -6,9 +6,7 @@ import { markWithAi, revealMarkScheme, submitMcq, submitSelfMark } from "@/app/(
 import type { MarkSchemeView, PracticeQuestion, SessionTopic } from "@/app/(app)/practice/types";
 import { Markdown } from "@/components/markdown";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -53,39 +51,53 @@ const difficultyLabel: Record<PracticeQuestion["difficulty"], string> = {
 export function QuestionView(props: Props) {
     const { question, topic } = props;
     return (
-        <Card className="gap-5">
-            <CardHeader className="gap-3">
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <Badge variant="secondary">{typeLabel[question.type]}</Badge>
-                    <Badge variant="outline">{difficultyLabel[question.difficulty]}</Badge>
-                    <span className="ml-auto font-medium text-muted-foreground tabular-nums">
+        <>
+            <div className="grid gap-3">
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold text-muted-foreground">
+                    <span>{typeLabel[question.type]}</span>
+                    <span aria-hidden>·</span>
+                    <span>{difficultyLabel[question.difficulty]}</span>
+                    <span aria-hidden>·</span>
+                    <span className="tabular-nums">
                         {question.marks} mark{question.marks === 1 ? "" : "s"}
                     </span>
-                </div>
-                {topic && (
-                    <p className="text-xs text-muted-foreground">
-                        {topic.unitCode} · {topic.code} {topic.name}
-                    </p>
-                )}
-            </CardHeader>
-            <CardContent>
-                <Markdown>{question.stem}</Markdown>
-            </CardContent>
+                    {topic && (
+                        <>
+                            <span aria-hidden>·</span>
+                            <span>
+                                {topic.unitCode} {topic.code} {topic.name}
+                            </span>
+                        </>
+                    )}
+                </p>
+                <Markdown className="max-w-[62ch] text-[1.125rem]! leading-normal! font-semibold sm:text-[1.25rem]!">
+                    {question.stem}
+                </Markdown>
+            </div>
             {question.type === "MCQ" ? <McqBody {...props} /> : <WrittenBody {...props} />}
-        </Card>
+        </>
     );
 }
 
 // ─── Shared bits ─────────────────────────────────────────────────────────────
 
-function ScoreBanner({ marks, max }: { marks: number; max: number }) {
+function ScoreBanner({
+    marks,
+    max,
+    children,
+}: {
+    marks: number;
+    max: number;
+    /** Explanation or other notes shown under the result line. */
+    children?: React.ReactNode;
+}) {
     const ratio = max > 0 ? marks / max : 0;
     const tone =
         ratio >= 0.75
-            ? "border-success/30 bg-success/10 text-success"
+            ? "text-mastery-strong-text"
             : ratio >= 0.4
-              ? "border-warning/40 bg-warning/10 text-amber-700 dark:text-warning"
-              : "border-destructive/30 bg-destructive/10 text-destructive";
+              ? "text-mastery-developing-text"
+              : "text-mastery-weak-text";
     const message =
         ratio === 1
             ? "Full marks"
@@ -97,21 +109,24 @@ function ScoreBanner({ marks, max }: { marks: number; max: number }) {
                   ? "A few marks"
                   : "Not this time";
     return (
-        <div role="status" className={cn("flex items-center justify-between rounded-lg border px-4 py-3", tone)}>
-            <span className="font-medium">{message}</span>
-            <span className="text-lg font-semibold tabular-nums">
-                {marks}/{max}
-            </span>
+        <div className="grid gap-2 rounded-lg bg-muted px-4 py-4 animate-in duration-200 ease-out-soft fade-in slide-in-from-bottom-1 sm:px-5">
+            <p role="status" className="flex items-baseline justify-between gap-3">
+                <span className={cn("font-display text-xl leading-tight font-extrabold", tone)}>{message}</span>
+                <span className="text-[0.9375rem] font-bold text-muted-foreground tabular-nums">
+                    {marks} / {max} mark{max === 1 ? "" : "s"}
+                </span>
+            </p>
+            {children}
         </div>
     );
 }
 
-function Explanation({ text }: { text: string | null }) {
+function Explanation({ text, bare = false }: { text: string | null; bare?: boolean }) {
     if (!text) return null;
     return (
-        <div className="rounded-lg bg-muted/60 px-4 py-3">
-            <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">Explanation</p>
-            <Markdown>{text}</Markdown>
+        <div className={cn(!bare && "rounded-lg bg-muted px-4 py-4 sm:px-5")}>
+            <p className="text-sm font-extrabold">Explanation</p>
+            <Markdown className="[&>p:first-child]:mt-1!">{text}</Markdown>
         </div>
     );
 }
@@ -125,9 +140,23 @@ function ErrorNote({ error }: { error: string | null }) {
     );
 }
 
-function NextButton({ isLast, onNext }: { isLast: boolean; onNext: () => void }) {
+function Actions({ children, className }: { children: React.ReactNode; className?: string }) {
     return (
-        <Button onClick={onNext} autoFocus className="w-full sm:w-auto">
+        <div
+            className={cn(
+                "flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:flex-wrap sm:justify-end [&>*]:w-full sm:[&>*]:w-auto",
+                className,
+            )}
+        >
+            {children}
+        </div>
+    );
+}
+
+function NextButton({ isLast, onNext }: { isLast: boolean; onNext: () => void }) {
+    // autoFocus: "Check" is replaced by this button, so keyboard focus carries over to the next action.
+    return (
+        <Button onClick={onNext} autoFocus>
             {isLast ? "See results" : "Next question"}
             <ArrowRight />
         </Button>
@@ -138,7 +167,7 @@ function SkipButton({ props, disabled }: { props: Props; disabled?: boolean }) {
     const { question, onOutcome, onNext } = props;
     return (
         <Button
-            variant="ghost"
+            variant="outline"
             disabled={disabled}
             onClick={() => {
                 onOutcome({
@@ -189,67 +218,95 @@ function McqBody(props: Props) {
 
     return (
         <>
-            <CardContent className="space-y-4">
-                <RadioGroup
-                    value={selected}
-                    onValueChange={setSelected}
-                    disabled={!!result || pending}
-                    aria-label="Answer options"
-                    className="gap-2"
-                >
-                    {question.options.map((o) => {
-                        const isCorrect = result && o.id === result.correctOptionId;
-                        const isWrongPick = result && o.id === selected && !isCorrect;
-                        return (
-                            <Label
-                                key={o.id}
-                                htmlFor={`opt-${o.id}`}
+            <RadioGroup
+                value={selected}
+                onValueChange={setSelected}
+                disabled={!!result || pending}
+                aria-label="Answer options"
+                className="gap-3"
+            >
+                {question.options.map((o) => {
+                    const isSelected = o.id === selected;
+                    const isCorrect = !!result && o.id === result.correctOptionId;
+                    const isWrongPick = !!result && isSelected && !isCorrect;
+                    const state = !result
+                        ? isSelected
+                            ? "selected"
+                            : "idle"
+                        : isCorrect
+                          ? "correct"
+                          : isWrongPick
+                            ? "wrong"
+                            : "dim";
+                    return (
+                        <label
+                            key={o.id}
+                            htmlFor={`opt-${o.id}`}
+                            data-state={state}
+                            className={cn(
+                                "relative grid min-h-[60px] grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-lg py-2.5 pr-4 pl-2.5 transition-[background-color,box-shadow,color] duration-200 ease-out-soft select-text has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring sm:pr-5",
+                                state === "idle" &&
+                                    "cursor-pointer bg-card shadow-[inset_0_0_0_1.5px_var(--border)] hover:shadow-[inset_0_0_0_1.5px_var(--border-strong)]",
+                                state === "selected" &&
+                                    "cursor-pointer bg-selected shadow-[inset_0_0_0_2px_var(--progress)]",
+                                state === "correct" &&
+                                    "bg-mastery-strong-pale shadow-[inset_0_0_0_2px_var(--mastery-strong-text)]",
+                                state === "wrong" &&
+                                    "bg-mastery-weak-pale shadow-[inset_0_0_0_2px_var(--mastery-weak-text)]",
+                                state === "dim" && "bg-card text-muted-foreground shadow-[inset_0_0_0_1.5px_var(--border)]",
+                            )}
+                        >
+                            <RadioGroupItem value={o.id} id={`opt-${o.id}`} className="sr-only" />
+                            <span
+                                aria-hidden
                                 className={cn(
-                                    "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 text-sm leading-normal font-normal transition-colors select-text",
-                                    !result &&
-                                        "hover:bg-muted/50 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5",
-                                    result && "cursor-default",
-                                    isCorrect && "border-success/50 bg-success/10",
-                                    isWrongPick && "border-destructive/50 bg-destructive/10",
+                                    "grid size-10 place-items-center rounded-[12px] font-display text-lg leading-none font-extrabold transition-colors duration-200 ease-out-soft",
+                                    state === "idle" && "bg-muted text-foreground",
+                                    state === "dim" && "bg-muted text-muted-foreground",
+                                    state === "selected" && "bg-progress text-card",
+                                    state === "correct" && "bg-mastery-strong-text text-card",
+                                    state === "wrong" && "bg-mastery-weak-text text-card",
                                 )}
                             >
-                                <RadioGroupItem value={o.id} id={`opt-${o.id}`} className="mt-0.5" />
-                                <span className="w-4 shrink-0 font-semibold">{o.label}</span>
-                                <Markdown className="min-w-0 flex-1 [&_p]:my-0!">{o.text}</Markdown>
-                                {isCorrect && (
-                                    <Check
-                                        className="mt-0.5 size-4 shrink-0 text-success"
-                                        aria-label="Correct answer"
-                                    />
+                                {state === "correct" ? (
+                                    <Check className="size-5" strokeWidth={3.5} />
+                                ) : state === "wrong" ? (
+                                    <X className="size-5" strokeWidth={3.5} />
+                                ) : (
+                                    o.label
                                 )}
-                                {isWrongPick && (
-                                    <X className="mt-0.5 size-4 shrink-0 text-destructive" aria-label="Your answer" />
-                                )}
-                            </Label>
-                        );
-                    })}
-                </RadioGroup>
-                {result && (
-                    <>
-                        <ScoreBanner marks={result.marks} max={question.marks} />
-                        <Explanation text={result.explanation} />
-                    </>
-                )}
-                <ErrorNote error={error} />
-            </CardContent>
-            <CardFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            </span>
+                            <span className="min-w-0">
+                                <span className="sr-only">{o.label}. </span>
+                                <Markdown className="text-base! leading-snug! font-semibold [&_p]:my-0!">
+                                    {o.text}
+                                </Markdown>
+                                {state === "correct" && <span className="sr-only"> (correct answer)</span>}
+                                {state === "wrong" && <span className="sr-only"> (your answer)</span>}
+                            </span>
+                        </label>
+                    );
+                })}
+            </RadioGroup>
+            {result && (
+                <ScoreBanner marks={result.marks} max={question.marks}>
+                    <Explanation text={result.explanation} bare />
+                </ScoreBanner>
+            )}
+            <ErrorNote error={error} />
+            <Actions>
                 {result ? (
                     <NextButton isLast={isLast} onNext={onNext} />
                 ) : (
                     <>
                         <SkipButton props={props} disabled={pending} />
-                        <Button onClick={submit} disabled={!selected || pending} className="w-full sm:w-auto">
+                        <Button onClick={submit} disabled={!selected || pending}>
                             {pending && <Loader2 className="animate-spin" />}
                             Check answer
                         </Button>
                     </>
                 )}
-            </CardFooter>
+            </Actions>
         </>
     );
 }
@@ -358,113 +415,135 @@ function WrittenBody(props: Props) {
               )
             : 0;
 
+    const selfButton = (
+        <Button variant={aiAvailable ? "outline" : "default"} onClick={startSelf} disabled={!hasAnswer || pending}>
+            {pendingAction === "self" ? <Loader2 className="animate-spin" /> : <ClipboardCheck />}
+            Mark it myself
+        </Button>
+    );
+    const aiButton = (
+        <Button
+            variant={aiAvailable ? "default" : "outline"}
+            onClick={markAi}
+            disabled={!hasAnswer || pending || !aiAvailable}
+        >
+            {pendingAction === "ai" ? <Loader2 className="animate-spin" /> : <Sparkles />}
+            {pendingAction === "ai" ? "Marking…" : "Mark with AI"}
+        </Button>
+    );
+
     return (
         <>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor={answerId}>Your answer</Label>
-                    <Textarea
-                        id={answerId}
-                        value={answer}
-                        onChange={(e) => setAnswer(e.target.value)}
-                        readOnly={locked}
-                        disabled={pending && !locked}
-                        maxLength={5000}
-                        placeholder={
-                            question.type === "CALCULATION"
-                                ? "Show your working — method marks count."
-                                : "Write your answer as you would in the exam."
-                        }
-                        className={cn(
-                            question.type === "LONG" ? "min-h-48" : "min-h-28",
-                            locked && "bg-muted/40 text-muted-foreground",
-                        )}
-                    />
-                </div>
+            <div className="grid gap-2">
+                <Label htmlFor={answerId} className="text-[0.9375rem]">
+                    Your answer
+                </Label>
+                <Textarea
+                    id={answerId}
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    readOnly={locked}
+                    disabled={pending && !locked}
+                    maxLength={5000}
+                    placeholder={
+                        question.type === "CALCULATION"
+                            ? "Show your working — method marks count."
+                            : "Write your answer as you would in the exam."
+                    }
+                    className={cn(
+                        "rounded-lg px-4 py-3 text-base! leading-relaxed",
+                        question.type === "LONG" ? "min-h-48" : "min-h-32",
+                        locked && "border-border bg-muted text-muted-foreground hover:border-border",
+                    )}
+                />
+            </div>
 
-                {phase.kind === "self" && (
+            {phase.kind === "self" && (
+                <SelfMarkList
+                    scheme={phase.scheme}
+                    ticked={phase.ticked}
+                    onToggle={toggle}
+                    disabled={pending}
+                    marks={tickedMarks}
+                    max={question.marks}
+                />
+            )}
+
+            {phase.kind === "selfDone" && (
+                <>
+                    <ScoreBanner marks={phase.marks} max={question.marks}>
+                        <Explanation text={phase.scheme.explanation} bare />
+                    </ScoreBanner>
                     <SelfMarkList
                         scheme={phase.scheme}
                         ticked={phase.ticked}
-                        onToggle={toggle}
-                        disabled={pending}
-                        marks={tickedMarks}
+                        disabled
+                        marks={phase.marks}
                         max={question.marks}
                     />
-                )}
+                </>
+            )}
 
-                {phase.kind === "selfDone" && (
-                    <>
-                        <ScoreBanner marks={phase.marks} max={question.marks} />
-                        <SelfMarkList
-                            scheme={phase.scheme}
-                            ticked={phase.ticked}
-                            disabled
-                            marks={phase.marks}
-                            max={question.marks}
-                        />
-                        <Explanation text={phase.scheme.explanation} />
-                    </>
-                )}
+            {phase.kind === "aiDone" && (
+                <>
+                    <ScoreBanner marks={phase.marks} max={question.marks} />
+                    <AiFeedback feedback={phase.feedback} points={phase.points} />
+                    {showScheme ? (
+                        <>
+                            <MarkSchemeList scheme={phase.scheme} />
+                            <Explanation text={phase.scheme.explanation} />
+                        </>
+                    ) : (
+                        <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setShowScheme(true)}>
+                            <ClipboardCheck />
+                            Show mark scheme
+                        </Button>
+                    )}
+                </>
+            )}
 
-                {phase.kind === "aiDone" && (
-                    <>
-                        <ScoreBanner marks={phase.marks} max={question.marks} />
-                        <AiFeedback feedback={phase.feedback} points={phase.points} />
-                        {showScheme ? (
+            <ErrorNote error={error} />
+
+            {phase.kind === "answering" && (
+                <div className="grid gap-3">
+                    <Actions>
+                        <SkipButton props={props} disabled={pending} />
+                        {/* The main action takes the orange and sits last (rightmost on desktop, top on phones):
+                            AI marking when it's available, otherwise marking it yourself. */}
+                        {aiAvailable ? (
                             <>
-                                <MarkSchemeList scheme={phase.scheme} />
-                                <Explanation text={phase.scheme.explanation} />
+                                {selfButton}
+                                {aiButton}
                             </>
                         ) : (
-                            <Button variant="outline" size="sm" onClick={() => setShowScheme(true)}>
-                                <ClipboardCheck />
-                                Show mark scheme
-                            </Button>
+                            <>
+                                {aiButton}
+                                {selfButton}
+                            </>
                         )}
-                    </>
-                )}
-
-                <ErrorNote error={error} />
-            </CardContent>
-
-            <CardFooter className="flex-col items-stretch gap-3">
-                {phase.kind === "answering" && (
-                    <>
-                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                            <SkipButton props={props} disabled={pending} />
-                            <Button variant="outline" onClick={startSelf} disabled={!hasAnswer || pending}>
-                                {pendingAction === "self" ? <Loader2 className="animate-spin" /> : <ClipboardCheck />}
-                                Mark it myself
-                            </Button>
-                            <Button onClick={markAi} disabled={!hasAnswer || pending || !aiAvailable}>
-                                {pendingAction === "ai" ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                                {pendingAction === "ai" ? "Marking…" : "Mark with AI"}
-                            </Button>
-                        </div>
-                        <p className="text-right text-xs text-muted-foreground">
-                            {!ai.enabled
-                                ? "AI marking isn't available right now — mark it yourself against the mark scheme."
-                                : ai.remaining === 0
-                                  ? "You've used today's AI marks (resets at midnight UTC). Mark it yourself for now."
-                                  : `${ai.remaining} AI mark${ai.remaining === 1 ? "" : "s"} left today.`}
-                        </p>
-                    </>
-                )}
-                {phase.kind === "self" && (
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button onClick={saveSelf} disabled={pending}>
-                            {pendingAction === "save" && <Loader2 className="animate-spin" />}
-                            Save {tickedMarks}/{question.marks} marks
-                        </Button>
-                    </div>
-                )}
-                {(phase.kind === "selfDone" || phase.kind === "aiDone") && (
-                    <div className="flex justify-end">
-                        <NextButton isLast={isLast} onNext={onNext} />
-                    </div>
-                )}
-            </CardFooter>
+                    </Actions>
+                    <p className="text-sm text-muted-foreground sm:text-right">
+                        {!ai.enabled
+                            ? "AI marking isn't available right now — mark it yourself against the mark scheme."
+                            : ai.remaining === 0
+                              ? "You've used today's AI marks (resets at midnight UTC). Mark it yourself for now."
+                              : `${ai.remaining} AI mark${ai.remaining === 1 ? "" : "s"} left today.`}
+                    </p>
+                </div>
+            )}
+            {phase.kind === "self" && (
+                <Actions>
+                    <Button onClick={saveSelf} disabled={pending}>
+                        {pendingAction === "save" && <Loader2 className="animate-spin" />}
+                        Save {tickedMarks}/{question.marks} marks
+                    </Button>
+                </Actions>
+            )}
+            {(phase.kind === "selfDone" || phase.kind === "aiDone") && (
+                <Actions>
+                    <NextButton isLast={isLast} onNext={onNext} />
+                </Actions>
+            )}
         </>
     );
 }
@@ -485,46 +564,57 @@ function SelfMarkList({
     max: number;
 }) {
     return (
-        <fieldset className="space-y-3 rounded-lg border p-4">
-            <legend className="px-1 text-sm font-medium">Mark scheme</legend>
+        <fieldset className="grid gap-3 rounded-lg bg-muted px-4 py-4 animate-in duration-200 ease-out-soft fade-in slide-in-from-bottom-1 sm:px-5">
+            {/* Floated so the legend sits inside the panel instead of on its top edge. */}
+            <legend className="float-left w-full font-display text-lg leading-tight font-extrabold">Mark scheme</legend>
             {!disabled && (
-                <p className="text-sm text-muted-foreground">
+                <p className="clear-both text-sm text-muted-foreground">
                     Tick each point your answer clearly makes. Be strict — an examiner would be.
                 </p>
             )}
             {scheme.notes.length > 0 && (
-                <div className="text-sm text-muted-foreground">
+                <div className="clear-both text-sm text-muted-foreground">
                     {scheme.notes.map((n, i) => (
-                        <Markdown key={i} className="[&_p]:my-0.5!">
+                        <Markdown key={i} className="text-sm! [&_p]:my-0.5!">
                             {n}
                         </Markdown>
                     ))}
                 </div>
             )}
-            <ul className="space-y-2">
+            <ul className="clear-both grid gap-2">
                 {scheme.points.map((p, i) => {
                     const id = `pt-${i}`;
+                    const on = ticked.includes(i);
                     return (
-                        <li key={i} className="flex items-start gap-3">
+                        <li
+                            key={i}
+                            className={cn(
+                                "flex items-start gap-3 rounded-lg px-3.5 py-3 transition-[background-color,box-shadow] duration-200 ease-out-soft",
+                                on ? "bg-selected shadow-[inset_0_0_0_2px_var(--progress)]" : "bg-card",
+                            )}
+                        >
                             <Checkbox
                                 id={id}
-                                checked={ticked.includes(i)}
+                                checked={on}
                                 onCheckedChange={(v) => onToggle?.(i, v === true)}
                                 disabled={disabled}
-                                className="mt-1"
+                                className="mt-0.5 disabled:opacity-100"
                             />
                             <Label
                                 htmlFor={id}
-                                className="block flex-1 cursor-pointer text-sm leading-normal font-normal select-text peer-disabled:cursor-default peer-disabled:opacity-100"
+                                className="block flex-1 cursor-pointer text-[0.9375rem] leading-normal font-semibold select-text peer-disabled:cursor-default peer-disabled:opacity-100"
                             >
-                                <Markdown className="[&_p]:my-0!">{p.text}</Markdown>
+                                <Markdown className="text-[0.9375rem]! [&_p]:my-0!">{p.text}</Markdown>
                             </Label>
-                            <span className="shrink-0 text-xs text-muted-foreground tabular-nums">({p.marks})</span>
+                            <span className="num shrink-0 rounded-full bg-muted px-2 py-1 text-xs leading-none text-muted-foreground">
+                                {p.marks}
+                                <span className="sr-only"> mark{p.marks === 1 ? "" : "s"}</span>
+                            </span>
                         </li>
                     );
                 })}
             </ul>
-            <p className="text-right text-sm font-medium tabular-nums" aria-live="polite">
+            <p className="text-right text-[0.9375rem] font-bold tabular-nums" aria-live="polite">
                 {marks}/{max} marks
             </p>
         </fieldset>
@@ -533,18 +623,21 @@ function SelfMarkList({
 
 function MarkSchemeList({ scheme }: { scheme: MarkSchemeView }) {
     return (
-        <div className="rounded-lg border p-4">
-            <p className="mb-2 text-sm font-medium">Mark scheme</p>
+        <div className="grid gap-2 rounded-lg bg-muted px-4 py-4 sm:px-5">
+            <p className="font-display text-lg leading-tight font-extrabold">Mark scheme</p>
             {scheme.notes.map((n, i) => (
-                <Markdown key={`n${i}`} className="text-sm text-muted-foreground [&_p]:my-0.5!">
+                <Markdown key={`n${i}`} className="text-sm! text-muted-foreground [&_p]:my-0.5!">
                     {n}
                 </Markdown>
             ))}
-            <ul className="space-y-1.5">
+            <ul className="grid gap-2">
                 {scheme.points.map((p, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm">
-                        <Markdown className="flex-1 [&_p]:my-0!">{p.text}</Markdown>
-                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">({p.marks})</span>
+                    <li key={i} className="flex items-start gap-3 rounded-lg bg-card px-3.5 py-3">
+                        <Markdown className="flex-1 text-[0.9375rem]! [&_p]:my-0!">{p.text}</Markdown>
+                        <span className="num shrink-0 rounded-full bg-muted px-2 py-1 text-xs leading-none text-muted-foreground">
+                            {p.marks}
+                            <span className="sr-only"> mark{p.marks === 1 ? "" : "s"}</span>
+                        </span>
                     </li>
                 ))}
             </ul>
@@ -560,24 +653,32 @@ function AiFeedback({
     points: { point: string; awarded: boolean; comment: string }[];
 }) {
     return (
-        <div className="space-y-3 rounded-lg border p-4">
-            <p className="flex items-center gap-1.5 text-sm font-medium">
-                <Sparkles className="size-4 text-primary" aria-hidden />
+        <div className="grid gap-3 rounded-lg bg-muted px-4 py-4 sm:px-5">
+            <p className="flex items-center gap-2 font-display text-lg leading-tight font-extrabold">
+                <Sparkles className="size-4 text-muted-foreground" aria-hidden />
                 AI examiner feedback
             </p>
             {feedback && <Markdown>{feedback}</Markdown>}
             {points.length > 0 && (
-                <ul className="space-y-2">
+                <ul className="grid gap-2">
                     {points.map((p, i) => (
-                        <li key={i} className="flex items-start gap-2.5 text-sm">
+                        <li key={i} className="flex items-start gap-3 rounded-lg bg-card px-3.5 py-3 text-[0.9375rem]">
                             {p.awarded ? (
-                                <Check className="mt-0.5 size-4 shrink-0 text-success" aria-label="Awarded" />
+                                <Check
+                                    className="mt-0.5 size-4 shrink-0 text-mastery-strong-text"
+                                    strokeWidth={3}
+                                    aria-label="Awarded"
+                                />
                             ) : (
-                                <X className="mt-0.5 size-4 shrink-0 text-destructive" aria-label="Not awarded" />
+                                <X
+                                    className="mt-0.5 size-4 shrink-0 text-mastery-weak-text"
+                                    strokeWidth={3}
+                                    aria-label="Not awarded"
+                                />
                             )}
                             <div className="min-w-0">
-                                <Markdown className="[&_p]:my-0!">{p.point}</Markdown>
-                                {p.comment && <p className="text-muted-foreground">{p.comment}</p>}
+                                <Markdown className="text-[0.9375rem]! font-semibold [&_p]:my-0!">{p.point}</Markdown>
+                                {p.comment && <p className="mt-0.5 text-muted-foreground">{p.comment}</p>}
                             </div>
                         </li>
                     ))}
