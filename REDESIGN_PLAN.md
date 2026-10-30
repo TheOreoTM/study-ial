@@ -32,8 +32,8 @@ demo user for app pages) → fix what's broken → commit → tick.
 - [ ] Progress
 - [ ] Plans: list, new, detail
 - [ ] Focus
-- [ ] Settings
-- [ ] Admin: overview, questions list, question editor (new/edit), import
+- [x] Settings
+- [x] Admin: overview, questions list, question editor (new/edit), import
 - [x] Not-found and error pages
 
 ## Final pass
