@@ -111,7 +111,7 @@ export function ImportHelp({ units }: { units: UnitRef[] }) {
                         ))}
                     </SelectContent>
                 </Select>
-                <pre className="max-h-64 overflow-auto rounded-lg border bg-card p-3 text-xs leading-relaxed whitespace-pre-wrap">
+                <pre tabIndex={0} className="max-h-64 overflow-auto rounded-lg border bg-card p-3 text-xs leading-relaxed whitespace-pre-wrap">
                     {prompt}
                 </pre>
             </section>
@@ -135,7 +135,7 @@ export function ImportHelp({ units }: { units: UnitRef[] }) {
                     <code>explanation</code>, <code>source</code>, <code>sourceRef</code> are optional;{" "}
                     <code>markScheme</code> is optional for MCQ.
                 </p>
-                <pre className="max-h-72 overflow-auto rounded-lg border bg-card p-3 text-xs leading-relaxed">
+                <pre tabIndex={0} className="max-h-72 overflow-auto rounded-lg border bg-card p-3 text-xs leading-relaxed">
                     {EXAMPLE_JSON}
                 </pre>
             </section>

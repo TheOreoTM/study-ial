@@ -63,9 +63,9 @@ export function UnitsEditor({
             <UnitPicker subjects={subjects} selectedIds={selectedIds} onChange={setSelectedIds} />
             {selectedUnits.length > 0 && (
                 <section aria-labelledby="exam-sessions-heading">
-                    <h3 id="exam-sessions-heading" className="mb-3 text-base">
+                    <h2 id="exam-sessions-heading" className="mb-3 text-base">
                         Exam sessions
-                    </h3>
+                    </h2>
                     <ExamSessionPicker units={selectedUnits} choices={choices} onChange={setChoices} today={today} />
                 </section>
             )}

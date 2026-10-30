@@ -52,6 +52,9 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
+          // The thumb is the focusable control, so it carries the slider's accessible name.
+          aria-label={props["aria-label"]}
+          aria-labelledby={props["aria-labelledby"]}
           className="block size-5 shrink-0 cursor-grab rounded-full border-[3px] border-progress bg-card shadow-sm ring-ring/30 transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
         />
       ))}

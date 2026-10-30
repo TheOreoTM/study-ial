@@ -85,6 +85,8 @@ export function ImportForm() {
                             accept="application/json,.json"
                             className="sr-only"
                             id="import-file"
+                            aria-label="Upload a questions JSON file"
+                            tabIndex={-1}
                             onChange={(e) => {
                                 void onFile(e.target.files?.[0]);
                                 e.target.value = "";

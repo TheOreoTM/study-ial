@@ -9,7 +9,7 @@ const BARS = [28, 40, 34, 52, 46, 64, 58, 78, 72, 92];
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
     if (await getUser()) redirect("/dashboard");
     return (
-        <div className="flex min-h-dvh items-center justify-center bg-background px-4 py-8 sm:py-12 lg:px-8">
+        <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-8 sm:py-12 lg:px-8">
             <div className="grid w-full max-w-[1040px] items-stretch gap-6 lg:grid-cols-[minmax(0,1fr)_440px]">
                 <aside
                     aria-hidden
@@ -46,6 +46,6 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
                     <div className="w-full max-w-[440px]">{children}</div>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
