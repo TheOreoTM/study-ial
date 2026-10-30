@@ -16,7 +16,11 @@ function toFocusTopic(t: { id: string; code: string; name: string; unit: { code:
     return { id: t.id, code: t.code, name: t.name, unitCode: t.unit.code };
 }
 
-export default async function FocusPage({ searchParams }: { searchParams: Promise<{ task?: string; topic?: string }> }) {
+export default async function FocusPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ task?: string; topic?: string }>;
+}) {
     const user = await requireUser();
     const params = await searchParams;
     const taskId = typeof params.task === "string" ? params.task : undefined;
@@ -65,11 +69,14 @@ export default async function FocusPage({ searchParams }: { searchParams: Promis
                 description="Work in calm, timed blocks. Finished focus sessions are logged to your streak."
             />
             {taskId && !task && (
-                <p role="alert" className="mb-4 rounded-lg border px-4 py-3 text-sm text-muted-foreground">
+                <p
+                    role="alert"
+                    className="mb-5 rounded-lg bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
+                >
                     That study-plan task couldn&apos;t be found, so this session isn&apos;t linked to it.
                 </p>
             )}
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
                 <FocusTimer
                     task={task}
                     initialTopic={topicRow ? toFocusTopic(topicRow) : null}

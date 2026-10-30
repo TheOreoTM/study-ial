@@ -46,7 +46,11 @@ const TOGGLES = [
     { key: "autoStartBreaks", label: "Start breaks automatically" },
     { key: "autoStartFocus", label: "Start focus automatically after a break" },
     { key: "sound", label: "Play a chime when time's up" },
-    { key: "notify", label: "Show a browser notification", hint: "We'll ask for permission when you next press Start." },
+    {
+        key: "notify",
+        label: "Show a browser notification",
+        hint: "We'll ask for permission when you next press Start.",
+    },
 ] as const;
 
 function SettingsForm({ settings, onDone }: { settings: TimerSettings; onDone: () => void }) {
@@ -81,10 +85,10 @@ function SettingsForm({ settings, onDone }: { settings: TimerSettings; onDone: (
             </DialogHeader>
 
             <fieldset className="grid grid-cols-3 gap-3">
-                <legend className="mb-2 text-sm font-medium">Lengths (minutes)</legend>
+                <legend className="mb-2.5 font-display text-base font-extrabold">Lengths (minutes)</legend>
                 {LENGTHS.map(({ key, label, max }) => (
                     <div key={key} className="grid gap-1.5">
-                        <Label htmlFor={`len-${key}`} className="text-xs text-muted-foreground">
+                        <Label htmlFor={`len-${key}`} className="text-[0.8125rem] text-muted-foreground">
                             {label}
                         </Label>
                         <Input
@@ -95,13 +99,14 @@ function SettingsForm({ settings, onDone }: { settings: TimerSettings; onDone: (
                             max={max}
                             value={String(draft[key])}
                             onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
+                            className="num text-lg"
                             required
                         />
                     </div>
                 ))}
             </fieldset>
 
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg bg-muted p-3 pl-4">
                 <Label htmlFor="len-longEvery">Long break after every</Label>
                 <div className="flex items-center gap-2">
                     <Input
@@ -110,21 +115,23 @@ function SettingsForm({ settings, onDone }: { settings: TimerSettings; onDone: (
                         inputMode="numeric"
                         min={2}
                         max={8}
-                        className="w-16"
+                        className="num w-20 text-lg"
                         value={String(draft.longEvery)}
                         onChange={(e) => setDraft({ ...draft, longEvery: e.target.value })}
                         required
                     />
-                    <span className="text-sm text-muted-foreground">sessions</span>
+                    <span className="text-sm font-semibold text-muted-foreground">sessions</span>
                 </div>
             </div>
 
             <div className="flex flex-col gap-4 border-t pt-4">
                 {TOGGLES.map((t) => (
                     <div key={t.key} className="flex items-start justify-between gap-4">
-                        <Label htmlFor={`opt-${t.key}`} className="flex-col items-start gap-1 font-normal">
+                        <Label htmlFor={`opt-${t.key}`} className="flex-col items-start gap-1">
                             {t.label}
-                            {"hint" in t && <span className="text-xs text-muted-foreground">{t.hint}</span>}
+                            {"hint" in t && (
+                                <span className="text-[0.8125rem] font-medium text-muted-foreground">{t.hint}</span>
+                            )}
                         </Label>
                         <Switch
                             id={`opt-${t.key}`}

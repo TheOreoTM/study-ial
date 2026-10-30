@@ -69,14 +69,19 @@ export function FocusTimer({
     // An untouched period always reflects the current settings (they load from localStorage after hydration).
     const timer: TimerState =
         stored.startedAt === null && stored.endsAt === null
-            ? { ...stored, durationMs: durationFor(stored.mode, settings), remainingMs: durationFor(stored.mode, settings) }
+            ? {
+                  ...stored,
+                  durationMs: durationFor(stored.mode, settings),
+                  remainingMs: durationFor(stored.mode, settings),
+              }
             : stored;
     const running = timer.endsAt !== null;
     const rem = remaining(timer, now);
     const clock = formatClock(rem);
     const progress = timer.durationMs > 0 ? 1 - rem / timer.durationMs : 0;
     const focusedMs = timer.mode === "focus" ? elapsed(timer, now) : 0;
-    const canEndEarly = timer.mode === "focus" && timer.startedAt !== null && minutesToLog(focusedMs) >= MIN_LOG_MINUTES;
+    const canEndEarly =
+        timer.mode === "focus" && timer.startedAt !== null && minutesToLog(focusedMs) >= MIN_LOG_MINUTES;
     const isBreak = timer.mode !== "focus";
 
     const allTopics = topicGroups.flatMap((g) => g.topics);
@@ -115,7 +120,9 @@ export function FocusTimer({
             if (settings.sound) playChime();
             const title = finished.mode === "focus" ? "Focus complete" : "Break's over";
             const body =
-                finished.mode === "focus" ? `Nice work. Time for a ${MODE_LABEL[next.mode].toLowerCase()}.` : "Ready to focus?";
+                finished.mode === "focus"
+                    ? `Nice work. Time for a ${MODE_LABEL[next.mode].toLowerCase()}.`
+                    : "Ready to focus?";
             notify(title, body);
         }
         setStatus(
@@ -216,16 +223,19 @@ export function FocusTimer({
     }
 
     const cyclePos = timer.completedFocus % settings.longEvery;
-    const dotsFilled = timer.mode === "long" && cyclePos === 0 && timer.completedFocus > 0 ? settings.longEvery : cyclePos;
+    const dotsFilled =
+        timer.mode === "long" && cyclePos === 0 && timer.completedFocus > 0 ? settings.longEvery : cyclePos;
     const R = 46;
     const C = 2 * Math.PI * R;
+
+    const paused = !running && timer.startedAt !== null;
 
     return (
         <div className="flex flex-col gap-6">
             <Card className="gap-0 py-0">
-                <CardContent className="flex flex-col items-center gap-6 px-4 py-6 sm:px-8 sm:py-8">
+                <CardContent className="flex flex-col items-center gap-7 px-4 py-5 sm:px-8 sm:py-7">
                     <div className="flex w-full items-center justify-between gap-2">
-                        <div role="group" aria-label="Timer mode" className="flex rounded-lg bg-muted p-1 text-sm">
+                        <div role="group" aria-label="Timer mode" className="flex rounded-full bg-muted p-1">
                             {MODES.map((m) => (
                                 <button
                                     key={m}
@@ -234,9 +244,9 @@ export function FocusTimer({
                                     disabled={running && timer.mode !== m}
                                     onClick={() => switchMode(m)}
                                     className={cn(
-                                        "rounded-md px-2.5 py-1.5 font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 sm:px-3",
+                                        "h-10 rounded-full px-3 font-display text-[0.9375rem] font-extrabold transition-colors duration-200 ease-out-soft outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 sm:px-4",
                                         timer.mode === m
-                                            ? "bg-background text-foreground shadow-sm"
+                                            ? "bg-selected text-selected-foreground"
                                             : "text-muted-foreground hover:text-foreground",
                                     )}
                                 >
@@ -250,49 +260,62 @@ export function FocusTimer({
 
                     <div
                         className={cn(
-                            "relative grid aspect-square w-full max-w-[18rem] place-items-center",
-                            isBreak ? "text-success" : "text-primary",
+                            "relative grid aspect-square w-full max-w-[17rem] place-items-center sm:max-w-[20rem]",
+                            isBreak ? "text-border-strong" : "text-progress",
                         )}
                     >
                         <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden>
-                            <circle cx="50" cy="50" r={R} fill="none" strokeWidth="2.5" className="stroke-muted" />
+                            <circle cx="50" cy="50" r={R} fill="none" strokeWidth="5" className="stroke-track" />
                             <circle
                                 cx="50"
                                 cy="50"
                                 r={R}
                                 fill="none"
                                 stroke="currentColor"
-                                strokeWidth="2.5"
+                                strokeWidth="5"
                                 strokeLinecap="round"
                                 strokeDasharray={C}
                                 strokeDashoffset={C * (1 - Math.min(1, Math.max(0, progress)))}
-                                className="transition-[stroke-dashoffset] duration-300 ease-linear"
+                                className={cn(
+                                    "transition-[stroke-dashoffset] duration-300 ease-linear motion-reduce:transition-none",
+                                    progress <= 0 && "opacity-0",
+                                )}
                             />
                         </svg>
-                        <div className="relative flex flex-col items-center gap-1 text-center">
-                            <span className="text-sm font-medium text-muted-foreground">{MODE_LABEL[timer.mode]}</span>
+                        <div className="relative flex flex-col items-center gap-2 text-center">
+                            <span
+                                className={cn(
+                                    "rounded-full px-3 py-1 font-display text-sm font-extrabold",
+                                    isBreak ? "bg-muted text-muted-foreground" : "bg-selected text-selected-foreground",
+                                )}
+                            >
+                                {MODE_LABEL[timer.mode]}
+                            </span>
                             <span
                                 role="timer"
                                 aria-label={`${MODE_LABEL[timer.mode]}: ${spokenRemaining(rem)}`}
-                                className="text-6xl font-semibold tracking-tight text-foreground tabular-nums sm:text-7xl"
+                                className={cn(
+                                    "num text-[4rem] leading-none tracking-[-0.02em] sm:text-[5.25rem]",
+                                    paused ? "text-muted-foreground" : "text-foreground",
+                                )}
                             >
                                 {clock}
                             </span>
-                            <span className="h-5 text-sm text-muted-foreground">
-                                {running ? "" : timer.startedAt !== null ? "Paused" : ""}
+                            <span className="h-5 text-sm font-bold text-muted-foreground">
+                                {paused ? "Paused" : isBreak && running ? "Step away from the screen" : ""}
                             </span>
                         </div>
                     </div>
 
                     <div
-                        className="flex items-center gap-1.5"
+                        className="flex items-center gap-2"
                         role="img"
                         aria-label={`${dotsFilled} of ${settings.longEvery} focus sessions before a long break`}
                     >
                         {Array.from({ length: settings.longEvery }, (_, i) => (
                             <span
                                 key={i}
-                                className={cn("size-2 rounded-full", i < dotsFilled ? "bg-primary" : "bg-muted")}
+                                className={cn("size-2.5 rounded-full", i < dotsFilled ? "bg-progress" : "bg-track")}
                             />
                         ))}
                     </div>
@@ -301,7 +324,6 @@ export function FocusTimer({
                         <Button
                             variant="outline"
                             size="icon-lg"
-                            className="rounded-full"
                             onClick={onReset}
                             disabled={timer.startedAt === null}
                             aria-label="Reset timer"
@@ -310,9 +332,11 @@ export function FocusTimer({
                         </Button>
                         <Button
                             size="lg"
-                            className="h-14 min-w-36 rounded-full text-base"
+                            className="h-14 min-w-40 text-lg"
                             onClick={toggle}
-                            aria-label={running ? "Pause timer" : timer.startedAt !== null ? "Resume timer" : "Start timer"}
+                            aria-label={
+                                running ? "Pause timer" : timer.startedAt !== null ? "Resume timer" : "Start timer"
+                            }
                         >
                             {running ? <Pause aria-hidden /> : <Play aria-hidden />}
                             {running ? "Pause" : timer.startedAt !== null ? "Resume" : "Start"}
@@ -320,7 +344,6 @@ export function FocusTimer({
                         <Button
                             variant="outline"
                             size="icon-lg"
-                            className="rounded-full"
                             onClick={onSkip}
                             aria-label={`Skip to ${MODE_LABEL[advance(timer, settings, { countFocus: false, now: 0 }).mode].toLowerCase()}`}
                         >
@@ -328,18 +351,13 @@ export function FocusTimer({
                         </Button>
                     </div>
 
-                    <div className="flex min-h-9 items-center justify-center">
+                    <div className="-mt-2 flex min-h-9 items-center justify-center">
                         {canEndEarly ? (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => finishPeriod(Date.now(), { early: true })}
-                                className="text-muted-foreground"
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => finishPeriod(Date.now(), { early: true })}>
                                 <Square aria-hidden /> End &amp; log {minutesToLog(focusedMs)} min
                             </Button>
                         ) : timer.mode === "focus" ? (
-                            <p className="text-center text-xs text-muted-foreground">
+                            <p className="max-w-xs text-center text-[0.8125rem] text-muted-foreground">
                                 Sessions are logged when the timer finishes (or ended after {MIN_LOG_MINUTES}+ minutes).
                             </p>
                         ) : null}
@@ -354,55 +372,62 @@ export function FocusTimer({
                 </CardContent>
             </Card>
 
-            <Card className="gap-4 py-5">
-                <CardContent className="flex flex-col gap-3 px-5">
-                    <h2 className="text-sm font-medium">Working on</h2>
+            <section aria-labelledby="focus-working-on" className="rounded-xl bg-muted p-5 sm:p-6">
+                <div className="flex flex-col gap-3">
+                    <h2 id="focus-working-on" className="text-lg">
+                        Working on
+                    </h2>
                     {task ? (
                         <div className="flex flex-col gap-3">
-                            <div className="rounded-lg border bg-muted/30 p-3">
-                                <p className={cn("font-medium", taskDone && "text-muted-foreground line-through")}>
+                            <div className="rounded-lg bg-card p-4">
+                                <p className={cn("font-bold", taskDone && "text-muted-foreground line-through")}>
                                     {task.title}
                                 </p>
                                 {task.topic && (
-                                    <p className="mt-0.5 text-sm text-muted-foreground">
-                                        <span className="font-mono text-xs">{task.topic.unitCode}</span> ·{" "}
-                                        {task.topic.code} {task.topic.name}
+                                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                                        <span className="inline-flex h-6 items-center rounded-[10px] bg-selected px-2 font-display text-[0.8125rem] font-extrabold text-selected-foreground">
+                                            {task.topic.unitCode}
+                                        </span>
+                                        <span>
+                                            {task.topic.code} {task.topic.name}
+                                        </span>
                                     </p>
                                 )}
                             </div>
                             {taskDone ? (
-                                <p className="flex items-center gap-1.5 text-sm text-success">
+                                <p className="flex items-center gap-1.5 text-sm font-bold text-success">
                                     <CheckCircle2 className="size-4" aria-hidden /> Task done
                                 </p>
                             ) : (
                                 <div
                                     className={cn(
                                         "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
-                                        offerTaskDone && "rounded-lg bg-primary/5 p-3",
+                                        offerTaskDone && "rounded-lg bg-primary-soft p-3 pl-4",
                                     )}
                                 >
-                                    {offerTaskDone && <p className="text-sm">Nice work — finished this task?</p>}
-                                    <Button
-                                        variant={offerTaskDone ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={onMarkDone}
-                                        disabled={markingDone}
-                                    >
+                                    {offerTaskDone && <p className="font-bold">Nice work — finished this task?</p>}
+                                    <Button variant="outline" size="sm" onClick={onMarkDone} disabled={markingDone}>
                                         <CheckCircle2 aria-hidden /> Mark task done
                                     </Button>
                                 </div>
                             )}
-                            <Link href="/focus" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                            <Link
+                                href="/focus"
+                                className="w-fit text-[0.8125rem] font-bold text-muted-foreground underline decoration-border-strong underline-offset-4 hover:text-foreground"
+                            >
                                 Unlink task
                             </Link>
                         </div>
                     ) : topicGroups.length > 0 || initialTopic ? (
                         <div className="grid gap-2">
-                            <Label htmlFor="focus-topic" className="font-normal text-muted-foreground">
+                            <Label htmlFor="focus-topic" className="text-muted-foreground">
                                 Topic (optional)
                             </Label>
-                            <Select value={topicId ?? NO_TOPIC} onValueChange={(v) => setTopicId(v === NO_TOPIC ? null : v)}>
-                                <SelectTrigger id="focus-topic" className="w-full">
+                            <Select
+                                value={topicId ?? NO_TOPIC}
+                                onValueChange={(v) => setTopicId(v === NO_TOPIC ? null : v)}
+                            >
+                                <SelectTrigger id="focus-topic" className="w-full bg-card">
                                     <SelectValue placeholder="No topic" />
                                 </SelectTrigger>
                                 <SelectContent position="popper" className="max-h-72">
@@ -427,19 +452,22 @@ export function FocusTimer({
                                 </SelectContent>
                             </Select>
                             {linkedTopic && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-[0.8125rem] text-muted-foreground">
                                     Time you log will count toward {linkedTopic.code} {linkedTopic.name}.
                                 </p>
                             )}
                         </div>
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            Add units in <Link href="/settings" className="underline underline-offset-4">Settings</Link>{" "}
+                            Add units in{" "}
+                            <Link href="/settings" className="underline underline-offset-4">
+                                Settings
+                            </Link>{" "}
                             to link focus time to a topic.
                         </p>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </section>
         </div>
     );
 }
