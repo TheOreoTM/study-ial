@@ -89,8 +89,8 @@ export default async function DashboardPage() {
                 />
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-                <div className="grid content-start gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+                <div className="grid min-w-0 content-start gap-6">
                     {/* Today's plan */}
                     <Card>
                         <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -195,7 +195,7 @@ export default async function DashboardPage() {
                 </div>
 
                 {/* Weak topics */}
-                <Card className="h-fit">
+                <Card className="h-fit min-w-0">
                     <CardHeader>
                         <CardTitle>Revise next</CardTitle>
                         <CardDescription>Your weakest and least-recent topics.</CardDescription>

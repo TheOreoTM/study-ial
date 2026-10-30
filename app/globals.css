@@ -90,6 +90,11 @@
     body {
         @apply bg-background text-foreground antialiased;
     }
+    /* Let grid items shrink below their content width (tables, nowrap rows) instead of
+       widening the page on small screens. */
+    .grid > * {
+        min-width: 0;
+    }
 }
 
 /* Rendered markdown (questions, mark schemes, AI feedback) */
