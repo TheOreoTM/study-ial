@@ -24,8 +24,8 @@ demo user for app pages) → fix what's broken → commit → tick.
 
 ## Route groups (app tier)
 
-- [ ] Auth pages: sign-in, sign-up, forgot-password, reset-password
-- [ ] Onboarding
+- [x] Auth pages: sign-in, sign-up, forgot-password, reset-password
+- [x] Onboarding
 - [ ] Dashboard
 - [ ] Subjects: index, subject, unit, topic
 - [ ] Practice
@@ -34,7 +34,7 @@ demo user for app pages) → fix what's broken → commit → tick.
 - [ ] Focus
 - [ ] Settings
 - [ ] Admin: overview, questions list, question editor (new/edit), import
-- [ ] Not-found and error pages
+- [x] Not-found and error pages
 
 ## Final pass
 
