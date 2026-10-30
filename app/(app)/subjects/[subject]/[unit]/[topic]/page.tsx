@@ -3,20 +3,20 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, ChevronRight, History, Play } from "lucide-react";
-import { MasteryBadge, MasteryBar } from "@/components/mastery";
 import { EmptyState } from "@/components/empty-state";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { masteryLabel } from "@/lib/mastery";
+import { masteryTone, type MasteryLevel } from "@/lib/mastery";
 import { getTopic, getTopicQuestionTypeCounts, getUnitByCode } from "@/lib/queries/curriculum";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { getUser } from "@/lib/session";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "../../../_components/breadcrumbs";
+import { Chip, UnitChip } from "../../../_components/chips";
 import { PracticeLink } from "../../../_components/practice-link";
+import { TopicRow } from "../../../_components/topic-row";
 
 type Params = Promise<{ subject: string; unit: string; topic: string }>;
 
@@ -26,6 +26,11 @@ const typeLabels = [
     ["CALCULATION", "Calculation"],
     ["LONG", "Extended response"],
 ] as const;
+
+/** Colour a marked attempt like the mastery it feeds: full-ish marks teal, partial sun, low bubblegum. */
+function markLevel(ratio: number): MasteryLevel {
+    return ratio >= 0.75 ? "strong" : ratio >= 0.4 ? "developing" : "weak";
+}
 
 const methodLabel = { AUTO: "Auto-marked", SELF: "Self-marked", AI: "AI-marked" } as const;
 
@@ -104,202 +109,183 @@ export default async function TopicPage({ params }: { params: Params }) {
                 ]}
             />
             <PageHeader
-                eyebrow={
-                    <>
-                        <span className="font-mono">{unit.code}</span> · Topic {topic.code}
-                    </>
-                }
                 title={topic.name}
+                description={
+                    <span className="mt-1 flex flex-wrap items-center gap-2">
+                        <UnitChip>{unit.code}</UnitChip>
+                        <Chip>Topic {topic.code}</Chip>
+                        <Chip>
+                            {total === 0 ? "Questions coming soon" : `${total} question${total === 1 ? "" : "s"}`}
+                        </Chip>
+                    </span>
+                }
                 actions={
                     total > 0 ? (
                         <PracticeLink href={`/practice?topic=${topic.id}`} signedIn={!!user} size="lg">
-                            <Play />
+                            <Play className="fill-current" />
                             {user ? "Start practice" : "Sign up to practise"}
                         </PracticeLink>
                     ) : undefined
                 }
             />
 
-            <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-                <div className="min-w-0 space-y-6">
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-y-8">
+                <section
+                    aria-labelledby="spec-points"
+                    className="min-w-0 rounded-xl border bg-card p-5 shadow-card sm:p-8 lg:col-start-1"
+                >
                     {topic.summary && (
-                        <section aria-label="Summary">
-                            <Markdown className="text-base text-muted-foreground">{topic.summary}</Markdown>
-                        </section>
+                        <Markdown className="mb-6 max-w-[62ch] text-[1.0625rem] text-muted-foreground [&_p]:my-0!">
+                            {topic.summary}
+                        </Markdown>
                     )}
-
-                    <Card className="gap-4">
-                        <CardHeader>
-                            <CardTitle>
-                                <h2>Specification points</h2>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {topic.specPoints.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    Specification points for this topic are coming soon.
-                                </p>
-                            ) : (
-                                <ol className="space-y-2.5">
-                                    {topic.specPoints.map((point, i) => (
-                                        <li key={i} className="flex gap-3">
-                                            <span className="mt-0.5 w-5 shrink-0 text-right text-sm text-muted-foreground tabular-nums">
-                                                {i + 1}.
-                                            </span>
-                                            <Markdown className="min-w-0 flex-1 [&_p]:my-0!">{point}</Markdown>
-                                        </li>
-                                    ))}
-                                </ol>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {user && (
-                        <section aria-labelledby="recent-attempts">
-                            <h2 id="recent-attempts" className="mb-3 font-semibold">
-                                Recent attempts
-                            </h2>
-                            {recent.length === 0 ? (
-                                <EmptyState
-                                    icon={History}
-                                    title="No attempts yet"
-                                    description={
-                                        total > 0 ? "Start a practice session to see your answers here." : undefined
-                                    }
-                                    className="py-8"
-                                />
-                            ) : (
-                                <ul className="divide-y rounded-xl border bg-card">
-                                    {recent.map((a) => {
-                                        const ratio = a.maxMarks > 0 ? a.marksAwarded / a.maxMarks : 0;
-                                        return (
-                                            <li key={a.id} className="flex items-start gap-3 px-4 py-3">
-                                                <div className="min-w-0 flex-1">
-                                                    <Markdown className="line-clamp-2 text-sm [&_.katex-display]:my-0! [&_p]:my-0!">
-                                                        {a.question.stem}
-                                                    </Markdown>
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        {methodLabel[a.method]} ·{" "}
-                                                        <time dateTime={a.createdAt.toISOString()}>
-                                                            {formatDistanceToNow(a.createdAt, { addSuffix: true })}
-                                                        </time>
-                                                    </p>
-                                                </div>
-                                                <span
-                                                    className={cn(
-                                                        "shrink-0 rounded-md px-2 py-0.5 text-sm font-medium tabular-nums",
-                                                        ratio >= 0.75
-                                                            ? "bg-success/15 text-success"
-                                                            : ratio >= 0.4
-                                                              ? "bg-warning/15 text-amber-700 dark:text-warning"
-                                                              : "bg-destructive/10 text-destructive",
-                                                    )}
-                                                >
-                                                    {a.marksAwarded}/{a.maxMarks}
-                                                </span>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                        </section>
+                    <h2 id="spec-points" className="text-lg">
+                        Specification points
+                    </h2>
+                    {topic.specPoints.length === 0 ? (
+                        <p className="mt-3 text-muted-foreground">
+                            Specification points for this topic are coming soon.
+                        </p>
+                    ) : (
+                        <ol className="mt-4 space-y-4">
+                            {topic.specPoints.map((point, i) => (
+                                <li key={i} className="flex gap-3.5">
+                                    <span
+                                        className="num grid size-7 shrink-0 place-items-center rounded-[10px] bg-muted pt-px text-sm text-muted-foreground"
+                                        aria-hidden
+                                    >
+                                        {i + 1}
+                                    </span>
+                                    <Markdown className="min-w-0 flex-1 pt-0.5 text-base [&_p]:my-0!">{point}</Markdown>
+                                </li>
+                            ))}
+                        </ol>
                     )}
-                </div>
+                </section>
 
-                <aside className="space-y-4">
-                    {mastery && (
-                        <Card className="gap-3 py-5">
-                            <CardHeader className="px-5">
-                                <CardTitle className="flex items-center justify-between gap-2 text-sm">
-                                    <h2>Your mastery</h2>
-                                    <MasteryBadge level={mastery.level} />
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2 px-5">
-                                <p className="text-3xl font-semibold tabular-nums">
-                                    {mastery.score === null ? "—" : `${Math.round(mastery.score * 100)}%`}
-                                </p>
-                                <MasteryBar level={mastery.level} score={mastery.score} label={topic.name} />
-                                <p className="text-xs text-muted-foreground">
-                                    {mastery.attempts === 0
-                                        ? masteryLabel.new
-                                        : `${mastery.attempts} attempt${mastery.attempts === 1 ? "" : "s"} · last ${formatDistanceToNow(mastery.lastPracticedAt!, { addSuffix: true })}`}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    <Card className="gap-3 py-5">
-                        <CardHeader className="px-5">
-                            <CardTitle className="text-sm">
-                                <h2>Questions</h2>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-5">
-                            {total === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    Questions for this topic are coming soon.
-                                </p>
-                            ) : (
-                                <dl className="space-y-1.5 text-sm">
-                                    {typeLabels.map(([type, label]) => {
-                                        const n = typeCounts.get(type) ?? 0;
-                                        if (n === 0) return null;
-                                        return (
-                                            <div key={type} className="flex justify-between gap-2">
-                                                <dt className="text-muted-foreground">{label}</dt>
-                                                <dd className="font-medium tabular-nums">{n}</dd>
+                {user && (
+                    <section aria-labelledby="recent-attempts" className="mt-2 min-w-0 lg:col-start-1 lg:mt-0">
+                        <h2 id="recent-attempts" className="mb-3 text-lg">
+                            Recent attempts
+                        </h2>
+                        {recent.length === 0 ? (
+                            <EmptyState
+                                icon={History}
+                                title="No attempts yet"
+                                description={
+                                    total > 0 ? "Start a practice session to see your answers here." : undefined
+                                }
+                                className="py-8"
+                            />
+                        ) : (
+                            <ul className="space-y-2">
+                                {recent.map((a) => {
+                                    const ratio = a.maxMarks > 0 ? a.marksAwarded / a.maxMarks : 0;
+                                    return (
+                                        <li
+                                            key={a.id}
+                                            className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3.5"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <Markdown className="line-clamp-2 text-[0.9375rem] [&_.katex-display]:my-0! [&_p]:my-0!">
+                                                    {a.question.stem}
+                                                </Markdown>
+                                                <p className="mt-1 text-[0.8125rem] text-muted-foreground">
+                                                    {methodLabel[a.method]} ·{" "}
+                                                    <time dateTime={a.createdAt.toISOString()}>
+                                                        {formatDistanceToNow(a.createdAt, { addSuffix: true })}
+                                                    </time>
+                                                </p>
                                             </div>
-                                        );
-                                    })}
-                                    <div className="flex justify-between gap-2 border-t pt-1.5">
-                                        <dt className="font-medium">Total</dt>
-                                        <dd className="font-medium tabular-nums">{total}</dd>
-                                    </div>
-                                </dl>
+                                            <span
+                                                className={cn(
+                                                    "num shrink-0 rounded-full px-2.5 py-1 text-sm leading-none",
+                                                    masteryTone[markLevel(ratio)].badge,
+                                                )}
+                                            >
+                                                <span className="sr-only">Marks: </span>
+                                                {a.marksAwarded}/{a.maxMarks}
+                                            </span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </section>
+                )}
+
+                <aside
+                    className={cn(
+                        "space-y-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1",
+                        user && "lg:row-span-2",
+                    )}
+                >
+                    {mastery && (
+                        <section aria-labelledby="your-mastery" className="rounded-xl bg-muted p-5">
+                            <h2 id="your-mastery" className="mb-3 text-lg">
+                                Your mastery
+                            </h2>
+                            <TopicRow code={topic.code} name={topic.name} mastery={mastery} />
+                            {mastery.attempts > 0 && (
+                                <p className="mt-3 text-[0.8125rem] text-muted-foreground">
+                                    {mastery.attempts} attempt{mastery.attempts === 1 ? "" : "s"} · last{" "}
+                                    {formatDistanceToNow(mastery.lastPracticedAt!, { addSuffix: true })}
+                                </p>
                             )}
-                            {total > 0 && (
-                                <PracticeLink
-                                    href={`/practice?topic=${topic.id}`}
-                                    signedIn={!!user}
-                                    className="mt-4 w-full"
-                                >
-                                    <Play />
-                                    {user ? "Start practice" : "Sign up to practise"}
-                                </PracticeLink>
-                            )}
-                        </CardContent>
-                    </Card>
+                        </section>
+                    )}
+
+                    <section aria-labelledby="question-types" className="rounded-xl bg-muted p-5">
+                        <h2 id="question-types" className="mb-3 text-lg">
+                            Questions
+                        </h2>
+                        {total === 0 ? (
+                            <p className="text-muted-foreground">Questions for this topic are coming soon.</p>
+                        ) : (
+                            <dl className="space-y-1 rounded-lg bg-card px-4 py-3">
+                                {typeLabels.map(([type, label]) => {
+                                    const n = typeCounts.get(type) ?? 0;
+                                    if (n === 0) return null;
+                                    return (
+                                        <div key={type} className="flex items-baseline justify-between gap-2 py-0.5">
+                                            <dt className="text-muted-foreground">{label}</dt>
+                                            <dd className="num">{n}</dd>
+                                        </div>
+                                    );
+                                })}
+                                <div className="mt-1 flex items-baseline justify-between gap-2 border-t pt-2">
+                                    <dt className="font-bold">Total</dt>
+                                    <dd className="num text-lg leading-none">{total}</dd>
+                                </div>
+                            </dl>
+                        )}
+                    </section>
                 </aside>
             </div>
 
             {(prev || next) && (
-                <nav aria-label="Other topics in this unit" className="mt-10 grid gap-3 border-t pt-6 sm:grid-cols-2">
+                <nav aria-label="Other topics in this unit" className="mt-12 grid gap-3 sm:grid-cols-2">
                     {prev ? (
-                        <Link
-                            href={`${unitHref}/${prev.slug}`}
-                            className="group rounded-lg border p-3 hover:bg-muted/50"
-                        >
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <ChevronLeft className="size-3.5" /> Previous topic
+                        <Link href={`${unitHref}/${prev.slug}`} className={adjacentCls}>
+                            <span className="flex items-center gap-1 text-[0.8125rem] font-bold text-muted-foreground">
+                                <ChevronLeft className="size-4" aria-hidden /> Previous topic
                             </span>
-                            <span className="mt-0.5 block text-sm font-medium">
-                                {prev.code} {prev.name}
+                            <span className="mt-1 flex items-baseline gap-2 font-bold">
+                                <span className="num text-muted-foreground">{prev.code}</span>
+                                <span className="min-w-0">{prev.name}</span>
                             </span>
                         </Link>
                     ) : (
                         <span className="hidden sm:block" />
                     )}
                     {next && (
-                        <Link
-                            href={`${unitHref}/${next.slug}`}
-                            className="group rounded-lg border p-3 text-right hover:bg-muted/50"
-                        >
-                            <span className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
-                                Next topic <ChevronRight className="size-3.5" />
+                        <Link href={`${unitHref}/${next.slug}`} className={cn(adjacentCls, "sm:text-right")}>
+                            <span className="flex items-center gap-1 text-[0.8125rem] font-bold text-muted-foreground sm:justify-end">
+                                Next topic <ChevronRight className="size-4" aria-hidden />
                             </span>
-                            <span className="mt-0.5 block text-sm font-medium">
-                                {next.code} {next.name}
+                            <span className="mt-1 flex items-baseline gap-2 font-bold sm:justify-end">
+                                <span className="num text-muted-foreground">{next.code}</span>
+                                <span className="min-w-0">{next.name}</span>
                             </span>
                         </Link>
                     )}
@@ -308,3 +294,6 @@ export default async function TopicPage({ params }: { params: Params }) {
         </>
     );
 }
+
+const adjacentCls =
+    "block rounded-lg border bg-card px-5 py-4 transition-[box-shadow,border-color] duration-200 ease-out-soft hover:border-border-strong hover:shadow-card focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring";
