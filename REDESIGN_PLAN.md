@@ -9,7 +9,7 @@ demo user for app pages) → fix what's broken → commit → tick.
 
 ## Design system
 
-- [ ] Tokens in `app/globals.css` (light + matching `.dark`), Baloo 2 + Figtree in `app/layout.tsx`, `masteryTone` in
+- [x] Tokens in `app/globals.css` (light + matching `.dark`), Baloo 2 + Figtree in `app/layout.tsx`, `masteryTone` in
       `lib/mastery.ts`, `themeColor` and `app/manifest.ts`
 
 ## Shared UI

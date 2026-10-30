@@ -47,12 +47,39 @@ export const masteryLabel: Record<MasteryLevel, string> = {
     strong: "Strong",
 };
 
-/** Tailwind classes for badges / bars by level. */
-export const masteryTone: Record<MasteryLevel, { badge: string; bar: string }> = {
-    new: { badge: "bg-muted text-muted-foreground", bar: "bg-muted-foreground/30" },
-    weak: { badge: "bg-destructive/10 text-destructive", bar: "bg-destructive" },
-    developing: { badge: "bg-warning/15 text-amber-700 dark:text-warning", bar: "bg-warning" },
-    strong: { badge: "bg-success/15 text-success", bar: "bg-success" },
+/**
+ * Tailwind classes by level. `fill` paints code tiles and bars, `text` is the score/level word on light or dark
+ * grounds, `pale` tints marked answers, `badge` is the level pill. Teal, sun and bubblegum mean mastery only.
+ */
+export const masteryTone: Record<MasteryLevel, { badge: string; bar: string; fill: string; text: string; pale: string }> = {
+    new: {
+        badge: "bg-muted text-muted-foreground",
+        bar: "bg-border-strong/40",
+        fill: "bg-muted text-muted-foreground",
+        text: "text-muted-foreground",
+        pale: "bg-muted",
+    },
+    weak: {
+        badge: "bg-mastery-weak-pale text-mastery-weak-text",
+        bar: "bg-mastery-weak",
+        fill: "bg-mastery-weak text-on-mastery",
+        text: "text-mastery-weak-text",
+        pale: "bg-mastery-weak-pale",
+    },
+    developing: {
+        badge: "bg-mastery-developing-pale text-mastery-developing-text",
+        bar: "bg-mastery-developing",
+        fill: "bg-mastery-developing text-on-mastery",
+        text: "text-mastery-developing-text",
+        pale: "bg-mastery-developing-pale",
+    },
+    strong: {
+        badge: "bg-mastery-strong-pale text-mastery-strong-text",
+        bar: "bg-mastery-strong",
+        fill: "bg-mastery-strong text-on-mastery",
+        text: "text-mastery-strong-text",
+        pale: "bg-mastery-strong-pale",
+    },
 };
 
 /** Priority for revision: higher = study sooner. Unseen topics rank between weak and developing. */
