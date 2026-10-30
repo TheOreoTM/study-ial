@@ -38,7 +38,7 @@ demo user for app pages) → fix what's broken → commit → tick.
 
 ## Final pass
 
-- [ ] `/impeccable audit` on every page and fix issues
+- [x] `/impeccable audit` on every page and fix issues
 - [ ] `/impeccable document` to rewrite `DESIGN.md` from the shipped app
 - [ ] Final screenshots in `screenshots/final/`
 - [ ] `MORNING_REPORT.md`
