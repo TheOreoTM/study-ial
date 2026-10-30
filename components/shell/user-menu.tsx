@@ -17,7 +17,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/lib/auth-client";
 
-export function UserMenu({ name, email, image }: { name: string; email: string; image?: string | null }) {
+export function UserMenu({
+    name,
+    email,
+    image,
+    compact = false,
+}: {
+    name: string;
+    email: string;
+    image?: string | null;
+    /** Avatar-only trigger for the desktop app bar. */
+    compact?: boolean;
+}) {
     const router = useRouter();
     const { theme, setTheme } = useTheme();
     const initials = name
@@ -29,17 +40,38 @@ export function UserMenu({ name, email, image }: { name: string; email: string; 
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-muted">
-                <Avatar className="size-8">
-                    {image && <AvatarImage src={image} alt="" />}
-                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{name}</div>
-                    <div className="truncate text-xs text-muted-foreground">{email}</div>
-                </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            {compact ? (
+                <DropdownMenuTrigger
+                    aria-label={`Account menu for ${name}`}
+                    className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full transition-colors hover:bg-accent focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                    <Avatar className="size-9">
+                        {image && <AvatarImage src={image} alt="" />}
+                        <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                </DropdownMenuTrigger>
+            ) : (
+                <DropdownMenuTrigger className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-lg bg-muted p-2.5 text-left transition-colors hover:bg-accent focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring">
+                    <Avatar className="size-9">
+                        {image && <AvatarImage src={image} alt="" />}
+                        <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-bold">{name}</div>
+                        <div className="truncate text-xs text-muted-foreground">{email}</div>
+                    </div>
+                </DropdownMenuTrigger>
+            )}
+            <DropdownMenuContent align="end" className="w-60">
+                {compact && (
+                    <>
+                        <DropdownMenuLabel className="min-w-0 py-2">
+                            <div className="truncate text-sm font-bold">{name}</div>
+                            <div className="truncate text-xs font-medium text-muted-foreground">{email}</div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                    </>
+                )}
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Theme</DropdownMenuLabel>
                 <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
                     <DropdownMenuRadioItem value="light">

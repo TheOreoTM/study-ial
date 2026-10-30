@@ -11,36 +11,44 @@ import { getUser } from "@/lib/session";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
     const user = await getUser();
     const isAdmin = user?.role === "ADMIN";
-    const footer = user ? (
-        <UserMenu name={user.name} email={user.email} image={user.image} />
-    ) : (
-        <div className="flex flex-col gap-2">
-            <Button asChild>
-                <Link href="/sign-up">Create free account</Link>
-            </Button>
-            <Button asChild variant="outline">
-                <Link href="/sign-in">Sign in</Link>
-            </Button>
-        </div>
-    );
+    const home = user ? "/dashboard" : "/";
 
     return (
-        <div className="min-h-dvh lg:grid lg:grid-cols-[15rem_1fr]">
-            <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r bg-card/50 p-4 lg:flex">
-                <Logo href={user ? "/dashboard" : "/"} className="px-2 pt-1" />
-                <div className="flex-1">{user ? <NavLinks isAdmin={isAdmin} /> : null}</div>
-                {footer}
-            </aside>
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/90 px-4 backdrop-blur lg:hidden">
-                {user && <MobileNav isAdmin={isAdmin} footer={footer} />}
-                <Logo href={user ? "/dashboard" : "/"} />
-                {!user && (
-                    <Button asChild size="sm" className="ml-auto">
-                        <Link href="/sign-in">Sign in</Link>
-                    </Button>
-                )}
+        <div className="min-h-dvh">
+            <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+                <div className="mx-auto flex h-16 w-full max-w-[1180px] items-center gap-2 px-4 sm:px-6 lg:gap-6">
+                    {user && (
+                        <div className="lg:hidden">
+                            <MobileNav
+                                isAdmin={isAdmin}
+                                footer={<UserMenu name={user.name} email={user.email} image={user.image} />}
+                            />
+                        </div>
+                    )}
+                    <Logo href={home} />
+                    {user && (
+                        <div className="hidden min-w-0 flex-1 lg:block">
+                            {/* Settings lives in the account menu on desktop, keeping the bar to the core loop. */}
+                            <NavLinks isAdmin={isAdmin} orientation="horizontal" exclude={["/settings"]} />
+                        </div>
+                    )}
+                    <div className="ml-auto flex items-center gap-2">
+                        {user ? (
+                            <UserMenu name={user.name} email={user.email} image={user.image} compact />
+                        ) : (
+                            <>
+                                <Button asChild variant="ghost" size="sm">
+                                    <Link href="/sign-in">Sign in</Link>
+                                </Button>
+                                <Button asChild size="sm" className="hidden sm:inline-flex">
+                                    <Link href="/sign-up">Create free account</Link>
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </div>
             </header>
-            <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
+            <main className="mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6 lg:py-10">{children}</main>
         </div>
     );
 }

@@ -5,12 +5,25 @@ import { usePathname } from "next/navigation";
 import { appNav } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-export function NavLinks({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate?: () => void }) {
+export function NavLinks({
+    isAdmin,
+    onNavigate,
+    orientation = "vertical",
+    exclude = [],
+}: {
+    isAdmin: boolean;
+    onNavigate?: () => void;
+    /** "horizontal" is the desktop app bar; "vertical" is the mobile menu. */
+    orientation?: "horizontal" | "vertical";
+    /** Hrefs to leave out (e.g. /settings, which the app bar reaches through the user menu). */
+    exclude?: string[];
+}) {
     const pathname = usePathname();
+    const horizontal = orientation === "horizontal";
     return (
-        <nav className="flex flex-col gap-0.5">
+        <nav aria-label="Main" className={cn("flex gap-1", horizontal ? "items-center" : "flex-col")}>
             {appNav
-                .filter((item) => !item.adminOnly || isAdmin)
+                .filter((item) => (!item.adminOnly || isAdmin) && !exclude.includes(item.href))
                 .map(({ href, label, icon: Icon }) => {
                     const active = pathname === href || pathname.startsWith(`${href}/`);
                     return (
@@ -18,14 +31,16 @@ export function NavLinks({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate
                             key={href}
                             href={href}
                             onClick={onNavigate}
+                            aria-current={active ? "page" : undefined}
                             className={cn(
-                                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                "flex min-h-11 items-center gap-3 rounded-full font-display font-bold whitespace-nowrap transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                                horizontal ? "px-4 text-[0.975rem]" : "px-4 text-[1.05rem]",
                                 active
-                                    ? "bg-accent text-accent-foreground"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                    ? "bg-selected text-selected-foreground"
+                                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
                             )}
                         >
-                            <Icon className="size-4" />
+                            {!horizontal && <Icon className="size-5" aria-hidden />}
                             {label}
                         </Link>
                     );
