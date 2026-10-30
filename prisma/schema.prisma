@@ -112,6 +112,7 @@ model Unit {
   topics    Topic[]
   questions Question[]
   students  UserUnit[]
+  plans     StudyPlanUnit[]
 
   @@unique([subjectId, number])
 }
@@ -263,8 +264,20 @@ model StudyPlan {
   updatedAt      DateTime   @updatedAt
 
   tasks StudyPlanTask[]
+  units StudyPlanUnit[]
 
   @@index([userId, status])
+}
+
+// The units a plan covers, with the exam date it was planned against.
+model StudyPlanUnit {
+  planId   String
+  plan     StudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  unitId   String
+  unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  examDate DateTime
+
+  @@id([planId, unitId])
 }
 
 enum TaskType {

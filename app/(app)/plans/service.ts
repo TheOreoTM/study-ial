@@ -1,7 +1,7 @@
 import "server-only";
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import { aiEnabled, consumeAiQuota, fastModel } from "@/lib/ai";
+import { aiEnabled, consumeAiQuota, fastModel, refundAiQuota } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { masteryLabel, revisionPriority } from "@/lib/mastery";
 import {
@@ -14,8 +14,8 @@ import {
     type PlannedTask,
     type PlannerUnit,
 } from "@/lib/planner";
-import { unitCodeFromTitle } from "@/components/plans/unit-code";
 import { getTopicMastery } from "@/lib/queries/mastery";
+import { localDay } from "@/lib/time";
 
 // DB-facing plan logic shared by the server actions (and exercised directly by scripts/tests).
 
@@ -65,7 +65,7 @@ const toRows = (planId: string, tasks: PlannedTask[], notes: Map<number, string>
 export async function createPlanForUser(
     userId: string,
     input: CreatePlanInput,
-    { now = new Date(), useAi = true }: { now?: Date; useAi?: boolean } = {},
+    { now = localDay(), useAi = true }: { now?: Date; useAi?: boolean } = {},
 ) {
     const units = await loadPlannerUnits(userId, input.units);
     const tasks = buildPlan({
@@ -91,6 +91,7 @@ export async function createPlanForUser(
                 minutesPerDay: input.minutesPerDay,
                 studyDays: [...new Set(input.studyDays)].sort(),
                 summary: garnish?.summary ?? null,
+                units: { create: input.units.map((u) => ({ unitId: u.unitId, examDate: u.examDate })) },
             },
         });
         await tx.studyPlanTask.createMany({ data: toRows(plan.id, tasks, garnish?.notes) });
@@ -107,24 +108,21 @@ export async function createPlanForUser(
  * Re-plans the remaining work from today: DONE tasks are kept (and count as covered), PENDING tasks and
  * future SKIPPED tasks are replaced by a fresh schedule. Past SKIPPED tasks stay as history.
  */
-export async function reschedulePlanForUser(userId: string, planId: string, { now = new Date() } = {}) {
+export async function reschedulePlanForUser(userId: string, planId: string, { now = localDay() } = {}) {
     const plan = await db.studyPlan.findFirst({
         where: { id: planId, userId },
-        include: { tasks: { include: { topic: { select: { unitId: true } } } } },
+        include: {
+            tasks: true,
+            units: { include: { unit: { select: { students: { where: { userId }, select: { examDate: true } } } } } },
+        },
     });
     if (!plan) throw new PlannerError("Plan not found.");
     const todayDay = toDayNumber(now);
 
-    // Which units is this plan for? Topic tasks carry it; past papers carry the unit code in the title.
-    const unitIds = new Set(plan.tasks.flatMap((t) => (t.topic ? [t.topic.unitId] : [])));
-    const codes = new Set(plan.tasks.flatMap((t) => (t.type === "PAST_PAPER" ? [unitCodeFromTitle(t.title) ?? ""] : [])));
-    codes.delete("");
-    const units = await db.unit.findMany({
-        where: { OR: [{ id: { in: [...unitIds] } }, { code: { in: [...codes] } }], students: { some: { userId } } },
-        select: { id: true, students: { where: { userId }, select: { examDate: true } } },
-    });
+    // Units the student still studies; prefer their current exam date (they may have changed it in settings).
+    const units = plan.units.filter((pu) => pu.unit.students.length > 0);
     const withDates = units
-        .map((u) => ({ unitId: u.id, examDate: u.students[0]?.examDate ?? plan.examDate }))
+        .map((pu) => ({ unitId: pu.unitId, examDate: pu.unit.students[0].examDate ?? pu.examDate }))
         .filter((u) => toDayNumber(u.examDate) > todayDay);
     if (withDates.length === 0)
         throw new PlannerError(
@@ -164,6 +162,9 @@ export async function reschedulePlanForUser(userId: string, planId: string, { no
         db.studyPlanTask.deleteMany({ where: { id: { in: removeIds }, planId } }),
         db.studyPlanTask.createMany({ data: toRows(planId, tasks, undefined, orderOffset) }),
         db.studyPlan.update({ where: { id: planId }, data: { examDate } }),
+        ...withDates.map((u) =>
+            db.studyPlanUnit.update({ where: { planId_unitId: { planId, unitId: u.unitId } }, data: { examDate: u.examDate } }),
+        ),
     ]);
     return { removed: removeIds.length, created: tasks.length };
 }
@@ -227,6 +228,7 @@ async function planGarnish(
         return summary ? { summary, notes } : null;
     } catch (e) {
         console.error("[plans] AI garnish failed", e);
+        await refundAiQuota(userId, "plan");
         return null;
     }
 }

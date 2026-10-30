@@ -1,7 +1,8 @@
 import "server-only";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
-import { fromDayNumber, toDayNumber } from "@/lib/planner";
+import { toDayNumber } from "@/lib/planner";
+import { localDay } from "@/lib/time";
 
 /** Fields every task view needs, including what's required to build topic/practice links. */
 export const planTaskSelect = {
@@ -27,11 +28,11 @@ export const planTaskSelect = {
 export type PlanTaskView = Prisma.StudyPlanTaskGetPayload<{ select: typeof planTaskSelect }>;
 export type TodayTask = PlanTaskView & { planTitle: string };
 
-/** The current UTC day as a Date at 00:00Z (task dates are stored as whole days). */
-export const utcToday = (now = new Date()) => fromDayNumber(toDayNumber(now));
+/** Today in the app time zone, as a Date at 00:00Z (task dates are stored as whole days). */
+export const utcToday = (now = new Date()) => localDay(now);
 
 /** Whole days from today until `date` (0 = today, negative = past). */
-export const daysUntil = (date: Date, now = new Date()) => toDayNumber(date) - toDayNumber(now);
+export const daysUntil = (date: Date, now = new Date()) => toDayNumber(date) - toDayNumber(localDay(now));
 
 /** Share of non-skipped tasks that are done, 0–100. */
 export function percentDone(done: number, total: number, skipped = 0) {

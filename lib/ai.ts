@@ -53,3 +53,10 @@ export async function remainingAiQuota(userId: string, feature: AiFeature) {
     });
     return Math.max(0, dailyLimit(feature) - (usage?.count ?? 0));
 }
+
+/** Gives back a unit of quota when the model call failed, so students aren't charged for our errors. */
+export async function refundAiQuota(userId: string, feature: AiFeature) {
+    await db.aiUsage
+        .updateMany({ where: { userId, day: today(), feature, count: { gt: 0 } }, data: { count: { decrement: 1 } } })
+        .catch(() => {});
+}

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { differenceInCalendarDays } from "date-fns";
 import { ArrowRight, BookOpen, CalendarCheck, Flame, Target, Timer } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
@@ -13,14 +12,14 @@ import { revisionPriority } from "@/lib/mastery";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getFocusStats } from "@/lib/queries/focus";
 import { getTopicMastery } from "@/lib/queries/mastery";
-import { getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
+import { daysUntil, getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
+import { APP_TIME_ZONE } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Today" };
 
 function greeting(now = new Date()) {
-    // Maldives is UTC+5, where most students are.
-    const hour = (now.getUTCHours() + 5) % 24;
+    const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, hour: "numeric", hourCycle: "h23" }).format(now));
     if (hour < 12) return "Good morning";
     if (hour < 17) return "Good afternoon";
     return "Good evening";
@@ -53,7 +52,7 @@ export default async function DashboardPage() {
         .map((t) => ({ topic: t, m: mastery.get(t.id)! }))
         .sort((a, b) => revisionPriority(b.m, now) - revisionPriority(a.m, now))
         .slice(0, 5);
-    const upcomingExams = userUnits.filter((uu) => uu.examDate && uu.examDate >= now);
+    const upcomingExams = userUnits.filter((uu) => uu.examDate && daysUntil(uu.examDate, now) >= 0);
     const firstName = user.name.split(" ")[0];
 
     return (
@@ -85,7 +84,7 @@ export default async function DashboardPage() {
                 <Stat
                     icon={BookOpen}
                     label="Next exam"
-                    value={upcomingExams[0] ? differenceInCalendarDays(upcomingExams[0].examDate!, now) : "—"}
+                    value={upcomingExams[0] ? daysUntil(upcomingExams[0].examDate!, now) : "—"}
                     suffix={upcomingExams[0] ? `days · ${upcomingExams[0].unit.code}` : undefined}
                 />
             </div>
@@ -166,7 +165,7 @@ export default async function DashboardPage() {
                                 <ul className="divide-y">
                                     {userUnits.map(({ unit, examDate }) => {
                                         const summary = summarizeMastery(unit.topics.map((t) => mastery.get(t.id)!));
-                                        const days = examDate ? differenceInCalendarDays(examDate, now) : null;
+                                        const days = examDate ? daysUntil(examDate, now) : null;
                                         return (
                                             <li key={unit.id} className="py-3 first:pt-0 last:pb-0">
                                                 <Link

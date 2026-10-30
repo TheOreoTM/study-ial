@@ -1,7 +1,9 @@
 // Pure helpers for focus stats / study streaks (unit-tested). DB access lives in lib/queries/focus.ts.
 
 /** Students are in the Maldives first; day boundaries for stats use this zone unless told otherwise. */
-export const DEFAULT_TIME_ZONE = "Indian/Maldives";
+import { APP_TIME_ZONE } from "@/lib/time";
+
+export const DEFAULT_TIME_ZONE = APP_TIME_ZONE;
 
 /** "YYYY-MM-DD" for `date` as seen in `timeZone`. */
 export function dayKey(date: Date, timeZone: string = DEFAULT_TIME_ZONE): string {

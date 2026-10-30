@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { consumeAiQuota, generateText } = vi.hoisted(() => ({
+const { consumeAiQuota, refundAiQuota, generateText } = vi.hoisted(() => ({
     consumeAiQuota: vi.fn(),
+    refundAiQuota: vi.fn(),
     generateText: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/ai", () => ({ consumeAiQuota, fastModel: () => "fast-model" }));
+vi.mock("@/lib/ai", () => ({ consumeAiQuota, refundAiQuota, fastModel: () => "fast-model" }));
 vi.mock("ai", async (importOriginal) => ({ ...(await importOriginal<typeof import("ai")>()), generateText }));
 
 import {
@@ -169,6 +170,7 @@ describe("normaliseAiMark / formatAiFeedback", () => {
 describe("markWithAi", () => {
     beforeEach(() => {
         consumeAiQuota.mockReset();
+        refundAiQuota.mockReset();
         generateText.mockReset();
     });
 
@@ -197,5 +199,13 @@ describe("markWithAi", () => {
             "quota",
         );
         expect(generateText).not.toHaveBeenCalled();
+    });
+
+    it("refunds the quota when the model call fails", async () => {
+        generateText.mockRejectedValue(new Error("provider down"));
+        await expect(markWithAi("u", { stem: "Q", markScheme: "P (1)", maxMarks: 1, answer: "A" })).rejects.toThrow(
+            "provider down",
+        );
+        expect(refundAiQuota).toHaveBeenCalledWith("u", "marking");
     });
 });

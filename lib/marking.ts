@@ -2,7 +2,7 @@
 // The pure parts are unit-tested in lib/marking.test.ts; the AI call is tested with mocks.
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import { consumeAiQuota, fastModel } from "@/lib/ai";
+import { consumeAiQuota, fastModel, refundAiQuota } from "@/lib/ai";
 
 // ─── Mark schemes ────────────────────────────────────────────────────────────
 
@@ -144,13 +144,19 @@ export function formatAiFeedback(result: AiMarkResult) {
  */
 export async function markWithAi(userId: string, input: MarkingInput): Promise<AiMarkResult> {
     await consumeAiQuota(userId, "marking");
-    const { output } = await generateText({
-        model: fastModel(),
-        instructions: MARKING_INSTRUCTIONS,
-        prompt: buildMarkingPrompt(input),
-        output: Output.object({ schema: aiMarkSchema }),
-        temperature: 0,
-        maxRetries: 1,
-    });
-    return normaliseAiMark(output, input.maxMarks);
+    try {
+        const { output } = await generateText({
+            model: fastModel(),
+            instructions: MARKING_INSTRUCTIONS,
+            prompt: buildMarkingPrompt(input),
+            output: Output.object({ schema: aiMarkSchema }),
+            temperature: 0,
+            maxRetries: 1,
+            abortSignal: AbortSignal.timeout(30_000),
+        });
+        return normaliseAiMark(output, input.maxMarks);
+    } catch (e) {
+        await refundAiQuota(userId, "marking");
+        throw e;
+    }
 }

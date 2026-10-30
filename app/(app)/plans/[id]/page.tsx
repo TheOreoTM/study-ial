@@ -12,6 +12,7 @@ import { toDayNumber } from "@/lib/planner";
 import { unitCodeFromTitle } from "@/components/plans/unit-code";
 import { daysUntil, getPlan, percentDone } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
+import { localDay } from "@/lib/time";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -35,7 +36,7 @@ export default async function PlanPage({ params }: Props) {
     if (!plan) notFound();
 
     const now = new Date();
-    const todayDay = toDayNumber(now);
+    const todayDay = toDayNumber(localDay(now));
     const archived = plan.status === "ARCHIVED";
     const tasks = plan.tasks;
     const done = tasks.filter((t) => t.status === "DONE").length;
