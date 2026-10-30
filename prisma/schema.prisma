@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -13,114 +7,321 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id      String   @id @default(nanoid())
-  userId String @unique // From StackAuth
-  email   String?
-  apiKeys ApiKey[]
+// ─── Auth (Better Auth) ──────────────────────────────────────────────────────
+
+enum Role {
+  STUDENT
+  ADMIN
 }
 
-model Subject {
-  id          String   @id @default(nanoid())
-  code        String   @unique // e.g. "PHYS", "CHEM", "BIOL", "MATH", "ISLM", "DHIV"
-  name        String // "Physics", "Chemistry", "Biology", "Mathematics", "Islam", "Dhivehi"
-  description String?
-  createdAt   DateTime @default(now())
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(STUDENT)
+  onboardedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  units  Unit[]
-  topics Topic[]
+  sessions      Session[]
+  accounts      Account[]
+  units         UserUnit[]
+  attempts      Attempt[]
+  studyPlans    StudyPlan[]
+  focusSessions FocusSession[]
+  aiUsage       AiUsage[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ─── Curriculum ──────────────────────────────────────────────────────────────
+
+model Subject {
+  id          String  @id @default(cuid())
+  slug        String  @unique // "physics"
+  code        String  @unique // Pearson qualification code, e.g. "YPH11"
+  name        String
+  description String?
+  color       String  @default("blue") // accent token used in the UI
+  order       Int     @default(0)
+  // Local (non-Pearson) subjects such as Dhivehi or Islam
+  isLocal     Boolean @default(false)
+
+  units Unit[]
 }
 
 model Unit {
-  id          String   @id @default(nanoid())
+  id          String  @id @default(cuid())
   subjectId   String
-  subject     Subject  @relation(fields: [subjectId], references: [id])
-  code        String // Official paper code
+  subject     Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  code        String  @unique // Paper code, e.g. "WPH11"
+  number      Int
   name        String
   description String?
-  createdAt   DateTime @default(now())
+  order       Int     @default(0)
 
-  topics Topic[]
+  topics    Topic[]
+  questions Question[]
+  students  UserUnit[]
 
-  @@unique([subjectId, code])
-  @@index([subjectId])
+  @@unique([subjectId, number])
 }
 
 model Topic {
-  id            String  @id @default(nanoid())
-  subjectId     String
-  subject       Subject @relation(fields: [subjectId], references: [id])
-  unitId        String
-  unit          Unit    @relation(fields: [unitId], references: [id])
-  code          String
-  name          String
-  slug          String  @unique
-  parentTopicId String?
-  parentTopic   Topic?  @relation("TopicChildren", fields: [parentTopicId], references: [id])
-  children      Topic[] @relation("TopicChildren")
+  id         String   @id @default(cuid())
+  unitId     String
+  unit       Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  slug       String // unique within a unit
+  code       String // "1.2"
+  name       String
+  summary    String?
+  // Specification learning outcomes, one per entry
+  specPoints String[]
+  order      Int      @default(0)
 
-  createdAt DateTime @default(now())
+  questions  Question[]
+  planTasks  StudyPlanTask[]
+  focusTimes FocusSession[]
 
-  @@unique([unitId, code])
-  @@index([subjectId])
-  @@index([unitId])
+  @@unique([unitId, slug])
 }
 
-model ApiKey {
-  id        String    @id @default(nanoid())
-  key       String    @unique
-  createdAt DateTime  @default(now())
-  revokedAt DateTime?
-  user      User      @relation(fields: [userId], references: [id])
-  userId    String
+// ─── Question bank ───────────────────────────────────────────────────────────
 
-  @@index([key])
+enum QuestionType {
+  MCQ
+  SHORT // structured / short answer, marked against a mark scheme
+  CALCULATION
+  LONG // extended response (6-mark style)
 }
 
 enum Difficulty {
   EASY
   MEDIUM
   HARD
-  VERY_HARD
 }
 
-enum QuestionType {
-  MCQ
-  STRUCTURED
-  ESSAY
-  GRAPH
-  TABLE
-  MIXED
-  DIAGRAM
-  CALCULATION
+enum QuestionSource {
+  ORIGINAL
+  PAST_PAPER
+}
+
+enum QuestionStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Question {
+  id          String         @id @default(cuid())
+  // Stable key for seeded/imported questions so re-running the seed updates in place
+  seedKey     String?        @unique
+  unitId      String
+  unit        Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  topicId     String
+  topic       Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  type        QuestionType
+  difficulty  Difficulty     @default(MEDIUM)
+  marks       Int
+  // Markdown, supports $LaTeX$
+  stem        String
+  // Markdown mark scheme: one marking point per line
+  markScheme  String
+  explanation String?
+  source      QuestionSource @default(ORIGINAL)
+  // e.g. "WPH11 Jan 2024 Q12" or a URL to the official paper
+  sourceRef   String?
+  status      QuestionStatus @default(DRAFT)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  options  QuestionOption[]
+  attempts Attempt[]
+
+  @@index([topicId, status])
+  @@index([unitId, status])
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label      String // "A"
+  text       String
+  isCorrect  Boolean  @default(false)
+
+  attempts Attempt[]
+
+  @@unique([questionId, label])
+}
+
+enum MarkingMethod {
+  AUTO // MCQ
+  SELF
+  AI
+}
+
+model Attempt {
+  id               String          @id @default(cuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionId String?
+  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  answer           String?
+  marksAwarded     Int
+  maxMarks         Int
+  method           MarkingMethod
+  feedback         String?
+  createdAt        DateTime        @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, questionId])
+}
+
+// ─── Student data ────────────────────────────────────────────────────────────
+
+model UserUnit {
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId   String
+  unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  examDate DateTime?
+  addedAt  DateTime  @default(now())
+
+  @@id([userId, unitId])
+}
+
+enum PlanStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model StudyPlan {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  startDate      DateTime
+  examDate       DateTime
+  minutesPerDay  Int
+  // Days of the week to study, 0 = Sunday
+  studyDays      Int[]
+  status         PlanStatus @default(ACTIVE)
+  // Optional AI-written overview of the plan
+  summary        String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  tasks StudyPlanTask[]
+
+  @@index([userId, status])
 }
 
 enum TaskType {
-  READ
-  REVISE
-  PRACTICE_QUESTIONS
-  MOCK_PAPER
+  LEARN
+  PRACTICE
   REVIEW
+  PAST_PAPER
 }
 
-enum Status {
+enum TaskStatus {
   PENDING
-  IN_PROGRESS
   DONE
   SKIPPED
 }
 
-enum ProgressStatus {
-  NOT_ATTEMPTED
-  ATTEMPTED
-  CORRECT
-  INCORRECT
+model StudyPlanTask {
+  id          String     @id @default(cuid())
+  planId      String
+  plan        StudyPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  date        DateTime   @db.Date
+  order       Int        @default(0)
+  type        TaskType
+  topicId     String?
+  topic       Topic?     @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  title       String
+  notes       String?
+  minutes     Int
+  status      TaskStatus @default(PENDING)
+  completedAt DateTime?
+
+  focusSessions FocusSession[]
+
+  @@index([planId, date])
 }
 
-enum AssetType {
-  DIAGRAM
-  GRAPH
-  TABLE_IMAGE
-  FORMULA_IMAGE
-  PHOTO
+model FocusSession {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      StudyPlanTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  topicId   String?
+  topic     Topic?         @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  minutes   Int
+  startedAt DateTime
+  endedAt   DateTime       @default(now())
+
+  @@index([userId, endedAt])
+}
+
+// Per-user daily counters used to cap AI spend.
+model AiUsage {
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day     String // YYYY-MM-DD (UTC)
+  feature String
+  count   Int    @default(0)
+
+  @@id([userId, day, feature])
 }

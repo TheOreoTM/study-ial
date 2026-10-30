@@ -1,45 +1,67 @@
-import { stackServerApp } from "@/stack/server";
-import { prisma } from "@/lib/prisma";
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { nextCookies } from "better-auth/next-js";
+import { db } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
 
-export async function getCurrentUser() {
-    const user = await stackServerApp.getUser();
+const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
-    if (!user) {
-        return null;
-    }
+const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
 
-    const dbUser = await prisma.user.upsert({
-        where: {
-            userId: user.id,
+export const auth = betterAuth({
+    database: prismaAdapter(db, { provider: "postgresql" }),
+    emailAndPassword: {
+        enabled: true,
+        minPasswordLength: 8,
+        // Verification is only enforced once real email delivery is configured.
+        requireEmailVerification: Boolean(process.env.RESEND_API_KEY),
+        sendResetPassword: async ({ user, url }) => {
+            await sendEmail({
+                to: user.email,
+                subject: "Reset your Study-IAL password",
+                text: `Hi ${user.name},\n\nReset your password here: ${url}\n\nIf you didn't ask for this, ignore this email.`,
+            });
         },
-        update: {
-            email: user.primaryEmail,
+    },
+    emailVerification: {
+        sendOnSignUp: Boolean(process.env.RESEND_API_KEY),
+        autoSignInAfterVerification: true,
+        sendVerificationEmail: async ({ user, url }) => {
+            await sendEmail({
+                to: user.email,
+                subject: "Verify your Study-IAL email",
+                text: `Hi ${user.name},\n\nConfirm your email to start studying: ${url}`,
+            });
         },
-        create: {
-            userId: user.id,
-            email: user.primaryEmail,
+    },
+    socialProviders: googleEnabled
+        ? {
+              google: {
+                  clientId: process.env.GOOGLE_CLIENT_ID!,
+                  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+              },
+          }
+        : undefined,
+    user: {
+        additionalFields: {
+            role: { type: "string", input: false, defaultValue: "STUDENT" },
+            onboardedAt: { type: "date", input: false, required: false },
         },
-        include: {
-            apiKeys: true,
-        },
-    });
-
-    if (dbUser.apiKeys.length === 0) {
-        const newKey = `sk_student_${crypto.randomUUID().replace(/-/g, "")}`;
-        await prisma.apiKey.create({
-            data: {
-                key: newKey,
-                userId: dbUser.id,
+        deleteUser: { enabled: true },
+    },
+    databaseHooks: {
+        user: {
+            create: {
+                before: async (user) => ({
+                    data: { ...user, role: adminEmails.includes(user.email.toLowerCase()) ? "ADMIN" : "STUDENT" },
+                }),
             },
-        });
+        },
+    },
+    plugins: [nextCookies()],
+});
 
-        // Return the user with the new key (simulated push since we just created it)
-        // Or re-fetch. Re-fetching is safer.
-        return await prisma.user.findUnique({
-            where: { id: dbUser.id },
-            include: { apiKeys: true },
-        });
-    }
-
-    return dbUser;
-}
+export const authConfig = { googleEnabled };

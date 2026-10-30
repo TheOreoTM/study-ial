@@ -1,111 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Suspense } from "react";
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Providers } from "@/components/providers";
+import { site } from "@/lib/site";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 
-import Navbar from "@/components/navbar";
-import { Toaster } from "@/components/ui/sonner";
-import { NavbarSkeleton } from "@/components/skeletons/navbar-skeleton";
-
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
-});
-
-export const viewport: Viewport = {
-    themeColor: "#000000",
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-};
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    metadataBase: new URL("https://study-ial.vercel.app"), // Replace with actual domain
-    title: {
-        default: "Study Hub | AI-Powered IAL A-Level Learning",
-        template: "%s | Study Hub",
-    },
-    description:
-        "Master your IAL A-Levels with Study Hub. AI-powered study plans, past paper parsing, and intelligent question extraction for Math, Physics, Chemistry, and Biology.",
-    keywords: [
-        "IAL",
-        "A-Level",
-        "Edexcel",
-        "Study Hub",
-        "AI Learning",
-        "Past Papers",
-        "Chemistry",
-        "Physics",
-        "Biology",
-        "Mathematics",
-    ],
-    authors: [{ name: "Study Hub Team" }],
-    creator: "Study Hub",
-    openGraph: {
-        type: "website",
-        locale: "en_US",
-        url: "https://study-ial.vercel.app",
-        title: "Study Hub | AI-Powered IAL A-Level Learning",
-        description:
-            "Master your IAL A-Levels with Study Hub. AI-powered study plans, past paper parsing, and intelligent question extraction.",
-        siteName: "Study Hub",
-        images: [
-            {
-                url: "/og-image.png", // Ensure this image exists or create a placeholder
-                width: 1200,
-                height: 630,
-                alt: "Study Hub - AI Powered Learning",
-            },
-        ],
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "Study Hub | AI-Powered IAL A-Level Learning",
-        description:
-            "Master your IAL A-Levels with Study Hub. AI-powered study plans and intelligent question extraction.",
-        images: ["/og-image.png"],
-    },
-    icons: {
-        icon: "/favicon.ico",
-        shortcut: "/favicon.ico",
-        apple: "/apple-icon.png",
-    },
-    manifest: "/manifest.json",
-    appleWebApp: {
-        capable: true,
-        statusBarStyle: "default",
-        title: "Study Hub",
-    },
+    metadataBase: new URL(site.url),
+    title: { default: `${site.name} — ${site.tagline}`, template: `%s · ${site.name}` },
+    description: site.description,
+    applicationName: site.name,
+    openGraph: { title: site.name, description: site.description, siteName: site.name, type: "website" },
 };
 
-export default function RootLayout({
-    children,
-}: Readonly<{
-    children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
+        { media: "(prefers-color-scheme: dark)", color: "#16181d" },
+    ],
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en">
-            <body>
-                <StackProvider app={stackClientApp}>
-                    <StackTheme>
-                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                            <Suspense fallback={<NavbarSkeleton />}>
-                                <Navbar />
-                            </Suspense>
-                            {children}
-                            <Toaster />
-                        </ThemeProvider>
-                    </StackTheme>
-                </StackProvider>
+        <html lang="en" suppressHydrationWarning>
+            <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
+                <Providers>{children}</Providers>
             </body>
         </html>
     );

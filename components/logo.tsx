@@ -1,14 +1,13 @@
-import { BookOpen } from "lucide-react";
-
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-export default function Logo({ withText = true }: { withText?: boolean }) {
+export function Logo({ className, href = "/" }: { className?: string; href?: string }) {
     return (
-        <Link href="/" className="flex items-center space-x-3 group">
-            <div className="p-2 rounded-xl bg-linear-to-br from-primary to-primary/50 group-hover:shadow-lg group-hover:shadow-blue-200/50 transition-all">
-                <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            {withText && <span className="text-2xl font-bold text-foreground">StudyIAL</span>}
+        <Link href={href} className={cn("flex items-center gap-2 font-semibold tracking-tight", className)}>
+            <span className="grid size-7 place-items-center rounded-lg bg-primary text-[0.8rem] font-bold text-primary-foreground">
+                IAL
+            </span>
+            <span>Study-IAL</span>
         </Link>
     );
 }
