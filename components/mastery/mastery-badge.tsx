@@ -21,13 +21,13 @@ export function MasteryBadge({
     return (
         <span
             className={cn(
-                "inline-flex w-fit shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+                "inline-flex w-fit shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[0.6875rem] leading-none font-extrabold tracking-[0.05em] whitespace-nowrap uppercase",
                 masteryTone[level].badge,
                 className,
             )}
         >
             {masteryLabel[level]}
-            {showScore && pct !== null && level !== "new" && <span className="tabular-nums opacity-80">· {pct}%</span>}
+            {showScore && pct !== null && level !== "new" && <span className="tabular-nums">· {pct}%</span>}
         </span>
     );
 }

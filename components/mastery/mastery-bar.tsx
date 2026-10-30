@@ -27,10 +27,10 @@ export function MasteryBar({
             aria-valuemax={100}
             aria-valuenow={pct}
             aria-valuetext={level === "new" ? masteryLabel.new : `${pct}% — ${masteryLabel[level]}`}
-            className={cn("h-1.5 w-full overflow-hidden rounded-full bg-muted", className)}
+            className={cn("h-2 w-full overflow-hidden rounded-full bg-track", className)}
         >
             <div
-                className={cn("h-full rounded-full transition-[width] duration-500", masteryTone[level].bar)}
+                className={cn("h-full rounded-full transition-[width] duration-500 ease-out-soft", masteryTone[level].bar)}
                 style={{ width: `${level === "new" ? 0 : Math.max(pct, 3)}%` }}
             />
         </div>
