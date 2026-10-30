@@ -1,0 +1,164 @@
+/*
+ * Study-IAL "Playful Pop" design system.
+ * One scale and one component set, two tiers:
+ *   .marketing  bold orange/purple fields for marketing pages (Persuade)
+ *   .app        calm cream/white shell for the product (Operate): colour only for actions, progress and mastery
+ * Apply `.base` plus exactly one tier class to a page root. Components read only the semantic tokens.
+ */
+
+.base {
+    /* ---- Primitives ---- */
+    --ink: #2b1240;
+    --ink-soft: #4d335f;
+    --white: #ffffff;
+    --cream: #fffaf4;
+    --sand: #f7f0e8;
+
+    /* Orange. Text on any orange is ink, never white (white on #ff7a3d is 2.59:1). */
+    --tangerine: #ff7a3d;
+    --tangerine-hover: #f2672b; /* ink on it: 5.34:1 */
+    --tangerine-press: #e85a1f; /* ink on it: 4.68:1 */
+    --tangerine-pale: #ffe6d6;
+
+    /* Purple */
+    --grape: #6a45f5;
+    --grape-deep: #5532d6; /* white on it: 7.46:1 */
+    --lilac: #c7b6ff;
+    --lilac-pale: #f1ebff;
+
+    /* Marketing-only identity colours */
+    --sun: #ffd23f;
+    --sky: #5cc8ff;
+    --lime: #b8e94a;
+
+    /* Mastery: fills are shared; text uses the tier's *-text token (deep shades on light grounds). */
+    --strong: #2ec4b6;
+    --developing: #ffd23f;
+    --weak: #ff8fb8;
+    --strong-ink: #0e766d; /* 5.48:1 on white */
+    --developing-ink: #8a5a00; /* 5.93:1 on white */
+    --weak-ink: #b0124f; /* 6.90:1 on white */
+    --strong-pale: #e2f6f3; /* marked-correct answer ground */
+    --weak-pale: #ffe9f1; /* marked-wrong answer ground */
+
+    --shadow-rgb: 43 18 64;
+
+    /* ---- Scale (shared) ---- */
+    --font-display: var(--pp-display), "Baloo 2", system-ui, sans-serif;
+    --font-body: var(--pp-body), "Figtree", system-ui, sans-serif;
+
+    --radius-xl: 36px;
+    --radius-lg: 28px;
+    --radius-md: 20px;
+    --radius-sm: 14px;
+    --radius-pill: 999px;
+
+    --s-1: 4px;
+    --s-2: 8px;
+    --s-3: 12px;
+    --s-4: 16px;
+    --s-5: 24px;
+    --s-6: 32px;
+    --s-7: 48px;
+    --s-8: 64px;
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --dur-fast: 160ms;
+    --dur: 220ms;
+
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Tier: marketing (Persuade) ----
+   Tangerine fields, ink type, ink primary buttons, mastery shown on a dark board. */
+.marketing {
+    --surface: var(--cream);
+    --surface-raised: var(--white);
+    --text: var(--ink);
+    /* On orange, all text is full ink: no muted shade passes AA on the deeper bar oranges
+       (#4d335f is 4.15:1 on #ff7a3d). Hierarchy on orange comes from size and weight. */
+    --text-muted: var(--ink);
+    --border: var(--ink);
+
+    --action-bg: var(--ink);
+    --action-bg-hover: #3d1d5a;
+    --action-fg: var(--white);
+    --action-shadow: 0 10px 22px -8px rgb(var(--shadow-rgb) / 0.6);
+    --secondary-bg: rgb(255 255 255 / 0.9);
+    --secondary-fg: var(--ink);
+    --secondary-ring: inset 0 0 0 3px var(--ink);
+
+    --focus: var(--ink);
+    --progress: var(--grape-deep);
+    --progress-track: rgb(var(--shadow-rgb) / 0.14);
+
+    /* Mastery rows sit on the ink board. */
+    --row-bg: rgb(255 255 255 / 0.07);
+    --row-fg: var(--white);
+    --row-muted: rgb(255 255 255 / 0.8);
+    --row-track: rgb(255 255 255 / 0.14);
+    --row-next-bg: var(--white);
+    --row-next-fg: var(--ink);
+    --row-next-muted: var(--ink-soft);
+    --row-next-track: rgb(var(--shadow-rgb) / 0.12);
+    --strong-text: var(--strong);
+    --developing-text: var(--developing);
+    --weak-text: var(--weak);
+
+    --chip-unit-bg: var(--grape);
+    --chip-unit-fg: var(--white);
+    --chip-bg: var(--cream);
+    --chip-fg: var(--ink);
+
+    --motion-hover-lift: translateY(-3px) rotate(-1deg);
+}
+
+/* ---- Tier: app shell (Operate) ----
+   Cream page, white panels, ink text. Orange = actions. Purple = progress and selection.
+   Mastery colours only where a mastery level is shown. Everything else is neutral. */
+.app {
+    --surface: var(--cream);
+    --surface-raised: var(--white);
+    --surface-sunken: var(--sand);
+    --text: var(--ink);
+    --text-muted: #6b5579; /* ≥5.8:1 on cream, sand and white */
+    --border: #ebe1d6;
+    --border-strong: #8f7f9c; /* control outlines */
+
+    --action-bg: var(--tangerine);
+    --action-bg-hover: var(--tangerine-hover);
+    --action-bg-press: var(--tangerine-press);
+    --action-fg: var(--ink);
+    --action-shadow: 0 6px 14px -8px rgb(var(--shadow-rgb) / 0.45);
+    --secondary-bg: var(--white);
+    --secondary-fg: var(--ink);
+    --secondary-ring: inset 0 0 0 2px var(--border-strong);
+
+    --focus: var(--grape-deep);
+    --progress: var(--grape-deep);
+    --progress-track: #ece3d9;
+    --selected-bg: var(--lilac-pale);
+    --selected-border: var(--grape-deep);
+    --selected-fg: var(--grape-deep);
+
+    --row-bg: var(--white);
+    --row-fg: var(--ink);
+    --row-muted: var(--text-muted);
+    --row-track: #ece3d9;
+    --row-next-bg: var(--tangerine-pale);
+    --row-next-fg: var(--ink);
+    --row-next-muted: var(--ink-soft);
+    --row-next-track: rgb(var(--shadow-rgb) / 0.12);
+    --strong-text: var(--strong-ink);
+    --developing-text: var(--developing-ink);
+    --weak-text: var(--weak-ink);
+
+    --chip-unit-bg: var(--lilac-pale);
+    --chip-unit-fg: var(--grape-deep);
+    --chip-bg: var(--sand);
+    --chip-fg: var(--ink);
+
+    /* Product motion: state only, no wobble. */
+    --motion-hover-lift: translateY(-1px);
+}
