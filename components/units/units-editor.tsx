@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { CircleAlert, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExamSessionPicker } from "./exam-session-picker";
 import { UnitPicker } from "./unit-picker";
@@ -63,7 +63,7 @@ export function UnitsEditor({
             <UnitPicker subjects={subjects} selectedIds={selectedIds} onChange={setSelectedIds} />
             {selectedUnits.length > 0 && (
                 <section aria-labelledby="exam-sessions-heading">
-                    <h3 id="exam-sessions-heading" className="mb-3 text-sm font-medium">
+                    <h3 id="exam-sessions-heading" className="mb-3 text-base">
                         Exam sessions
                     </h3>
                     <ExamSessionPicker units={selectedUnits} choices={choices} onChange={setChoices} today={today} />
@@ -71,7 +71,8 @@ export function UnitsEditor({
             )}
             <div className="flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
                 {error && (
-                    <p role="alert" className="text-sm text-destructive sm:mr-auto">
+                    <p role="alert" className="flex items-center gap-2 text-sm font-semibold text-destructive sm:mr-auto">
+                        <CircleAlert className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
                         {error}
                     </p>
                 )}

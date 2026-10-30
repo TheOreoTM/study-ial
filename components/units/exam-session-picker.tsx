@@ -32,8 +32,8 @@ export function ExamSessionPicker({
     return (
         <div className="flex flex-col gap-4">
             {units.length > 1 && (
-                <div className="flex flex-col gap-2 rounded-lg bg-muted/50 p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <Label htmlFor="exam-all" className="text-muted-foreground">
+                <div className="flex flex-col gap-3 rounded-lg bg-muted p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <Label htmlFor="exam-all" className="leading-snug">
                         Sitting everything in the same session?
                     </Label>
                     <Select
@@ -42,7 +42,7 @@ export function ExamSessionPicker({
                             onChange(choices.map((c) => ({ ...c, examDate: v === NOT_SURE ? null : v })))
                         }
                     >
-                        <SelectTrigger id="exam-all" className="w-full bg-background sm:w-56">
+                        <SelectTrigger id="exam-all" className="w-full sm:w-60">
                             <SelectValue placeholder="Set all units…" />
                         </SelectTrigger>
                         <SelectContent>
@@ -57,18 +57,23 @@ export function ExamSessionPicker({
                 </div>
             )}
 
-            <ul className="divide-y rounded-lg border">
+            <ul className="flex flex-col gap-2.5">
                 {units.map((u) => {
                     const current = dateFor.get(u.id) ?? null;
                     const id = `exam-${u.id}`;
                     return (
-                        <li key={u.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4">
-                            <Label htmlFor={id} className="min-w-0 flex-1 flex-col items-start gap-0.5">
-                                <span className="font-mono text-xs font-normal text-muted-foreground">{u.code}</span>
-                                <span className="leading-snug">{u.name}</span>
+                        <li
+                            key={u.id}
+                            className="flex flex-col gap-3 rounded-lg bg-card px-4 py-3.5 shadow-[inset_0_0_0_1.5px_var(--border)] sm:flex-row sm:items-center sm:gap-4"
+                        >
+                            <Label htmlFor={id} className="min-w-0 flex-1 items-center gap-3 leading-snug">
+                                <span className="shrink-0 rounded-[10px] bg-selected px-2 py-0.5 font-display text-sm font-extrabold text-selected-foreground">
+                                    {u.code}
+                                </span>
+                                <span className="min-w-0 font-semibold">{u.name}</span>
                             </Label>
                             <Select value={current ?? NOT_SURE} onValueChange={(v) => set(u.id, v)}>
-                                <SelectTrigger id={id} className="w-full sm:w-56">
+                                <SelectTrigger id={id} className="w-full sm:w-60">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -84,7 +89,7 @@ export function ExamSessionPicker({
                     );
                 })}
             </ul>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
                 We use approximate dates (mid-January, early June, late October) to pace your study plan. You can change
                 these any time in Settings.
             </p>

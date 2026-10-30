@@ -6,7 +6,7 @@ import { Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthNotice, FormError } from "./auth-card";
 import { signUp } from "@/lib/auth-client";
 
 export function SignUpForm({ requiresVerification }: { requiresVerification: boolean }) {
@@ -42,23 +42,15 @@ export function SignUpForm({ requiresVerification }: { requiresVerification: boo
 
     if (sentTo) {
         return (
-            <div className="flex flex-col items-center gap-2 py-4 text-center">
-                <MailCheck className="size-8 text-primary" />
-                <p className="font-medium">Check your inbox</p>
-                <p className="text-sm text-muted-foreground">
-                    We sent a verification link to <span className="font-medium text-foreground">{sentTo}</span>.
-                </p>
-            </div>
+            <AuthNotice icon={MailCheck} title="Check your inbox">
+                We sent a verification link to <span className="font-bold break-all text-foreground">{sentTo}</span>.
+            </AuthNotice>
         );
     }
 
     return (
-        <form onSubmit={onSubmit} className="grid gap-4">
-            {error && (
-                <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
+        <form onSubmit={onSubmit} className="grid gap-5">
+            {error && <FormError>{error}</FormError>}
             <div className="grid gap-2">
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" name="name" autoComplete="name" required maxLength={60} />
@@ -69,11 +61,21 @@ export function SignUpForm({ requiresVerification }: { requiresVerification: boo
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required />
-                <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+                <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    aria-describedby="password-hint"
+                />
+                <p id="password-hint" className="text-sm text-muted-foreground">
+                    At least 8 characters.
+                </p>
             </div>
-            <Button type="submit" disabled={pending}>
-                {pending && <Loader2 className="size-4 animate-spin" />}
+            <Button type="submit" size="lg" className="mt-1 w-full" disabled={pending}>
+                {pending && <Loader2 className="animate-spin" aria-hidden />}
                 Create account
             </Button>
         </form>

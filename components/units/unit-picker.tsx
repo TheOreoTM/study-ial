@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Check } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { PickerSubject } from "./types";
@@ -47,9 +46,9 @@ export function UnitPicker({
     }
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-7">
             <fieldset>
-                <legend className="mb-3 text-sm font-medium">Subjects</legend>
+                <legend className="mb-3 font-display text-base font-extrabold">Subjects</legend>
                 <div className="flex flex-wrap gap-2">
                     {subjects.map((s) => {
                         const on = openSubjects.has(s.id);
@@ -60,13 +59,13 @@ export function UnitPicker({
                                 aria-pressed={on}
                                 onClick={() => toggleSubject(s)}
                                 className={cn(
-                                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                                    "inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-full px-4.5 font-display text-[0.975rem] font-extrabold transition-[background-color,box-shadow,color] duration-200 ease-out-soft outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",
                                     on
-                                        ? "border-primary bg-primary text-primary-foreground"
-                                        : "bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
+                                        ? "bg-selected pl-3.5 text-selected-foreground shadow-[inset_0_0_0_2px_var(--progress)]"
+                                        : "bg-card text-foreground shadow-[inset_0_0_0_1.5px_var(--border-strong)] hover:bg-accent",
                                 )}
                             >
-                                {on && <Check className="size-3.5" aria-hidden />}
+                                {on && <Check className="size-4" strokeWidth={3} aria-hidden />}
                                 {s.name}
                             </button>
                         );
@@ -80,16 +79,23 @@ export function UnitPicker({
                     const count = s.units.filter((u) => selected.has(u.id)).length;
                     return (
                         <fieldset key={s.id} className="min-w-0">
-                            <legend className="mb-3 flex w-full items-baseline justify-between gap-2 text-sm font-medium">
-                                <span>{s.name} units</span>
-                                <span className="text-xs font-normal text-muted-foreground">
-                                    {count} selected
+                            <legend className="mb-3 flex w-full items-baseline justify-between gap-2">
+                                <span className="font-display text-base font-extrabold">{s.name} units</span>
+                                <span
+                                    className={cn(
+                                        "text-sm font-semibold",
+                                        count > 0 ? "text-selected-foreground" : "text-muted-foreground",
+                                    )}
+                                >
+                                    <span className="num">{count}</span> selected
                                 </span>
                             </legend>
                             {s.units.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">No units yet — coming soon.</p>
+                                <p className="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
+                                    No units yet — coming soon.
+                                </p>
                             ) : (
-                                <div className="grid gap-2 sm:grid-cols-2">
+                                <div className="grid gap-2.5 sm:grid-cols-2">
                                     {s.units.map((u) => {
                                         const checked = selected.has(u.id);
                                         const inputId = `unit-${u.id}`;
@@ -98,28 +104,37 @@ export function UnitPicker({
                                                 key={u.id}
                                                 htmlFor={inputId}
                                                 className={cn(
-                                                    "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
-                                                    checked ? "border-primary bg-primary/5" : "hover:bg-muted/60",
+                                                    "flex min-h-[60px] cursor-pointer items-start gap-3 rounded-lg px-4 py-3.5 transition-[background-color,box-shadow] duration-200 ease-out-soft has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring",
+                                                    checked
+                                                        ? "bg-selected shadow-[inset_0_0_0_2px_var(--progress)]"
+                                                        : "bg-card shadow-[inset_0_0_0_1.5px_var(--border)] hover:shadow-[inset_0_0_0_1.5px_var(--border-strong)]",
                                                 )}
                                             >
                                                 <Checkbox
                                                     id={inputId}
                                                     checked={checked}
                                                     onCheckedChange={(v) => toggleUnit(u.id, v === true)}
-                                                    className="mt-0.5"
+                                                    className="mt-0.5 focus-visible:outline-none"
                                                 />
                                                 <span className="min-w-0 flex-1">
                                                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                        <span className="font-mono text-xs text-muted-foreground">
+                                                        <span
+                                                            className={cn(
+                                                                "rounded-[10px] px-2 py-0.5 font-display text-sm font-extrabold transition-colors duration-200",
+                                                                checked
+                                                                    ? "bg-progress text-background"
+                                                                    : "bg-selected text-selected-foreground",
+                                                            )}
+                                                        >
                                                             {u.code}
                                                         </span>
                                                         {u.topicCount === 0 && (
-                                                            <Badge variant="secondary" className="text-[0.7rem]">
+                                                            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-bold text-muted-foreground">
                                                                 Coming soon
-                                                            </Badge>
+                                                            </span>
                                                         )}
                                                     </span>
-                                                    <span className="mt-0.5 block text-sm leading-snug font-medium">
+                                                    <span className="mt-1.5 block leading-snug font-semibold">
                                                         {u.name}
                                                     </span>
                                                 </span>

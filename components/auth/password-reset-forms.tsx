@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2, MailCheck } from "lucide-react";
+import { Link2Off, Loader2, MailCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthNotice, FormError } from "./auth-card";
 import { authClient } from "@/lib/auth-client";
 
 export function ForgotPasswordForm() {
@@ -28,24 +28,20 @@ export function ForgotPasswordForm() {
 
     if (sent) {
         return (
-            <div className="flex flex-col items-center gap-2 py-4 text-center">
-                <MailCheck className="size-8 text-primary" />
-                <p className="font-medium">Check your inbox</p>
-                <p className="text-sm text-muted-foreground">
-                    If an account exists for that email, a reset link is on its way.
-                </p>
-            </div>
+            <AuthNotice icon={MailCheck} title="Check your inbox">
+                If an account exists for that email, a reset link is on its way.
+            </AuthNotice>
         );
     }
 
     return (
-        <form onSubmit={onSubmit} className="grid gap-4">
+        <form onSubmit={onSubmit} className="grid gap-5">
             <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" name="email" type="email" autoComplete="email" required />
             </div>
-            <Button type="submit" disabled={pending}>
-                {pending && <Loader2 className="size-4 animate-spin" />}
+            <Button type="submit" size="lg" className="mt-1 w-full" disabled={pending}>
+                {pending && <Loader2 className="animate-spin" aria-hidden />}
                 Send reset link
             </Button>
         </form>
@@ -59,15 +55,14 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
 
     if (!token) {
         return (
-            <Alert variant="destructive">
-                <AlertDescription>
-                    This reset link is invalid or has expired.{" "}
-                    <Link href="/forgot-password" className="underline">
-                        Request a new one
-                    </Link>
-                    .
-                </AlertDescription>
-            </Alert>
+            <div className="flex flex-col gap-5">
+                <AuthNotice icon={Link2Off} title="This link no longer works">
+                    This reset link is invalid or has expired. Request a new one and we&apos;ll email it to you.
+                </AuthNotice>
+                <Button asChild size="lg" className="w-full">
+                    <Link href="/forgot-password">Request a new link</Link>
+                </Button>
+            </div>
         );
     }
 
@@ -92,22 +87,33 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
     }
 
     return (
-        <form onSubmit={onSubmit} className="grid gap-4">
-            {error && (
-                <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
+        <form onSubmit={onSubmit} className="grid gap-5">
+            {error && <FormError>{error}</FormError>}
             <div className="grid gap-2">
                 <Label htmlFor="password">New password</Label>
-                <Input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required />
+                <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                />
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="confirm">Confirm password</Label>
-                <Input id="confirm" name="confirm" type="password" autoComplete="new-password" minLength={8} required />
+                <Input
+                    id="confirm"
+                    name="confirm"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    aria-invalid={error === "Passwords don't match." ? true : undefined}
+                />
             </div>
-            <Button type="submit" disabled={pending}>
-                {pending && <Loader2 className="size-4 animate-spin" />}
+            <Button type="submit" size="lg" className="mt-1 w-full" disabled={pending}>
+                {pending && <Loader2 className="animate-spin" aria-hidden />}
                 Set new password
             </Button>
         </form>
