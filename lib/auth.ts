@@ -6,11 +6,6 @@ import { sendEmail } from "@/lib/email";
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
-const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
 export const auth = betterAuth({
     database: prismaAdapter(db, { provider: "postgresql" }),
     emailAndPassword: {
@@ -54,14 +49,31 @@ export const auth = betterAuth({
     },
     databaseHooks: {
         user: {
-            create: {
-                before: async (user) => ({
-                    data: { ...user, role: adminEmails.includes(user.email.toLowerCase()) ? "ADMIN" : "STUDENT" },
-                }),
+            // Roles are never granted here: see promoteVerifiedAdmin in lib/session.ts, which only
+            // promotes ADMIN_EMAILS once the address is verified.
+            create: { before: async (user) => ({ data: { ...user, name: cleanName(user.name) } }) },
+            update: {
+                before: async (user) => ({ data: user.name === undefined ? user : { ...user, name: cleanName(user.name) } }),
             },
         },
     },
+    // Throttle sign-in / sign-up brute force. Stored in Postgres so it works across serverless instances.
+    rateLimit: { enabled: process.env.NODE_ENV === "production" || process.env.AUTH_RATE_LIMIT === "1", storage: "database" },
     plugins: [nextCookies()],
 });
 
 export const authConfig = { googleEnabled };
+
+/** Comma-separated ADMIN_EMAILS, lower-cased. */
+export const adminEmails = new Set(
+    (process.env.ADMIN_EMAILS ?? "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean),
+);
+
+/** Display names: trimmed, collapsed whitespace, max 60 chars. */
+function cleanName(name: unknown) {
+    const n = String(name ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+    return n || "Student";
+}

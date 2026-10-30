@@ -4,16 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GoogleButton, OrDivider } from "@/components/auth/google-button";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { authConfig } from "@/lib/auth";
+import { safeRedirect } from "@/lib/safe-redirect";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-/** Only allow same-site relative redirects. */
-function safeNext(next: string | string[] | undefined) {
-    return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-}
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-    const next = safeNext((await searchParams).next);
+    const next = safeRedirect((await searchParams).next);
     return (
         <Card>
             <CardHeader className="text-center">

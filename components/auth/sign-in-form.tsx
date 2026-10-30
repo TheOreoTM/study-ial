@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signIn } from "@/lib/auth-client";
+import { safeRedirect } from "@/lib/safe-redirect";
 
 export function SignInForm({ next }: { next: string }) {
     const router = useRouter();
@@ -33,7 +34,7 @@ export function SignInForm({ next }: { next: string }) {
             setPending(false);
             return;
         }
-        router.push(next);
+        router.push(safeRedirect(next));
         router.refresh();
     }
 

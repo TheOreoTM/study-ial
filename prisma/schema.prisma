@@ -338,3 +338,13 @@ model AiUsage {
 
   @@id([userId, day, feature])
 }
+
+// Better Auth rate-limit counters (database storage so limits hold across serverless instances).
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rateLimit")
+}

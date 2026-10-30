@@ -59,6 +59,8 @@ pnpm test
    - `DATABASE_URL` (Neon), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` (your production URL)
    - Optional: `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (redirect URI `https://<domain>/api/auth/callback/google`),
      `RESEND_API_KEY` + `EMAIL_FROM`, `OPENROUTER_API_KEY`, `ADMIN_EMAILS`
+   - Admin access: add your email to `ADMIN_EMAILS`, then sign in with Google (or a verified email). The role is
+     only granted to verified addresses, so configure Google or Resend in production.
 3. The `vercel-build` script runs migrations before building. Seed the curriculum once:
    `DATABASE_URL=<neon url> NODE_ENV=production pnpm db:seed` (the demo user is skipped in production).
 

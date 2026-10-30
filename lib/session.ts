@@ -2,15 +2,26 @@ import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { adminEmails, auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 /** The signed-in user (fresh from the DB), or null. Cached per request. */
 export const getUser = cache(async () => {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) return null;
-    return db.user.findUnique({ where: { id: session.user.id } });
+    const user = await db.user.findUnique({ where: { id: session.user.id } });
+    return user ? promoteVerifiedAdmin(user) : null;
 });
+
+/**
+ * ADMIN_EMAILS only become admins once they've proven they own the address (verified email or
+ * Google sign-in). Granting the role at sign-up would let anyone register that email and get admin.
+ */
+async function promoteVerifiedAdmin<T extends { id: string; email: string; emailVerified: boolean; role: string }>(user: T) {
+    if (user.role === "ADMIN" || !user.emailVerified || !adminEmails.has(user.email.toLowerCase())) return user;
+    await db.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
+    return { ...user, role: "ADMIN" as const };
+}
 
 /** For pages: redirects to sign-in when signed out, and to onboarding until it's done. */
 export async function requireUser({ allowUnonboarded = false } = {}) {

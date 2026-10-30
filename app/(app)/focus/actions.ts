@@ -27,6 +27,9 @@ export async function logFocusSession(input: z.input<typeof logSchema>): Promise
     if (startedAt.getTime() > now + 5 * 60_000 || startedAt.getTime() < now - 24 * 3_600_000) {
         return { ok: false, error: "Invalid start time." };
     }
+    // Can't have focused for longer than the period has existed (1 min of grace for rounding/skew).
+    const elapsedMinutes = Math.ceil((now - startedAt.getTime()) / 60_000) + 1;
+    if (minutes > elapsedMinutes) return { ok: false, error: "That session is longer than the time that has passed." };
 
     let resolvedTopicId = topicId ?? null;
     if (taskId) {

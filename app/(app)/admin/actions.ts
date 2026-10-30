@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { assertAdmin } from "@/lib/session";
-import { aiEnabled, AiQuotaError, consumeAiQuota, smartModel } from "@/lib/ai";
+import { aiEnabled, AiQuotaError, consumeAiQuota, refundAiQuota, smartModel } from "@/lib/ai";
 import { db } from "@/lib/db";
 import {
     AdminDataError,
@@ -169,6 +169,7 @@ export async function draftMarkScheme(raw: unknown): Promise<Result<{ markScheme
     if (!parsed.success) return { ok: false, error: formatZodError(parsed.error) };
     const { stem, marks, type, topicId } = parsed.data;
 
+    let charged = false;
     try {
         const topic = topicId
             ? await db.topic.findUnique({
@@ -177,6 +178,7 @@ export async function draftMarkScheme(raw: unknown): Promise<Result<{ markScheme
               })
             : null;
         await consumeAiQuota(admin.id, "marking");
+        charged = true;
 
         const context = topic
             ? `Unit ${topic.unit.code} (${topic.unit.name}), topic "${topic.name}".\nSpec points:\n${topic.specPoints.map((s) => `- ${s}`).join("\n")}`
@@ -218,6 +220,7 @@ export async function draftMarkScheme(raw: unknown): Promise<Result<{ markScheme
             .join("\n");
         return { ok: true, markScheme, notes: output.notes?.trim() || null };
     } catch (e) {
+        if (charged) await refundAiQuota(admin.id, "marking");
         return failure(e);
     }
 }

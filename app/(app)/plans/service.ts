@@ -31,7 +31,11 @@ export type CreatePlanInput = {
 async function loadPlannerUnits(userId: string, units: { unitId: string; examDate: Date }[]): Promise<PlannerUnit[]> {
     const rows = await db.unit.findMany({
         where: { id: { in: units.map((u) => u.unitId) }, students: { some: { userId } } },
-        select: { id: true, code: true, topics: { select: { id: true, name: true, order: true }, orderBy: { order: "asc" } } },
+        select: {
+            id: true,
+            code: true,
+            topics: { select: { id: true, name: true, order: true }, orderBy: { order: "asc" } },
+        },
     });
     if (rows.length !== units.length) throw new PlannerError("Some of those units aren't on your list any more.");
     const mastery = await getTopicMastery(
@@ -49,7 +53,12 @@ async function loadPlannerUnits(userId: string, units: { unitId: string; examDat
     });
 }
 
-const toRows = (planId: string, tasks: PlannedTask[], notes: Map<number, string> = new Map(), orderOffset = new Map<string, number>()) =>
+const toRows = (
+    planId: string,
+    tasks: PlannedTask[],
+    notes: Map<number, string> = new Map(),
+    orderOffset = new Map<string, number>(),
+) =>
     tasks.map((t, i) => ({
         planId,
         date: t.date,
@@ -97,7 +106,10 @@ export async function createPlanForUser(
         await tx.studyPlanTask.createMany({ data: toRows(plan.id, tasks, garnish?.notes) });
         // Keep the student's unit exam dates in sync with what they entered here.
         for (const u of input.units) {
-            await tx.userUnit.update({ where: { userId_unitId: { userId, unitId: u.unitId } }, data: { examDate: u.examDate } });
+            await tx.userUnit.update({
+                where: { userId_unitId: { userId, unitId: u.unitId } },
+                data: { examDate: u.examDate },
+            });
         }
         return plan;
     });
@@ -158,14 +170,23 @@ export async function reschedulePlanForUser(userId: string, planId: string, { no
     });
     const examDate = fromDayNumber(Math.max(...withDates.map((u) => toDayNumber(u.examDate))));
 
-    await db.$transaction([
-        db.studyPlanTask.deleteMany({ where: { id: { in: removeIds }, planId } }),
-        db.studyPlanTask.createMany({ data: toRows(planId, tasks, undefined, orderOffset) }),
-        db.studyPlan.update({ where: { id: planId }, data: { examDate } }),
-        ...withDates.map((u) =>
-            db.studyPlanUnit.update({ where: { planId_unitId: { planId, unitId: u.unitId } }, data: { examDate: u.examDate } }),
-        ),
-    ]);
+    await db.$transaction(async (tx) => {
+        // Optimistic lock: claim the plan only if nobody rescheduled it since we read it (double click,
+        // two tabs). Postgres serialises the two updates; the loser matches 0 rows and aborts.
+        const claimed = await tx.studyPlan.updateMany({
+            where: { id: planId, userId, updatedAt: plan.updatedAt },
+            data: { examDate },
+        });
+        if (claimed.count === 0) throw new PlannerError("This plan was just updated. Refresh and try again.");
+        // Never delete a task that was ticked off while we were planning.
+        await tx.studyPlanTask.deleteMany({ where: { id: { in: removeIds }, planId, status: { not: "DONE" } } });
+        await tx.studyPlanTask.createMany({ data: toRows(planId, tasks, undefined, orderOffset) });
+        for (const u of withDates)
+            await tx.studyPlanUnit.update({
+                where: { planId_unitId: { planId, unitId: u.unitId } },
+                data: { examDate: u.examDate },
+            });
+    });
     return { removed: removeIds.length, created: tasks.length };
 }
 
@@ -202,7 +223,9 @@ async function planGarnish(
             const days = toDayNumber(u.examDate) - toDayNumber(now);
             return `- ${u.code}: exam in ${days} days; ${u.topics.length} topics; weakest: ${weakest.join(", ") || "n/a"}`;
         });
-        const first = tasks.slice(0, 10).map((t, i) => `${i}. ${dayKey(t.date)} ${t.type} ${t.minutes} min — ${t.title}`);
+        const first = tasks
+            .slice(0, 10)
+            .map((t, i) => `${i}. ${dayKey(t.date)} ${t.type} ${t.minutes} min — ${t.title}`);
         const { output } = await generateText({
             model: fastModel(),
             abortSignal: AbortSignal.timeout(20_000),
@@ -223,7 +246,8 @@ async function planGarnish(
         });
         const notes = new Map<number, string>();
         for (const n of output.notes)
-            if (n.index >= 0 && n.index < Math.min(10, tasks.length) && n.note.trim()) notes.set(n.index, n.note.trim().slice(0, 200));
+            if (n.index >= 0 && n.index < Math.min(10, tasks.length) && n.note.trim())
+                notes.set(n.index, n.note.trim().slice(0, 200));
         const summary = output.summary.trim().slice(0, 800);
         return summary ? { summary, notes } : null;
     } catch (e) {
