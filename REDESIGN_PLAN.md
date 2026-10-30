@@ -26,12 +26,12 @@ demo user for app pages) → fix what's broken → commit → tick.
 
 - [x] Auth pages: sign-in, sign-up, forgot-password, reset-password
 - [x] Onboarding
-- [ ] Dashboard
-- [ ] Subjects: index, subject, unit, topic
+- [x] Dashboard
+- [x] Subjects: index, subject, unit, topic
 - [ ] Practice
-- [ ] Progress
-- [ ] Plans: list, new, detail
-- [ ] Focus
+- [x] Progress
+- [x] Plans: list, new, detail
+- [x] Focus
 - [x] Settings
 - [x] Admin: overview, questions list, question editor (new/edit), import
 - [x] Not-found and error pages
