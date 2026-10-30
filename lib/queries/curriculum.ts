@@ -45,3 +45,37 @@ export const getQuestionCounts = cache(async (topicIds: string[]) => {
     });
     return new Map(rows.map((r) => [r.topicId, r._count._all]));
 });
+
+/** Published question counts keyed by unitId. */
+export const getUnitQuestionCounts = cache(async (unitIds: string[]) => {
+    const rows = await db.question.groupBy({
+        by: ["unitId"],
+        where: { unitId: { in: unitIds }, status: "PUBLISHED" },
+        _count: { _all: true },
+    });
+    return new Map(rows.map((r) => [r.unitId, r._count._all]));
+});
+
+/** Published question counts for one topic, by question type. */
+export const getTopicQuestionTypeCounts = cache(async (topicId: string) => {
+    const rows = await db.question.groupBy({
+        by: ["type"],
+        where: { topicId, status: "PUBLISHED" },
+        _count: { _all: true },
+    });
+    return new Map(rows.map((r) => [r.type, r._count._all]));
+});
+
+/** Every subject → unit → topic path, for the sitemap. */
+export const getCurriculumPaths = cache(() =>
+    db.subject.findMany({
+        orderBy: { order: "asc" },
+        select: {
+            slug: true,
+            units: {
+                orderBy: { order: "asc" },
+                select: { code: true, topics: { orderBy: { order: "asc" }, select: { slug: true } } },
+            },
+        },
+    }),
+);
