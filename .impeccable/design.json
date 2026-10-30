@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-30T21:41:55.934471+00:00",
+  "generatedAt": "2026-10-30T22:20:29+00:00",
   "title": "Design System: Study-IAL",
   "extensions": {
     "colorMeta": {
@@ -17,21 +17,6 @@
           "#ba97d8",
           "#d8c6e6",
           "#f3eef7"
-        ]
-      },
-      "ink-soft": {
-        "role": "neutral",
-        "displayName": "Soft Plum",
-        "canonical": "#4d335f",
-        "tonalRamp": [
-          "#281e2e",
-          "#42314f",
-          "#604474",
-          "#81569f",
-          "#9e7db5",
-          "#bba6c9",
-          "#d8cedf",
-          "#f3f0f5"
         ]
       },
       "cream": {
@@ -126,7 +111,7 @@
       },
       "tangerine-pale": {
         "role": "primary",
-        "displayName": "Tangerine Pale",
+        "displayName": "Tangerine Pale (next up)",
         "canonical": "#ffe6d6",
         "tonalRamp": [
           "#40200c",
@@ -169,9 +154,24 @@
           "#efedf7"
         ]
       },
+      "lilac": {
+        "role": "tertiary",
+        "displayName": "Lilac (marketing identity)",
+        "canonical": "#c7b6ff",
+        "tonalRamp": [
+          "#180c40",
+          "#250e71",
+          "#310cac",
+          "#3a02f3",
+          "#673cf6",
+          "#997ef1",
+          "#c7baf3",
+          "#eeebfa"
+        ]
+      },
       "lilac-pale": {
         "role": "secondary",
-        "displayName": "Lilac Pale",
+        "displayName": "Lilac Pale (selected)",
         "canonical": "#f1ebff",
         "tonalRamp": [
           "#1c0c40",
@@ -186,7 +186,7 @@
       },
       "sun": {
         "role": "tertiary",
-        "displayName": "Sun",
+        "displayName": "Sun (marketing)",
         "canonical": "#ffd23f",
         "tonalRamp": [
           "#40340c",
@@ -201,7 +201,7 @@
       },
       "sky": {
         "role": "tertiary",
-        "displayName": "Sky",
+        "displayName": "Sky (marketing identity)",
         "canonical": "#5cc8ff",
         "tonalRamp": [
           "#0c2f40",
@@ -216,7 +216,7 @@
       },
       "lime": {
         "role": "tertiary",
-        "displayName": "Lime",
+        "displayName": "Lime (marketing identity)",
         "canonical": "#b8e94a",
         "tonalRamp": [
           "#2e3b12",
@@ -227,21 +227,6 @@
           "#c9e48b",
           "#dfecc0",
           "#f5f8ec"
-        ]
-      },
-      "lilac": {
-        "role": "tertiary",
-        "displayName": "Lilac",
-        "canonical": "#c7b6ff",
-        "tonalRamp": [
-          "#180c40",
-          "#250e71",
-          "#310cac",
-          "#3a02f3",
-          "#673cf6",
-          "#997ef1",
-          "#c7baf3",
-          "#eeebfa"
         ]
       },
       "mastery-strong": {
@@ -289,9 +274,9 @@
           "#faebf0"
         ]
       },
-      "mastery-strong-ink": {
+      "mastery-strong-text": {
         "role": "tertiary",
-        "displayName": "Deep Teal (text)",
+        "displayName": "Deep Teal (strong text)",
         "canonical": "#0e766d",
         "tonalRamp": [
           "#123b37",
@@ -304,9 +289,9 @@
           "#ecf8f7"
         ]
       },
-      "mastery-developing-ink": {
+      "mastery-developing-text": {
         "role": "tertiary",
-        "displayName": "Deep Amber (text)",
+        "displayName": "Deep Amber (developing text)",
         "canonical": "#8a5a00",
         "tonalRamp": [
           "#402e0c",
@@ -319,9 +304,9 @@
           "#faf5eb"
         ]
       },
-      "mastery-weak-ink": {
+      "mastery-weak-text": {
         "role": "tertiary",
-        "displayName": "Deep Raspberry (text)",
+        "displayName": "Raspberry (weak text)",
         "canonical": "#b0124f",
         "tonalRamp": [
           "#3c1121",
@@ -349,9 +334,24 @@
           "#eef6f5"
         ]
       },
+      "mastery-developing-pale": {
+        "role": "tertiary",
+        "displayName": "Pale Sun",
+        "canonical": "#fff5d1",
+        "tonalRamp": [
+          "#0e0b04",
+          "#262110",
+          "#453d21",
+          "#665d3e",
+          "#898060",
+          "#aea584",
+          "#d1cbb4",
+          "#f2efe1"
+        ]
+      },
       "mastery-weak-pale": {
         "role": "tertiary",
-        "displayName": "Pale Bubblegum",
+        "displayName": "Pale Pink",
         "canonical": "#ffe9f1",
         "tonalRamp": [
           "#400c1f",
@@ -364,7 +364,7 @@
           "#faebf0"
         ]
       },
-      "app-text-muted": {
+      "muted-foreground": {
         "role": "neutral",
         "displayName": "Muted Plum",
         "canonical": "#6b5579",
@@ -379,7 +379,7 @@
           "#f3f1f4"
         ]
       },
-      "app-border": {
+      "border": {
         "role": "neutral",
         "displayName": "Hairline",
         "canonical": "#ebe1d6",
@@ -394,7 +394,7 @@
           "#f5f2f0"
         ]
       },
-      "app-border-strong": {
+      "border-strong": {
         "role": "neutral",
         "displayName": "Control Outline",
         "canonical": "#8f7f9c",
@@ -409,7 +409,7 @@
           "#f2f1f3"
         ]
       },
-      "app-track": {
+      "track": {
         "role": "neutral",
         "displayName": "Track",
         "canonical": "#ece3d9",
@@ -423,179 +423,513 @@
           "#e0d7cd",
           "#f5f2f0"
         ]
+      },
+      "destructive": {
+        "role": "error",
+        "displayName": "Danger Red",
+        "canonical": "#c0262d",
+        "tonalRamp": [
+          "#220000",
+          "#460207",
+          "#760712",
+          "#af0c1f",
+          "#da4243",
+          "#fb756f",
+          "#fcb6b0",
+          "#fee9e7"
+        ]
+      },
+      "dark-background": {
+        "role": "neutral",
+        "displayName": "Night Plum (dark page)",
+        "canonical": "#1b1026",
+        "tonalRamp": [
+          "#0d0911",
+          "#251e2d",
+          "#42384f",
+          "#645772",
+          "#877a96",
+          "#ab9ebb",
+          "#cfc6da",
+          "#f1ecf8"
+        ]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "Dark Card",
+        "canonical": "#261835",
+        "tonalRamp": [
+          "#0d0912",
+          "#261d2f",
+          "#433653",
+          "#655677",
+          "#88789c",
+          "#ac9dc1",
+          "#d0c5df",
+          "#f2ebfa"
+        ]
+      },
+      "dark-popover": {
+        "role": "neutral",
+        "displayName": "Dark Popover",
+        "canonical": "#2c1d3d",
+        "tonalRamp": [
+          "#0d0913",
+          "#261d31",
+          "#433655",
+          "#65557a",
+          "#88779e",
+          "#ac9cc3",
+          "#d0c5e0",
+          "#f2ebfb"
+        ]
+      },
+      "dark-foreground": {
+        "role": "neutral",
+        "displayName": "Dark Text",
+        "canonical": "#fbf4ec",
+        "tonalRamp": [
+          "#0c0b09",
+          "#24211d",
+          "#413c36",
+          "#625d56",
+          "#857f78",
+          "#aaa39c",
+          "#cecac5",
+          "#f1eeeb"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Dark Muted",
+        "canonical": "#2f2041",
+        "tonalRamp": [
+          "#0d0913",
+          "#261d31",
+          "#433655",
+          "#65557a",
+          "#88779f",
+          "#ac9cc4",
+          "#d0c5e1",
+          "#f2ebfc"
+        ]
+      },
+      "dark-accent": {
+        "role": "neutral",
+        "displayName": "Dark Hover",
+        "canonical": "#36264a",
+        "tonalRamp": [
+          "#0d0814",
+          "#261c32",
+          "#443557",
+          "#65547c",
+          "#8877a1",
+          "#ad9bc6",
+          "#d0c4e2",
+          "#f2ebfd"
+        ]
+      },
+      "dark-muted-foreground": {
+        "role": "neutral",
+        "displayName": "Dark Muted Text",
+        "canonical": "#c2b2d0",
+        "tonalRamp": [
+          "#0d0911",
+          "#261e2c",
+          "#44374e",
+          "#655771",
+          "#887995",
+          "#ad9eba",
+          "#d0c6da",
+          "#f2ecf8"
+        ]
+      },
+      "dark-primary-hover": {
+        "role": "primary",
+        "displayName": "Dark Tangerine Hover",
+        "canonical": "#ff8c57",
+        "tonalRamp": [
+          "#1e0200",
+          "#3c1300",
+          "#672600",
+          "#9a3c00",
+          "#c95b22",
+          "#f0824f",
+          "#feb899",
+          "#feeae1"
+        ]
+      },
+      "dark-primary-soft": {
+        "role": "primary",
+        "displayName": "Tangerine Glow (dark next up)",
+        "canonical": "#4a2238",
+        "tonalRamp": [
+          "#13070d",
+          "#311925",
+          "#552f43",
+          "#7a4e65",
+          "#9f7088",
+          "#c494ac",
+          "#e2bfd0",
+          "#fde8f2"
+        ]
+      },
+      "dark-selected": {
+        "role": "secondary",
+        "displayName": "Dark Selected",
+        "canonical": "#352a5e",
+        "tonalRamp": [
+          "#0b0818",
+          "#221c3b",
+          "#3d3464",
+          "#5d548c",
+          "#8077b2",
+          "#a49cd7",
+          "#c9c5ef",
+          "#eeecff"
+        ]
+      },
+      "dark-selected-foreground": {
+        "role": "secondary",
+        "displayName": "Dark Selected Text",
+        "canonical": "#d4c7ff",
+        "tonalRamp": [
+          "#0c0816",
+          "#241c37",
+          "#40355e",
+          "#615485",
+          "#8477aa",
+          "#a89bcf",
+          "#cdc4e9",
+          "#efecfd"
+        ]
+      },
+      "dark-progress": {
+        "role": "secondary",
+        "displayName": "Dark Progress Violet",
+        "canonical": "#a58bff",
+        "tonalRamp": [
+          "#0d0423",
+          "#25114e",
+          "#432384",
+          "#6344b1",
+          "#8469d9",
+          "#a792f7",
+          "#cbc2fb",
+          "#eeecfe"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Dark Hairline / Track",
+        "canonical": "#3b2b4f",
+        "tonalRamp": [
+          "#0d0814",
+          "#261c32",
+          "#443557",
+          "#65557c",
+          "#8877a0",
+          "#ad9bc5",
+          "#d0c4e2",
+          "#f2ebfd"
+        ]
+      },
+      "dark-border-strong": {
+        "role": "neutral",
+        "displayName": "Dark Control Outline",
+        "canonical": "#8a76a3",
+        "tonalRamp": [
+          "#0e0814",
+          "#271c33",
+          "#453458",
+          "#67537e",
+          "#8a76a3",
+          "#ae9ac8",
+          "#d1c3e4",
+          "#f2eafe"
+        ]
+      },
+      "dark-destructive": {
+        "role": "error",
+        "displayName": "Dark Danger",
+        "canonical": "#ff7373",
+        "tonalRamp": [
+          "#200001",
+          "#460209",
+          "#760517",
+          "#a9202d",
+          "#d34b4f",
+          "#fb7474",
+          "#fcb6b2",
+          "#fee9e7"
+        ]
+      },
+      "dark-mastery-strong-pale": {
+        "role": "tertiary",
+        "displayName": "Dark Teal Tint",
+        "canonical": "#173a3e",
+        "tonalRamp": [
+          "#040d0e",
+          "#122528",
+          "#244347",
+          "#416469",
+          "#64888c",
+          "#88acb0",
+          "#b7d0d3",
+          "#e3f2f3"
+        ]
+      },
+      "dark-mastery-developing-pale": {
+        "role": "tertiary",
+        "displayName": "Dark Sun Tint",
+        "canonical": "#3a3226",
+        "tonalRamp": [
+          "#0d0b07",
+          "#26211a",
+          "#433c31",
+          "#655c4f",
+          "#887f71",
+          "#ada395",
+          "#d0c9c0",
+          "#f2eee8"
+        ]
+      },
+      "dark-mastery-weak-pale": {
+        "role": "tertiary",
+        "displayName": "Dark Pink Tint",
+        "canonical": "#42213a",
+        "tonalRamp": [
+          "#12070f",
+          "#2e1a29",
+          "#503148",
+          "#75506b",
+          "#99728e",
+          "#be96b3",
+          "#ddc1d5",
+          "#fae9f4"
+        ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Marketing hero headline only."
+        "purpose": "Marketing hero headline only (fluid 3rem–6rem)."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Marketing section headings."
+        "purpose": "Marketing section headings (fluid 2.25rem–3.5rem)."
       },
-      "title": {
-        "displayName": "Title",
-        "purpose": "Marketing step and feature titles."
+      "page-title": {
+        "displayName": "Page Title",
+        "purpose": "App PageHeader h1 and auth cards: 1.75rem, 2.125rem from 640px."
       },
-      "app-title": {
-        "displayName": "App Title",
-        "purpose": "App page heading (fixed rem)."
+      "section-title": {
+        "displayName": "Section Title",
+        "purpose": "App page sections, subject card names, empty-state titles."
       },
-      "app-section": {
-        "displayName": "App Section",
-        "purpose": "App panel headings."
+      "card-title": {
+        "displayName": "Card Title",
+        "purpose": "Card and panel headings; also the button size step."
       },
       "question": {
         "displayName": "Question",
-        "purpose": "Practice question stems."
+        "purpose": "Practice question stems: 1.125rem, 1.25rem from 640px, max 62ch."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "All reading text."
+        "purpose": "All reading text; lead text 1.0625rem."
       },
       "label": {
         "displayName": "Level Label",
-        "purpose": "Uppercase mastery level words only."
+        "purpose": "Uppercase mastery level words and the Up next state only."
+      },
+      "number": {
+        "displayName": "Number",
+        "purpose": "Scores, stats, counts and code tiles (the num utility)."
       }
     },
     "shadows": [
       {
+        "name": "card",
+        "value": "0 1px 2px rgb(43 18 64 / 0.04), 0 12px 32px -20px rgb(43 18 64 / 0.25)",
+        "purpose": "Cards, the question card, subject and auth cards. Dark: 0 1px 2px rgb(0 0 0 / 0.2), 0 12px 32px -20px rgb(0 0 0 / 0.6)."
+      },
+      {
+        "name": "raised",
+        "value": "0 12px 22px -14px rgb(43 18 64 / 0.55)",
+        "purpose": "Next-up row and task, dialogs, menus, hovered subject card. Dark: 0 12px 22px -14px rgb(0 0 0 / 0.7)."
+      },
+      {
+        "name": "action",
+        "value": "0 6px 14px -8px rgb(43 18 64 / 0.45)",
+        "purpose": "The tangerine primary button only. Dark: 0 6px 14px -8px rgb(0 0 0 / 0.6)."
+      },
+      {
         "name": "marketing-lift",
         "value": "0 10px 22px -8px rgb(43 18 64 / 0.6)",
-        "purpose": "Marketing buttons and the mastery board."
-      },
-      {
-        "name": "app-card",
-        "value": "0 1px 2px rgb(43 18 64 / 0.04), 0 12px 32px -20px rgb(43 18 64 / 0.25)",
-        "purpose": "The app's primary task surface (question card)."
-      },
-      {
-        "name": "next-up",
-        "value": "0 12px 22px -14px rgb(43 18 64 / 0.55)",
-        "purpose": "The topic to revise next, both tiers."
+        "purpose": "Marketing buttons; the board uses a deeper two-layer lift."
       }
     ],
     "motion": [
       {
-        "name": "ease-out",
+        "name": "ease-out-soft",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "All app state changes, 160\u2013220ms."
+        "purpose": "All app state changes, 150–250ms; bars fill over 500ms."
       },
       {
         "name": "ease-spring",
         "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
         "purpose": "Marketing hover lift only; never in the app tier."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation/transition-duration: 0.01ms",
+        "purpose": "Global prefers-reduced-motion rule in app/globals.css."
       }
     ],
     "breakpoints": [
       {
-        "name": "phone",
+        "name": "marketing-phone",
         "value": "480px"
       },
       {
-        "name": "app-nav-row",
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "marketing-tablet",
         "value": "720px"
       },
       {
-        "name": "app-two-column",
+        "name": "practice-two-column",
         "value": "960px"
       },
       {
-        "name": "marketing-desktop",
+        "name": "lg (app bar nav, auth split)",
         "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
       }
     ]
   },
   "components": [
     {
-      "name": "App Primary Button",
+      "name": "Primary Button",
       "kind": "button",
-      "refersTo": "button-primary-app",
-      "description": "The one primary action per app view (Check answer, Next question). Ink text on Tangerine.",
-      "html": "<button class=\"ds-btn-app\">Check answer <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M12 5l7 7-7 7\"/></svg></button>",
-      "css": ".ds-btn-app{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 22px;border:0;border-radius:999px;background:#ff7a3d;color:#2b1240;font:800 1.0625rem/1 'Baloo 2', system-ui, sans-serif;box-shadow:0 6px 14px -8px rgb(43 18 64/.45);cursor:pointer;transition:transform 220ms cubic-bezier(.16,1,.3,1),background-color 160ms cubic-bezier(.16,1,.3,1)}.ds-btn-app:hover{background:#f2672b;transform:translateY(-1px)}.ds-btn-app:active{background:#e85a1f;transform:translateY(1px) scale(.98)}.ds-btn-app:focus-visible{outline:3px solid #5532d6;outline-offset:3px}"
+      "refersTo": "button-primary",
+      "description": "The one tangerine action per app view. Ink text on Tangerine, action shadow.",
+      "html": "<button class=\"ds-btn-primary\">Practise topic <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M12 5l7 7-7 7\"/></svg></button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border:0;border-radius:9999px;background:#ff7a3d;color:#2b1240;font:800 0.975rem/1 'Baloo 2', Figtree, system-ui, sans-serif;box-shadow:0 6px 14px -8px rgb(43 18 64/.45);cursor:pointer;transition:transform 200ms cubic-bezier(.16,1,.3,1),background-color 200ms cubic-bezier(.16,1,.3,1)}.ds-btn-primary:hover{background:#f2672b;transform:translateY(-1px)}.ds-btn-primary:active{background:#e85a1f;transform:scale(.98)}.ds-btn-primary:focus-visible{outline:3px solid #5532d6;outline-offset:2px}"
     },
     {
-      "name": "App Secondary Button",
+      "name": "Outline Button",
       "kind": "button",
-      "refersTo": "button-secondary-app",
-      "description": "Secondary app actions (Skip, End session).",
-      "html": "<button class=\"ds-btn-app2\">Skip</button>",
-      "css": ".ds-btn-app2{min-height:48px;padding:0 22px;border:0;border-radius:999px;background:#fff;color:#2b1240;font:800 1.0625rem/1 'Baloo 2', system-ui, sans-serif;box-shadow:inset 0 0 0 2px #8f7f9c;cursor:pointer;transition:background-color 160ms cubic-bezier(.16,1,.3,1)}.ds-btn-app2:hover{background:#fffaf4}.ds-btn-app2:focus-visible{outline:3px solid #5532d6;outline-offset:3px}"
+      "refersTo": "button-outline",
+      "description": "Every non-primary action: card ground with a 2px inset outline.",
+      "html": "<button class=\"ds-btn-outline\">View plan</button>",
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;height:44px;padding:0 20px;border:0;border-radius:9999px;background:#fff;color:#2b1240;font:800 0.975rem/1 'Baloo 2', Figtree, system-ui, sans-serif;box-shadow:inset 0 0 0 2px #8f7f9c;cursor:pointer;transition:box-shadow 200ms cubic-bezier(.16,1,.3,1),background-color 200ms cubic-bezier(.16,1,.3,1)}.ds-btn-outline:hover{background:#f7f0e8;box-shadow:inset 0 0 0 2px #2b1240}.ds-btn-outline:active{transform:scale(.98)}.ds-btn-outline:focus-visible{outline:3px solid #5532d6;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "44px field, 1.5px control outline, Deep Grape focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"you@example.com\">",
+      "css": ".ds-input{height:44px;width:260px;padding:0 14px;border:1.5px solid #8f7f9c;border-radius:14px;background:#fff;color:#2b1240;font:500 0.95rem Figtree, system-ui, sans-serif;outline:none;transition:border-color 150ms,box-shadow 150ms}.ds-input::placeholder{color:#6b5579}.ds-input:hover{border-color:rgb(43 18 64/.6)}.ds-input:focus-visible{border-color:#5532d6;box-shadow:0 0 0 3px rgb(85 50 214/.25)}"
+    },
+    {
+      "name": "App Nav",
+      "kind": "nav",
+      "refersTo": "nav-item-current",
+      "description": "Baloo pill links; Lilac Pale with Deep Grape text for the current section.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\">Dashboard</a><a href=\"#\">Subjects</a><a href=\"#\">Progress</a><a href=\"#\">Plans</a></nav>",
+      "css": ".ds-nav{display:flex;gap:4px;padding:10px 12px;background:#fff;border-bottom:1px solid #ebe1d6}.ds-nav a{display:flex;align-items:center;min-height:44px;padding:0 16px;border-radius:9999px;font:700 0.975rem 'Baloo 2', Figtree, system-ui, sans-serif;color:#6b5579;text-decoration:none;transition:background-color 150ms,color 150ms}.ds-nav a:hover{background:#f7f0e8;color:#2b1240}.ds-nav a[aria-current=page]{background:#f1ebff;color:#5532d6}.ds-nav a:focus-visible{outline:3px solid #5532d6;outline-offset:2px}"
+    },
+    {
+      "name": "Unit Chip",
+      "kind": "chip",
+      "refersTo": "chip-unit",
+      "description": "Unit code label: Baloo 800 in a 10px rounded square, Lilac Pale with Deep Grape.",
+      "html": "<span class=\"ds-chip-unit\">WPH11</span>",
+      "css": ".ds-chip-unit{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:10px;background:#f1ebff;color:#5532d6;font:800 0.875rem/1 'Baloo 2', Figtree, system-ui, sans-serif;letter-spacing:.02em}"
+    },
+    {
+      "name": "Mastery Badge",
+      "kind": "chip",
+      "refersTo": "mastery-badge-strong",
+      "description": "Uppercase level word on the level's pale ground.",
+      "html": "<span class=\"ds-badge ds-badge-strong\">Strong</span> <span class=\"ds-badge ds-badge-dev\">Getting there</span> <span class=\"ds-badge ds-badge-weak\">Needs work</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:9999px;font:800 0.6875rem/1 Figtree, system-ui, sans-serif;letter-spacing:.05em;text-transform:uppercase}.ds-badge-strong{background:#e2f6f3;color:#0e766d}.ds-badge-dev{background:#fff5d1;color:#8a5a00}.ds-badge-weak{background:#ffe9f1;color:#b0124f}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White 28px card with a hairline and the card shadow.",
+      "html": "<div class=\"ds-card\"><h3>Physics</h3><p>3 units · 24 topics</p></div>",
+      "css": ".ds-card{width:280px;padding:24px;border:1px solid #ebe1d6;border-radius:28px;background:#fff;color:#2b1240;box-shadow:0 1px 2px rgb(43 18 64/.04),0 12px 32px -20px rgb(43 18 64/.25);transition:box-shadow 200ms cubic-bezier(.16,1,.3,1),transform 200ms cubic-bezier(.16,1,.3,1)}.ds-card:hover{transform:translateY(-1px);box-shadow:0 12px 22px -14px rgb(43 18 64/.55)}.ds-card h3{margin:0;font:800 1.25rem/1.25 'Baloo 2', Figtree, system-ui, sans-serif}.ds-card p{margin:4px 0 0;font:500 0.875rem Figtree, system-ui, sans-serif;color:#6b5579}"
+    },
+    {
+      "name": "Mastery Row (next up)",
+      "kind": "custom",
+      "refersTo": "row-next-up",
+      "description": "Signature row: code tile, name, score, bar, level word. Next up gets Tangerine Pale, the raised shadow and a bubblegum flag.",
+      "html": "<ul class=\"ds-rows\"><li class=\"ds-row ds-row-next\"><span class=\"ds-flag\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M12 5l7 7-7 7\"/></svg></span><span class=\"ds-tile ds-weak\">1.5</span><a href=\"#\" class=\"ds-name\">Momentum</a><span class=\"ds-score ds-weak-t\">38%</span><span class=\"ds-bar\"><i class=\"ds-weak\" style=\"width:38%\"></i></span><span class=\"ds-lvl ds-weak-t\">Needs work</span></li><li class=\"ds-row\"><span class=\"ds-tile ds-strong\">1.2</span><a href=\"#\" class=\"ds-name\">Motion graphs</a><span class=\"ds-score ds-strong-t\">86%</span><span class=\"ds-bar\"><i class=\"ds-strong\" style=\"width:86%\"></i></span><span class=\"ds-lvl\">Strong</span></li></ul>",
+      "css": ".ds-rows{list-style:none;margin:0;padding:16px 16px 16px 24px;display:grid;gap:8px;width:380px;background:#f7f0e8;border-radius:28px}.ds-row{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'tile name score' 'tile bar lvl';align-items:center;gap:8px 14px;padding:10px 14px 10px 10px;border-radius:20px;background:#fff;color:#2b1240;font-family:Figtree, system-ui, sans-serif}.ds-row-next{background:#ffe6d6;box-shadow:0 12px 22px -14px rgb(43 18 64/.55)}.ds-flag{position:absolute;left:-12px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:28px;height:28px;border-radius:9999px;background:#ff8fb8;color:#2b1240}.ds-tile{grid-area:tile;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;color:#2b1240;font:800 .9375rem/1 'Baloo 2', Figtree, system-ui, sans-serif;font-variant-numeric:tabular-nums}.ds-name{grid-area:name;font-weight:700;color:inherit;text-decoration:none}.ds-name:hover{text-decoration:underline}.ds-score{grid-area:score;text-align:right;font:800 1.25rem/1 'Baloo 2', Figtree, system-ui, sans-serif;font-variant-numeric:tabular-nums}.ds-bar{grid-area:bar;height:10px;border-radius:9999px;background:#ece3d9;overflow:hidden}.ds-bar i{display:block;height:100%;border-radius:9999px}.ds-lvl{grid-area:lvl;text-align:right;font-size:.75rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6b5579}.ds-weak{background:#ff8fb8}.ds-strong{background:#2ec4b6}.ds-weak-t{color:#b0124f}.ds-strong-t{color:#0e766d}"
+    },
+    {
+      "name": "Answer Option",
+      "kind": "custom",
+      "refersTo": "answer-option-selected",
+      "description": "Full-width labelled radio card: idle, selected (Deep Grape) and marked correct (teal ink).",
+      "html": "<div class=\"ds-opts\"><label class=\"ds-opt\"><span class=\"ds-let\">A</span>2.4 m s⁻¹</label><label class=\"ds-opt ds-sel\"><span class=\"ds-let\">B</span>4.8 m s⁻¹</label><label class=\"ds-opt ds-ok\"><span class=\"ds-let\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></span>9.6 m s⁻¹</label></div>",
+      "css": ".ds-opts{display:grid;gap:12px;width:360px}.ds-opt{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:16px;min-height:60px;padding:10px 16px 10px 10px;border-radius:20px;background:#fff;color:#2b1240;font:600 1rem Figtree, system-ui, sans-serif;box-shadow:inset 0 0 0 1.5px #ebe1d6;cursor:pointer;transition:box-shadow 200ms cubic-bezier(.16,1,.3,1),background-color 200ms cubic-bezier(.16,1,.3,1)}.ds-opt:hover{box-shadow:inset 0 0 0 1.5px #8f7f9c}.ds-let{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#f7f0e8;font:800 1.125rem/1 'Baloo 2', Figtree, system-ui, sans-serif}.ds-sel{background:#f1ebff;box-shadow:inset 0 0 0 2px #5532d6}.ds-sel:hover{box-shadow:inset 0 0 0 2px #5532d6}.ds-sel .ds-let{background:#5532d6;color:#fff}.ds-ok{background:#e2f6f3;box-shadow:inset 0 0 0 2px #0e766d}.ds-ok:hover{box-shadow:inset 0 0 0 2px #0e766d}.ds-ok .ds-let{background:#0e766d;color:#fff}"
     },
     {
       "name": "Marketing Primary Button",
       "kind": "button",
       "refersTo": "button-primary-marketing",
-      "description": "Marketing CTA on tangerine fields: Ink pill, springy lift.",
-      "html": "<button class=\"ds-btn-mkt\">Start practising free <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M12 5l7 7-7 7\"/></svg></button>",
-      "css": ".ds-btn-mkt{display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 26px;border:0;border-radius:999px;background:#2b1240;color:#fff;font:800 1.2rem/1 'Baloo 2', system-ui, sans-serif;box-shadow:0 10px 22px -8px rgb(43 18 64/.6);cursor:pointer;transition:transform 220ms cubic-bezier(.34,1.56,.64,1)}.ds-btn-mkt:hover{transform:translateY(-3px) rotate(-1deg)}.ds-btn-mkt:active{transform:translateY(1px) scale(.98)}.ds-btn-mkt:focus-visible{outline:3px solid #2b1240;outline-offset:3px}"
-    },
-    {
-      "name": "Unit Chip (app)",
-      "kind": "chip",
-      "refersTo": "chip-unit-app",
-      "description": "Paper code label in the app tier.",
-      "html": "<span class=\"ds-chip-unit\">WPH11</span>",
-      "css": ".ds-chip-unit{display:inline-flex;align-items:center;padding:3px 12px 1px;border-radius:12px;background:#f1ebff;color:#5532d6;font:800 1.05rem/1.2 'Baloo 2', system-ui, sans-serif;letter-spacing:.02em}"
-    },
-    {
-      "name": "Mastery Row (app)",
-      "kind": "custom",
-      "refersTo": "mastery-row",
-      "description": "Signature component: one topic's mastery. Shared by both tiers; app tier shown.",
-      "html": "<div class=\"ds-row ds-weak\"><span class=\"ds-code\">1.5</span><span class=\"ds-name\">Density, upthrust and viscosity</span><span class=\"ds-score\">38%</span><span class=\"ds-bar\"><span></span></span><span class=\"ds-level\">weak</span></div>",
-      "css": ".ds-row{--tone:#ff8fb8;--tone-text:#b0124f;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:'code name score' 'code bar level';align-items:center;column-gap:12px;row-gap:8px;padding:10px 12px;border-radius:20px;background:#ffe6d6;color:#2b1240;font-family:Figtree, system-ui, sans-serif;box-shadow:0 12px 22px -14px rgb(43 18 64/.55);max-width:360px}.ds-code{grid-area:code;align-self:stretch;display:grid;place-items:center;min-width:42px;border-radius:14px;background:var(--tone);font:800 .95rem 'Baloo 2', system-ui, sans-serif}.ds-name{grid-area:name;font-weight:700;line-height:1.25}.ds-score{grid-area:score;justify-self:end;font:800 1.25rem/1 'Baloo 2', system-ui, sans-serif;color:var(--tone-text)}.ds-bar{grid-area:bar;height:8px;border-radius:999px;background:rgb(43 18 64/.12);overflow:hidden}.ds-bar span{display:block;height:100%;width:38%;background:var(--tone);border-radius:inherit}.ds-level{grid-area:level;justify-self:end;font-size:.8125rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--tone-text)}"
-    },
-    {
-      "name": "Answer Option",
-      "kind": "input",
-      "refersTo": "answer-option-selected",
-      "description": "Multiple-choice answer card (native radio inside). Selected state shown.",
-      "html": "<label class=\"ds-opt\"><input type=\"radio\" name=\"ds\" checked><span class=\"ds-letter\">B</span><span>a small sphere moving at high speed</span></label>",
-      "css": ".ds-opt{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:16px;min-height:60px;padding:12px 18px 12px 12px;border-radius:20px;background:#fff;box-shadow:inset 0 0 0 1.5px #ebe1d6;font:600 1rem/1.4 Figtree, system-ui, sans-serif;color:#2b1240;cursor:pointer;max-width:520px}.ds-opt input{position:absolute;opacity:0}.ds-opt:hover{box-shadow:inset 0 0 0 1.5px #8f7f9c}.ds-opt:has(input:checked){background:#f1ebff;box-shadow:inset 0 0 0 2px #5532d6}.ds-opt:has(input:focus-visible){outline:3px solid #5532d6;outline-offset:3px}.ds-letter{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#f7f0e8;font:800 1.125rem 'Baloo 2', system-ui, sans-serif}.ds-opt:has(input:checked) .ds-letter{background:#5532d6;color:#fff}"
-    },
-    {
-      "name": "App Nav",
-      "kind": "nav",
-      "refersTo": "app-nav",
-      "description": "App bar section links; purple marks the current section.",
-      "html": "<nav class=\"ds-nav\"><a href=\"#\">Today</a><a href=\"#\" aria-current=\"page\">Subjects</a><a href=\"#\">Progress</a></nav>",
-      "css": ".ds-nav{display:flex;gap:4px;background:#fff;padding:10px;border-bottom:1px solid #ebe1d6;font:700 .9375rem Figtree, system-ui, sans-serif}.ds-nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;color:#6b5579;text-decoration:none;transition:background-color 160ms cubic-bezier(.16,1,.3,1)}.ds-nav a:hover{background:#f7f0e8;color:#2b1240}.ds-nav a[aria-current=page]{background:#f1ebff;color:#5532d6}.ds-nav a:focus-visible{outline:3px solid #5532d6;outline-offset:3px}"
-    },
-    {
-      "name": "Marked Correct Option",
-      "kind": "input",
-      "refersTo": "answer-option-correct",
-      "description": "Answer card after marking, correct.",
-      "html": "<div class=\"ds-opt-ok\"><span class=\"ds-ok-badge\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></span><span>a small sphere moving slowly with laminar flow</span></div>",
-      "css": ".ds-opt-ok{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:16px;min-height:60px;padding:12px 18px 12px 12px;border-radius:20px;background:#e2f6f3;box-shadow:inset 0 0 0 2px #0e766d;font:600 1rem/1.4 Figtree, system-ui, sans-serif;color:#2b1240;max-width:520px}.ds-ok-badge{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#0e766d;color:#fff}"
+      "description": "Landing page only: 56px Ink pill with a springy lift.",
+      "html": "<div class=\"ds-mk-field\"><button class=\"ds-btn-mk\">Start practising <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M12 5l7 7-7 7\"/></svg></button></div>",
+      "css": ".ds-mk-field{padding:32px;border-radius:36px;background-color:#ff7a3d;background-image:radial-gradient(rgb(43 18 64/.11) 1.7px,transparent 2px);background-size:26px 26px}.ds-btn-mk{display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 26px;border:0;border-radius:9999px;background:#2b1240;color:#fff;font:800 1.2rem/1 'Baloo 2', Figtree, system-ui, sans-serif;box-shadow:0 10px 22px -8px rgb(43 18 64/.6);cursor:pointer;transition:transform 220ms cubic-bezier(.34,1.56,.64,1),background-color 160ms cubic-bezier(.16,1,.3,1)}.ds-btn-mk:hover{transform:translateY(-3px);background:#3f2953}.ds-btn-mk:active{transform:translateY(0) scale(.98)}.ds-btn-mk:focus-visible{outline:3px solid #2b1240;outline-offset:3px}"
     }
   ],
   "narrative": {
     "northStar": "The Scoreboard Study Room",
-    "overview": "**Creative North Star: \"The Scoreboard Study Room\"**\n\nMarketing is the loud scoreboard that shows the game; the app is the quiet room where you play it. The mastery bar is the thread between them: the same chunky row, with its coloured code tile, score and level word, appears on the tangerine hero and in the product's side rail. A student should recognise it instantly in both places.\n\nThere is one component set and one type pairing, delivered in two tiers. The **marketing tier** (Persuade) is bold: tangerine fields with a dot grid, rising-bar skylines, ink type, purple and yellow accents, springy hovers. The **app tier** (Operate) is calm: a cream page, white panels and ink text. Colour appears only where it means something: orange for the action, purple for progress and \"where you are\", and the three mastery colours where a mastery level is shown. Everything else is neutral, because the product is used under exam pressure and has to stay calm.",
+    "overview": "Marketing is the loud scoreboard that shows the game; the app is the quiet room where you play it. The mastery row is the thread between them: the same chunky row, with its coloured code tile, score, bar and level word, appears on the ink board in the tangerine hero and on every progress, subject and practice screen in the product. A student should recognise it instantly in both places.\n\nThere is one component set and one type pairing, delivered in two tiers. The **app tier** (Operate) is the default token set in `app/globals.css`: a cream page, white cards, ink text, and a plum dark theme. Colour appears only where it means something: orange for the action, purple for progress and \"where you are\", and the three mastery colours where a mastery level is shown. Everything else is neutral, because the product is used under exam pressure and has to stay calm. The **marketing tier** (Persuade) is the landing page only, built in `components/landing/landing.module.css` from the brand colours: tangerine dot-grid fields, rising-bar skylines, a grape level path, subject identity colours, springy hovers.\n\nComponents are **chunky and friendly, never fussy**: pill buttons in Baloo, rounded-square tiles, heavy display numbers, clear state colours. `app/design-lab/system/` remains as the original reference the production app was migrated from; the shipped code is now the source of truth.",
     "keyCharacteristics": [
-      "Two tiers, one system: the tier is a class on the page root (`.marketing` or `.app`); components read only semantic tokens.",
-      "Mastery colours (teal, sun, bubblegum) mean strong, developing and weak, and nothing else, in both tiers.",
-      "Baloo 2 (heavy, rounded) carries headings, numbers and buttons; Figtree carries everything people read.",
-      "Text on orange is always ink."
+      "App tier is the default; the marketing tier lives only in the landing CSS module.",
+      "Mastery colours (teal, sun, bubblegum) mean strong, developing and weak, and nothing else.",
+      "Baloo 2 carries headings, numbers, buttons and nav; Figtree carries everything people read.",
+      "Text on orange is always ink.",
+      "Every screen works in light and plum dark, and at 375px wide."
     ],
     "rules": [
       {
         "name": "The Ink-on-Orange Rule",
-        "body": "Text on any orange (tangerine, its hover and pressed shades, or the deeper skyline bars) is full Ink, never white and never a lighter plum. White on tangerine is 2.59:1, Soft Plum is 4.15:1, and only Ink clears AA on the deepest bar orange (4.68:1). Hierarchy on orange comes from size and weight.",
+        "body": "Text on any orange (tangerine, its hover and pressed shades, the skyline bars, the auth panel) is full Ink, never white and never a lighter plum. White on tangerine is 2.59:1. Hierarchy on orange comes from size and weight.",
+        "section": "colors"
+      },
+      {
+        "name": "The Colour Has a Job Rule",
+        "body": "In the app, orange means \"do this\", purple means \"progress or where you are\", the mastery colours mean a mastery level, and red means danger. If a coloured element does none of those, it is neutral.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Orange Rule",
+        "body": "Each app view has one tangerine action; everything else is outline, secondary or ghost. When a page has a next task, that task's button is the orange one and the page header's action falls back to outline (the dashboard does exactly this). Signed-out, the app bar's \"Create free account\" is outline because the page owns the orange.",
         "section": "colors"
       },
       {
         "name": "The Mastery Monopoly Rule",
-        "body": "Teal, sun and bubblegum are reserved for mastery states in both tiers. No decoration, subject identity or illustration may use them.",
+        "body": "Teal, sun and bubblegum are reserved for mastery states in both tiers: tiles, bars, badges, session segments (sun = part marks), and the bubblegum next-up flag. The brand mark's three rising bars use them because they depict the three levels. No decoration, subject identity or illustration may.",
         "section": "colors"
       },
       {
         "name": "The Fixed Scale in the App Rule",
-        "body": "Marketing type is fluid (clamp). App type uses fixed rem steps at about a 1.2 ratio. Product screens don't need headings that grow and shrink with the window.",
+        "body": "Marketing type is fluid (clamp). App type uses fixed rem steps with a single step-up at 640px. Product screens don't need headings that grow and shrink with the window.",
         "section": "typography"
       },
       {
@@ -605,21 +939,23 @@
       },
       {
         "name": "The Flat Rail Rule",
-        "body": "In the app, secondary panels (the rail, feedback) are tonal: Sand on Cream, with no shadow. Only the primary task surface is raised.",
+        "body": "Secondary panels (the practice rail, score banner, mark scheme, explanation, empty states) are tonal: Sand on Cream, with no shadow. Only the primary task surface and cards are raised.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** put a tier class (`.marketing` or `.app`) on every page root, and build screens from the shared components and semantic tokens.",
+      "**Do** build app screens from the semantic tokens (`bg-primary`, `bg-selected`, `bg-progress`, `text-muted-foreground`, `bg-mastery-*`) and shared components (`PageHeader`, `EmptyState`, `Card`, the mastery set); never raw hex.",
       "**Do** use Ink for all text on orange, and size and weight for hierarchy there.",
-      "**Do** keep orange for the one primary action per view in the app, and purple for progress, selection and \"you are here\".",
-      "**Do** show mastery with the Mastery Row and the three mastery colours, and use their deep partners for any mastery text on light grounds.",
-      "**Do** keep app motion to state changes at 150\u2013250ms on `cubic-bezier(0.16, 1, 0.3, 1)`, and turn it off under `prefers-reduced-motion`."
+      "**Do** keep one tangerine action per app view; demote the rest to outline, secondary or ghost.",
+      "**Do** take mastery colours and labels from `masteryTone` and `masteryLabel`, using the `text` tones for mastery text on light grounds.",
+      "**Do** check every screen in plum dark mode and at 375px.",
+      "**Do** keep app motion to state changes at 150–250ms on `cubic-bezier(0.16, 1, 0.3, 1)`; the global reduced-motion rule turns it all off."
     ],
     "donts": [
-      "**Don't** put white or Soft Plum text on tangerine or its darker shades. White on `#ff7a3d` is 2.59:1, and Soft Plum is 4.15:1.",
-      "**Don't** use teal, sun or bubblegum for anything that isn't a mastery state, including subject colours, decoration or illustrations.",
-      "**Don't** bring marketing fields, skylines, dot grids, subject colours or springy easing into the app tier.",
+      "**Don't** put white or light plum text on tangerine or its darker shades. White on `#ff7a3d` is 2.59:1.",
+      "**Don't** use teal, sun or bubblegum for anything that isn't a mastery state, including subject colours, decoration or illustration.",
+      "**Don't** use mastery bubblegum or raspberry for errors; danger is the red `destructive` token.",
+      "**Don't** bring marketing fields, skylines, dot grids, subject identity colours or springy easing into the app tier.",
       "**Don't** add looping or decorative animation to product screens. The marketing board's one-time fill and lift is the most motion either tier gets.",
       "**Don't** use coloured side borders, zero-offset glows or hard block shadows on cards, rows or alerts."
     ]
