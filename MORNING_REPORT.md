@@ -162,5 +162,9 @@ Nothing.
   delete it if you care.
 - **Dev server**: after changing fonts in `app/layout.tsx` it served a stale layout until restarted (CLAUDE.md already
   mentions this for schema changes; it applies to the root layout too).
+- **Eyebrow lines**: kicker-style lines above page titles remain (dashboard greeting, subject, plan, admin and practice
+  pages, via `PageHeader`'s `eyebrow`). The impeccable craft floor discourages them, so the new DESIGN.md doesn't
+  present them as a pattern. Remove them if you agree.
+- **Duplicate values**: `success`/`warning` share hex values with the strong/developing mastery text tones.
 - **Formatting**: prettier isn't installed, so new files were hand-formatted to the 4-space/120-col style. Run prettier
   once it's available. `app/(app)/settings/password-form.tsx` already failed prettier before this work.
