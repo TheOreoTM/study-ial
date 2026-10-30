@@ -20,7 +20,7 @@ demo user for app pages) → fix what's broken → commit → tick.
 
 ## Landing
 
-- [ ] Landing page (`app/page.tsx`): bold tangerine/grape marketing tier from Playful Pop B
+- [x] Landing page (`app/page.tsx`): bold tangerine/grape marketing tier from Playful Pop B
 
 ## Route groups (app tier)
 
