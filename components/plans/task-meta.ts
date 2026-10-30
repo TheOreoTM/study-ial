@@ -18,11 +18,12 @@ export type TaskLike = {
     } | null;
 };
 
+/** Task types are neutral chips (icon + label): colour in the app is reserved for action, progress and mastery. */
 export const taskTypeMeta: Record<TaskType, { label: string; icon: LucideIcon; tone: string }> = {
-    LEARN: { label: "Learn", icon: BookOpen, tone: "bg-primary/10 text-primary" },
-    PRACTICE: { label: "Practice", icon: PencilLine, tone: "bg-accent text-accent-foreground" },
-    REVIEW: { label: "Review", icon: RotateCcw, tone: "bg-warning/15 text-amber-700 dark:text-warning" },
-    PAST_PAPER: { label: "Past paper", icon: FileText, tone: "bg-success/15 text-success" },
+    LEARN: { label: "Learn", icon: BookOpen, tone: "bg-muted text-foreground" },
+    PRACTICE: { label: "Practice", icon: PencilLine, tone: "bg-muted text-foreground" },
+    REVIEW: { label: "Review", icon: RotateCcw, tone: "bg-muted text-foreground" },
+    PAST_PAPER: { label: "Past paper", icon: FileText, tone: "bg-muted text-foreground" },
 };
 
 /** Where a task's main action goes: the topic page for LEARN, a practice session for PRACTICE/REVIEW. */

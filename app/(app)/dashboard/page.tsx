@@ -1,20 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, CalendarCheck, Flame, Target, Timer } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Target, Timer } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
-import { MasteryBadge, MasteryBar, summarizeMastery } from "@/components/mastery";
+import { MasteryBar, summarizeMastery } from "@/components/mastery";
 import { TodayTasks } from "@/components/plans/today-tasks";
+import { UnitChip } from "@/components/plans/unit-chip";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { revisionPriority } from "@/lib/mastery";
+import { masteryTone, revisionPriority } from "@/lib/mastery";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getFocusStats } from "@/lib/queries/focus";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { daysUntil, getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
 import { APP_TIME_ZONE } from "@/lib/time";
+import { cn } from "@/lib/utils";
+import { ReviseRow } from "./revise-row";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -54,6 +58,10 @@ export default async function DashboardPage() {
         .slice(0, 5);
     const upcomingExams = userUnits.filter((uu) => uu.examDate && daysUntil(uu.examDate, now) >= 0);
     const firstName = user.name.split(" ")[0];
+    // The one tangerine action: the first unfinished task in today's plan when there is one,
+    // otherwise the header's weak-topic practice.
+    const hasNextTask = todayTasks.some((t) => t.status === "PENDING");
+    const nextExam = upcomingExams[0];
 
     return (
         <>
@@ -62,7 +70,7 @@ export default async function DashboardPage() {
                 title={`${firstName}, here's today`}
                 actions={
                     practisable.length > 0 ? (
-                        <Button asChild>
+                        <Button asChild variant={hasNextTask ? "outline" : "default"}>
                             <Link href="/practice?mode=weak">
                                 <Target className="size-4" /> Practise weak topics
                             </Link>
@@ -78,157 +86,168 @@ export default async function DashboardPage() {
                 <Stat
                     icon={CalendarCheck}
                     label="Plan progress"
-                    value={plan ? `${plan.percentDone}%` : "—"}
+                    value={plan ? `${plan.percentDone}%` : "–"}
                     href={plan ? `/plans/${plan.id}` : "/plans/new"}
-                />
+                >
+                    {plan && <Progress value={plan.percentDone} className="mt-3 h-1.5" aria-label="Plan progress" />}
+                </Stat>
                 <Stat
                     icon={BookOpen}
                     label="Next exam"
-                    value={upcomingExams[0] ? daysUntil(upcomingExams[0].examDate!, now) : "—"}
-                    suffix={upcomingExams[0] ? `days · ${upcomingExams[0].unit.code}` : undefined}
+                    value={nextExam ? daysUntil(nextExam.examDate!, now) : "–"}
+                    suffix={nextExam ? `days · ${nextExam.unit.code}` : undefined}
                 />
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-                <div className="grid min-w-0 content-start gap-6">
-                    {/* Today's plan */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-start justify-between gap-4">
-                            <div>
-                                <CardTitle>Today&apos;s plan</CardTitle>
-                                <CardDescription>
-                                    {plan ? (
-                                        <>
-                                            {plan.title} · {plan.daysLeft} days to go
-                                        </>
-                                    ) : (
-                                        "No active study plan yet."
-                                    )}
-                                </CardDescription>
-                            </div>
-                            {plan && (
-                                <Button asChild variant="ghost" size="sm">
-                                    <Link href={`/plans/${plan.id}`}>
-                                        Full plan <ArrowRight className="size-4" />
-                                    </Link>
-                                </Button>
-                            )}
-                        </CardHeader>
-                        <CardContent>
-                            {plan ? (
-                                todayTasks.length > 0 ? (
-                                    <TodayTasks tasks={todayTasks} />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+                {/* Today's plan */}
+                <Card className="min-w-0 gap-5 lg:col-start-1">
+                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                        <div className="min-w-0">
+                            <CardTitle className="text-xl">Today&apos;s plan</CardTitle>
+                            <CardDescription className="mt-1">
+                                {plan ? (
+                                    <>
+                                        {plan.title} · {plan.daysLeft} days to go
+                                    </>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">
-                                        Nothing scheduled today. Take the rest — or get ahead with some weak-topic practice.
-                                    </p>
-                                )
-                            ) : (
-                                <EmptyState
-                                    icon={CalendarCheck}
-                                    title="Plan your revision"
-                                    description="Get a day-by-day plan that covers every topic before your exams and focuses on your weakest ones."
-                                    action={
-                                        <Button asChild>
-                                            <Link href="/plans/new">Create a study plan</Link>
-                                        </Button>
-                                    }
-                                />
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Units */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-start justify-between gap-4">
-                            <div>
-                                <CardTitle>Your units</CardTitle>
-                                <CardDescription>Mastery across each unit&apos;s topics.</CardDescription>
-                            </div>
-                            <Button asChild variant="ghost" size="sm">
-                                <Link href="/settings">Edit</Link>
+                                    "No active study plan yet."
+                                )}
+                            </CardDescription>
+                        </div>
+                        {plan && (
+                            <Button asChild variant="ghost" size="sm" className="-mt-1 -mr-2 shrink-0">
+                                <Link href={`/plans/${plan.id}`}>
+                                    Full plan <ArrowRight className="size-4" />
+                                </Link>
                             </Button>
-                        </CardHeader>
-                        <CardContent>
-                            {userUnits.length === 0 ? (
-                                <EmptyState
-                                    icon={BookOpen}
-                                    title="No units yet"
-                                    description="Add the units you're sitting to get started."
-                                    action={
-                                        <Button asChild>
-                                            <Link href="/settings">Add units</Link>
-                                        </Button>
-                                    }
-                                />
+                        )}
+                    </CardHeader>
+                    <CardContent className="px-4 sm:px-6">
+                        {plan ? (
+                            todayTasks.length > 0 ? (
+                                <TodayTasks tasks={todayTasks} />
                             ) : (
-                                <ul className="divide-y">
-                                    {userUnits.map(({ unit, examDate }) => {
-                                        const summary = summarizeMastery(unit.topics.map((t) => mastery.get(t.id)!));
-                                        const days = examDate ? daysUntil(examDate, now) : null;
-                                        return (
-                                            <li key={unit.id} className="py-3 first:pt-0 last:pb-0">
-                                                <Link
-                                                    href={`/subjects/${unit.subject.slug}/${unit.code.toLowerCase()}`}
-                                                    className="group block"
-                                                >
-                                                    <div className="mb-2 flex items-baseline justify-between gap-3">
-                                                        <div className="min-w-0">
-                                                            <span className="font-mono text-xs text-muted-foreground">
-                                                                {unit.code}
-                                                            </span>{" "}
-                                                            <span className="font-medium group-hover:underline">{unit.name}</span>
-                                                        </div>
-                                                        <span className="shrink-0 text-xs text-muted-foreground">
-                                                            {days === null ? "No exam date" : days >= 0 ? `${days} days` : "Exam passed"}
-                                                        </span>
-                                                    </div>
-                                                    <MasteryBar level={summary.level} score={summary.score} label={unit.name} />
-                                                </Link>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                                <p className="rounded-lg bg-muted px-4 py-3 text-muted-foreground">
+                                    Nothing scheduled today. Take the rest — or get ahead with some weak-topic practice.
+                                </p>
+                            )
+                        ) : (
+                            <EmptyState
+                                icon={CalendarCheck}
+                                title="Plan your revision"
+                                description="Get a day-by-day plan that covers every topic before your exams and focuses on your weakest ones."
+                                action={
+                                    <Button asChild variant="outline">
+                                        <Link href="/plans/new">Create a study plan</Link>
+                                    </Button>
+                                }
+                            />
+                        )}
+                    </CardContent>
+                </Card>
 
-                {/* Weak topics */}
-                <Card className="h-fit min-w-0">
-                    <CardHeader>
-                        <CardTitle>Revise next</CardTitle>
-                        <CardDescription>Your weakest and least-recent topics.</CardDescription>
+                {/* Weak topics: flat sand rail of mastery rows */}
+                <section
+                    aria-labelledby="revise-next"
+                    className="h-fit min-w-0 rounded-xl bg-muted p-4 sm:p-6 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                >
+                    <h2 id="revise-next" className="text-xl">
+                        Revise next
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">Your weakest and least-recent topics.</p>
+                    {weakTopics.length === 0 ? (
+                        <p className="mt-4 text-muted-foreground">
+                            No practice questions for your units yet. Browse{" "}
+                            <Link
+                                href="/subjects"
+                                className="font-bold text-foreground underline decoration-border-strong decoration-2 underline-offset-4 hover:decoration-current"
+                            >
+                                other subjects
+                            </Link>{" "}
+                            in the meantime.
+                        </p>
+                    ) : (
+                        <ul className="mt-4 grid gap-2.5">
+                            {weakTopics.map(({ topic, m }, i) => (
+                                <ReviseRow
+                                    key={topic.id}
+                                    href={`/practice?topic=${topic.id}`}
+                                    code={topic.code}
+                                    unitCode={topic.unit.code}
+                                    name={topic.name}
+                                    level={m.level}
+                                    score={m.score}
+                                    isNext={i === 0}
+                                />
+                            ))}
+                        </ul>
+                    )}
+                </section>
+
+                {/* Units */}
+                <Card className="min-w-0 gap-5 lg:col-start-1">
+                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                        <div className="min-w-0">
+                            <CardTitle className="text-xl">Your units</CardTitle>
+                            <CardDescription className="mt-1">Mastery across each unit&apos;s topics.</CardDescription>
+                        </div>
+                        <Button asChild variant="ghost" size="sm" className="-mt-1 -mr-2 shrink-0">
+                            <Link href="/settings">Edit</Link>
+                        </Button>
                     </CardHeader>
                     <CardContent>
-                        {weakTopics.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                No practice questions for your units yet. Browse{" "}
-                                <Link href="/subjects" className="underline underline-offset-4">
-                                    other subjects
-                                </Link>{" "}
-                                in the meantime.
-                            </p>
+                        {userUnits.length === 0 ? (
+                            <EmptyState
+                                icon={BookOpen}
+                                title="No units yet"
+                                description="Add the units you're sitting to get started."
+                                action={
+                                    <Button asChild variant={practisable.length > 0 ? "outline" : "default"}>
+                                        <Link href="/settings">Add units</Link>
+                                    </Button>
+                                }
+                            />
                         ) : (
                             <ul className="grid gap-2">
-                                {weakTopics.map(({ topic, m }) => (
-                                    <li key={topic.id} className="flex items-center gap-3 rounded-lg border p-3">
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium">{topic.name}</p>
-                                            <div className="mt-1 flex items-center gap-2">
-                                                <span className="font-mono text-xs text-muted-foreground">
-                                                    {topic.unit.code} · {topic.code}
-                                                </span>
-                                                <MasteryBadge level={m.level} score={m.score} showScore />
-                                            </div>
-                                        </div>
-                                        <Button asChild size="sm" variant="outline">
-                                            <Link href={`/practice?topic=${topic.id}`} aria-label={`Practise ${topic.name}`}>
-                                                Practise
+                                {userUnits.map(({ unit, examDate }) => {
+                                    const summary = summarizeMastery(unit.topics.map((t) => mastery.get(t.id)!));
+                                    const days = examDate ? daysUntil(examDate, now) : null;
+                                    const pct = summary.score === null ? null : Math.round(summary.score * 100);
+                                    return (
+                                        <li key={unit.id}>
+                                            <Link
+                                                href={`/subjects/${unit.subject.slug}/${unit.code.toLowerCase()}`}
+                                                className="group -mx-3 block rounded-lg px-3 py-3 outline-none transition-colors duration-200 ease-out-soft hover:bg-muted focus-visible:outline-3 focus-visible:outline-ring"
+                                            >
+                                                <div className="mb-2.5 flex items-center gap-3">
+                                                    <UnitChip code={unit.code} />
+                                                    <span className="min-w-0 flex-1 truncate font-bold">{unit.name}</span>
+                                                    <span
+                                                        className={cn(
+                                                            "num shrink-0 text-lg leading-none",
+                                                            pct === null ? "text-muted-foreground" : masteryTone[summary.level].text,
+                                                        )}
+                                                    >
+                                                        {pct === null ? "–" : `${pct}%`}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <MasteryBar
+                                                        level={summary.level}
+                                                        score={summary.score}
+                                                        label={unit.name}
+                                                        className="flex-1"
+                                                    />
+                                                    <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-muted-foreground">
+                                                        <CalendarDays className="size-3.5" aria-hidden />
+                                                        {days === null ? "No exam date" : days >= 0 ? `${days} days` : "Exam passed"}
+                                                    </span>
+                                                </div>
                                             </Link>
-                                        </Button>
-                                    </li>
-                                ))}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         )}
                     </CardContent>
@@ -244,24 +263,47 @@ function Stat({
     value,
     suffix,
     href,
+    children,
 }: {
     icon: React.ComponentType<{ className?: string }>;
     label: string;
     value: React.ReactNode;
     suffix?: string;
     href?: string;
+    children?: React.ReactNode;
 }) {
     const body = (
-        <div className="h-full rounded-xl border bg-card p-4 transition-colors hover:border-primary/40">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Icon className="size-3.5" />
-                {label}
+        <div
+            className={cn(
+                "h-full rounded-xl border bg-card p-4 sm:px-5",
+                href && "transition-[border-color] duration-200 ease-out-soft group-hover:border-border-strong",
+            )}
+        >
+            <div className="flex items-center gap-1.5 text-[0.8125rem] font-bold text-muted-foreground">
+                <Icon className="size-4 shrink-0" />
+                <span className="truncate">{label}</span>
+                {href && (
+                    <ArrowRight
+                        className="ml-auto hidden size-3.5 shrink-0 transition-transform sm:block duration-200 ease-out-soft group-hover:translate-x-0.5"
+                        aria-hidden
+                    />
+                )}
             </div>
-            <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-semibold tabular-nums">{value}</span>
-                {suffix && <span className="truncate text-xs text-muted-foreground">{suffix}</span>}
+            <div className="mt-2 flex min-w-0 items-baseline gap-1.5">
+                <span className="num text-[1.75rem] leading-none">{value}</span>
+                {suffix && <span className="truncate text-sm font-semibold text-muted-foreground">{suffix}</span>}
             </div>
+            {children}
         </div>
     );
-    return href ? <Link href={href}>{body}</Link> : body;
+    return href ? (
+        <Link
+            href={href}
+            className="group block rounded-xl outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+            {body}
+        </Link>
+    ) : (
+        body
+    );
 }

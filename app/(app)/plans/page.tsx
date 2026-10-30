@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarCheck, Plus } from "lucide-react";
+import { Archive, ArrowRight, CalendarCheck, CalendarDays, Plus } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { daysLeftLabel, formatDate, formatMinutes } from "@/components/plans/task-meta";
@@ -43,16 +43,16 @@ export default async function PlansPage() {
                 />
             ) : (
                 <div className="space-y-10">
-                    <section aria-labelledby="active-plans" className="space-y-3">
-                        <h2 id="active-plans" className="text-sm font-medium text-muted-foreground">
+                    <section aria-labelledby="active-plans" className="space-y-4">
+                        <h2 id="active-plans" className="text-xl">
                             Active
                         </h2>
                         {active.length === 0 ? (
-                            <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                            <p className="rounded-xl bg-muted p-6 text-center text-muted-foreground">
                                 No active plans. Create one, or unarchive an old plan.
                             </p>
                         ) : (
-                            <ul className="grid gap-3 md:grid-cols-2">
+                            <ul className="grid gap-4 md:grid-cols-2">
                                 {active.map((p) => (
                                     <PlanCard key={p.id} plan={p} />
                                 ))}
@@ -60,11 +60,11 @@ export default async function PlansPage() {
                         )}
                     </section>
                     {archived.length > 0 && (
-                        <section aria-labelledby="archived-plans" className="space-y-3">
-                            <h2 id="archived-plans" className="text-sm font-medium text-muted-foreground">
+                        <section aria-labelledby="archived-plans" className="space-y-4">
+                            <h2 id="archived-plans" className="text-xl">
                                 Archived
                             </h2>
-                            <ul className="grid gap-3 md:grid-cols-2">
+                            <ul className="grid gap-4 md:grid-cols-2">
                                 {archived.map((p) => (
                                     <PlanCard key={p.id} plan={p} />
                                 ))}
@@ -79,46 +79,51 @@ export default async function PlansPage() {
 
 function PlanCard({ plan }: { plan: PlanListItem }) {
     const archived = plan.status === "ARCHIVED";
+    const soon = plan.daysLeft <= 21 && plan.daysLeft >= 0;
     return (
         <li>
             <Link
                 href={`/plans/${plan.id}`}
                 className={cn(
-                    "group flex h-full flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm transition-colors outline-none hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                    archived && "bg-muted/30 shadow-none",
+                    "group flex h-full flex-col gap-5 rounded-xl border p-5 outline-none transition-[border-color,box-shadow] duration-200 ease-out-soft focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring sm:p-6",
+                    archived ? "border-transparent bg-muted" : "bg-card shadow-card hover:border-border-strong",
                 )}
             >
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <h3 className="truncate font-semibold group-hover:text-primary">{plan.title}</h3>
-                        <p className="mt-0.5 text-sm text-muted-foreground">Exam {formatDate(plan.examDate)}</p>
+                        <h3 className="truncate text-xl leading-tight">{plan.title}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">Exam {formatDate(plan.examDate)}</p>
                     </div>
                     <span
                         className={cn(
-                            "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
-                            archived
-                                ? "bg-muted text-muted-foreground"
-                                : plan.daysLeft <= 21 && plan.daysLeft >= 0
-                                  ? "bg-warning/15 text-amber-700 dark:text-warning"
-                                  : "bg-accent text-accent-foreground",
+                            "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-bold",
+                            archived ? "bg-card text-muted-foreground" : "bg-muted",
+                            !archived && (soon ? "text-warning" : "text-foreground"),
                         )}
                     >
+                        {archived ? <Archive className="size-3.5" aria-hidden /> : <CalendarDays className="size-3.5" aria-hidden />}
                         {archived ? "Archived" : daysLeftLabel(plan.daysLeft)}
                     </span>
                 </div>
-                <div className="mt-auto space-y-2">
-                    <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
-                        <span>
+                <div className="mt-auto">
+                    <div className="mb-2 flex items-baseline justify-between gap-3">
+                        <span className="text-sm font-semibold text-muted-foreground tabular-nums">
                             {plan.doneTasks} of {plan.totalTasks - plan.skippedTasks} sessions done
                         </span>
-                        <span>{plan.percentDone}%</span>
+                        <span className="num text-xl leading-none">{plan.percentDone}%</span>
                     </div>
-                    <Progress value={plan.percentDone} className="h-1.5" aria-label={`${plan.title} progress`} />
+                    <Progress value={plan.percentDone} className="h-2" aria-label={`${plan.title} progress`} />
                     {!archived && (
-                        <p className="text-xs text-muted-foreground">
-                            {plan.todayTasks > 0
-                                ? `Today: ${plan.todayTasks} ${plan.todayTasks === 1 ? "session" : "sessions"} · ${formatMinutes(plan.todayMinutes)}`
-                                : "Nothing scheduled today"}
+                        <p className="mt-4 flex items-center justify-between gap-3 border-t pt-4 text-sm font-semibold">
+                            <span className={plan.todayTasks > 0 ? undefined : "text-muted-foreground"}>
+                                {plan.todayTasks > 0
+                                    ? `Today: ${plan.todayTasks} ${plan.todayTasks === 1 ? "session" : "sessions"} · ${formatMinutes(plan.todayMinutes)}`
+                                    : "Nothing scheduled today"}
+                            </span>
+                            <ArrowRight
+                                className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-out-soft group-hover:translate-x-0.5"
+                                aria-hidden
+                            />
                         </p>
                     )}
                 </div>

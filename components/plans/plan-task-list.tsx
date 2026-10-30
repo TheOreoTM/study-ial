@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TaskItem } from "./task-item";
@@ -19,7 +19,16 @@ type Week<T> = { start: number; days: Day<T>[] };
 const WEEKS_STEP = 2;
 
 /** A plan's tasks grouped by week and day, with today highlighted and done/skip/undo inline. */
-export function PlanTaskList({ tasks, todayDay }: { tasks: TaskLike[]; todayDay: number }) {
+export function PlanTaskList({
+    tasks,
+    todayDay,
+    highlightNext = true,
+}: {
+    tasks: TaskLike[];
+    todayDay: number;
+    /** Give today's first pending task the view's primary action (off when another primary is on screen). */
+    highlightNext?: boolean;
+}) {
     const [items, setStatus] = useTaskStatuses(tasks);
     const [showPast, setShowPast] = useState(false);
     const [futureWeeks, setFutureWeeks] = useState(WEEKS_STEP);
@@ -38,6 +47,9 @@ export function PlanTaskList({ tasks, todayDay }: { tasks: TaskLike[]; todayDay:
         return out;
     }, [items]);
 
+    const nextId = highlightNext
+        ? items.find((t) => dayNum(t.date) === todayDay && t.status === "PENDING")?.id
+        : undefined;
     const thisWeek = weekOf(todayDay);
     const past = weeks.filter((w) => w.start < thisWeek);
     const upcoming = weeks.filter((w) => w.start >= thisWeek);
@@ -54,11 +66,14 @@ export function PlanTaskList({ tasks, todayDay }: { tasks: TaskLike[]; todayDay:
                   ? "Next week"
                   : `Week of ${formatDay(new Date(w.start * DAY_MS), { weekday: undefined })}`;
         return (
-            <section key={w.start} aria-label={label} className="space-y-3">
-                <div className="flex items-baseline justify-between gap-2 border-b pb-2">
-                    <h2 className="font-semibold">{label}</h2>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                        {done}/{all.length} done
+            <section key={w.start} aria-label={label} className="space-y-4">
+                <div className="flex items-baseline justify-between gap-2">
+                    <h2 className="text-xl">{label}</h2>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                        <span className="num text-foreground">
+                            {done}/{all.length}
+                        </span>{" "}
+                        done
                     </span>
                 </div>
                 {w.days.map((d) => {
@@ -69,33 +84,32 @@ export function PlanTaskList({ tasks, todayDay }: { tasks: TaskLike[]; todayDay:
                         <div
                             key={d.day}
                             id={isToday ? "today" : undefined}
-                            className={cn(
-                                "scroll-mt-20 rounded-xl p-2 sm:p-3",
-                                isToday ? "bg-accent/60 ring-1 ring-primary/30" : "",
-                            )}
+                            className={cn("scroll-mt-24", isToday && "-mx-2 rounded-xl bg-muted p-2 sm:-mx-4 sm:p-4")}
                         >
-                            <h3 className="mb-2 flex flex-wrap items-center gap-2 px-1 text-sm">
-                                <span className={cn("font-medium", isToday && "text-accent-foreground")}>
-                                    {formatDay(new Date(d.day * DAY_MS))}
-                                </span>
+                            <h3 className="mb-2.5 flex min-h-7 flex-wrap items-center gap-2 px-1 font-sans text-[0.9375rem] font-bold">
+                                <span>{formatDay(new Date(d.day * DAY_MS))}</span>
                                 {isToday && (
-                                    <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                                    <span className="inline-flex h-6 items-center rounded-full bg-selected px-2.5 font-display text-xs font-extrabold text-selected-foreground">
                                         Today
                                     </span>
                                 )}
                                 {overdue && (
-                                    <span className="rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-warning">
+                                    <span className="inline-flex h-6 items-center gap-1 rounded-full bg-muted px-2.5 text-xs font-bold text-warning">
+                                        <CalendarClock className="size-3.5" aria-hidden />
                                         Missed
                                     </span>
                                 )}
-                                <span className="ml-auto text-xs text-muted-foreground">{formatMinutes(minutes)}</span>
+                                <span className="ml-auto text-sm font-semibold text-muted-foreground">
+                                    {formatMinutes(minutes)}
+                                </span>
                             </h3>
-                            <ul className="space-y-2">
+                            <ul className={cn(isToday ? "space-y-3" : "space-y-2")}>
                                 {d.tasks.map((t) => (
                                     <TaskItem
                                         key={t.id}
                                         task={t}
                                         compact={!isToday}
+                                        next={t.id === nextId}
                                         onStatus={(s) => setStatus(t.id, s)}
                                     />
                                 ))}
@@ -108,10 +122,10 @@ export function PlanTaskList({ tasks, todayDay }: { tasks: TaskLike[]; todayDay:
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-10">
             {past.length > 0 && (
                 <div className="space-y-8">
-                    <Button variant="ghost" size="sm" onClick={() => setShowPast((v) => !v)} aria-expanded={showPast}>
+                    <Button variant="ghost" size="sm" className="-ml-3" onClick={() => setShowPast((v) => !v)} aria-expanded={showPast}>
                         {showPast ? <ChevronUp /> : <ChevronDown />}
                         {showPast ? "Hide earlier weeks" : `Show ${past.length} earlier ${past.length === 1 ? "week" : "weeks"}`}
                     </Button>
@@ -119,7 +133,7 @@ export function PlanTaskList({ tasks, todayDay }: { tasks: TaskLike[]; todayDay:
                 </div>
             )}
             {upcoming.length === 0 && (
-                <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                <p className="rounded-xl bg-muted p-6 text-center text-muted-foreground">
                     No more sessions scheduled in this plan.
                 </p>
             )}

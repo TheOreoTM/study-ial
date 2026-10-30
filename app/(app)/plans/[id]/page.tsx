@@ -9,10 +9,12 @@ import { daysLeftLabel, formatDate, formatMinutes } from "@/components/plans/tas
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toDayNumber } from "@/lib/planner";
+import { UnitChip } from "@/components/plans/unit-chip";
 import { unitCodeFromTitle } from "@/components/plans/unit-code";
 import { daysUntil, getPlan, percentDone } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
 import { localDay } from "@/lib/time";
+import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -50,73 +52,100 @@ export default async function PlanPage({ params }: Props) {
         ...new Set(
             tasks.map((t) => t.topic?.unit.code ?? (t.type === "PAST_PAPER" ? unitCodeFromTitle(t.title) : null)),
         ),
-    ].filter(Boolean);
+    ].filter((c): c is string => Boolean(c));
+
+    const showMissed = !archived && missed > 0;
+    const todayDone = today.filter((t) => t.status === "DONE").length;
 
     return (
         <>
-            <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
+            <Button asChild variant="ghost" size="sm" className="mb-4 -ml-3">
                 <Link href="/plans">
                     <ArrowLeft />
                     Study plans
                 </Link>
             </Button>
             <PageHeader
-                eyebrow={codes.length ? codes.sort().join(" · ") : undefined}
+                eyebrow={
+                    codes.length ? (
+                        <span className="flex flex-wrap gap-1.5">
+                            {codes.sort().map((c) => (
+                                <UnitChip key={c} code={c} size="sm" />
+                            ))}
+                        </span>
+                    ) : undefined
+                }
                 title={plan.title}
                 description={`${formatMinutes(plan.minutesPerDay)} a day, ${describeDays(plan.studyDays)}.`}
                 actions={<PlanActions planId={plan.id} title={plan.title} archived={archived} />}
             />
 
             {archived && (
-                <div className="mb-6 flex items-center gap-2 rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                    <ArchiveRestore className="size-4 shrink-0" aria-hidden />
+                <div className="mb-6 flex items-center gap-3 rounded-lg bg-muted px-4 py-3 text-muted-foreground">
+                    <ArchiveRestore className="size-5 shrink-0" aria-hidden />
                     This plan is archived, so its sessions don&apos;t show on your dashboard. Unarchive it from the menu.
                 </div>
             )}
 
-            <div className="mb-8 grid gap-3 sm:grid-cols-3">
+            <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <Stat label="Exam">
-                    <p className="text-2xl font-semibold tabular-nums">{daysLeftLabel(daysLeft)}</p>
-                    <p className="text-sm text-muted-foreground">{formatDate(plan.examDate)}</p>
+                    {daysLeft > 1 ? (
+                        <p className="flex items-baseline gap-1.5">
+                            <span className="num text-[1.75rem] leading-none">{daysLeft}</span>
+                            <span className="font-semibold text-muted-foreground">days to go</span>
+                        </p>
+                    ) : (
+                        <p className="num text-[1.75rem] leading-none">{daysLeftLabel(daysLeft)}</p>
+                    )}
+                    <p className="mt-2 text-sm text-muted-foreground">{formatDate(plan.examDate)}</p>
                 </Stat>
-                <Stat label="Progress">
-                    <p className="text-2xl font-semibold tabular-nums">{pct}%</p>
-                    <Progress value={pct} className="mt-2 h-1.5" aria-label="Plan progress" />
-                    <p className="mt-1.5 text-xs text-muted-foreground tabular-nums">
-                        {done} of {tasks.length - skipped} sessions done
+                <Stat label="Progress" className="order-last col-span-2 sm:order-none sm:col-span-1">
+                    <p className="num text-[1.75rem] leading-none">{pct}%</p>
+                    <Progress value={pct} className="mt-3 h-2" aria-label="Plan progress" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        <span className="tabular-nums">
+                            {done} of {tasks.length - skipped}
+                        </span>{" "}
+                        sessions done
                     </p>
                 </Stat>
                 <Stat label="Today">
                     {today.length > 0 ? (
                         <>
-                            <p className="text-2xl font-semibold tabular-nums">
-                                {today.filter((t) => t.status === "DONE").length}/{today.length}
+                            <p className="flex items-baseline gap-1.5">
+                                <span className="num text-[1.75rem] leading-none">
+                                    {todayDone}/{today.length}
+                                </span>
+                                <span className="font-semibold text-muted-foreground">done</span>
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="mt-2 text-sm text-muted-foreground">
                                 {formatMinutes(todayMinutes)} ·{" "}
-                                <a href="#today" className="font-medium text-primary hover:underline">
+                                <a
+                                    href="#today"
+                                    className="font-bold text-foreground underline decoration-border-strong decoration-2 underline-offset-4 hover:decoration-current"
+                                >
                                     Jump to today
                                 </a>
                             </p>
                         </>
                     ) : (
                         <>
-                            <p className="text-2xl font-semibold">Rest day</p>
-                            <p className="text-sm text-muted-foreground">Nothing scheduled today.</p>
+                            <p className="num text-[1.75rem] leading-none">Rest day</p>
+                            <p className="mt-2 text-sm text-muted-foreground">Nothing scheduled today.</p>
                         </>
                     )}
                 </Stat>
             </div>
 
-            {!archived && missed > 0 && (
-                <div className="mb-8 flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            {showMissed && (
+                <div className="mb-8 flex flex-col gap-4 rounded-xl bg-muted p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                     <div className="flex gap-3">
-                        <CalendarClock className="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-warning" aria-hidden />
+                        <CalendarClock className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
                         <div>
-                            <p className="font-medium">
+                            <p className="font-display text-lg leading-tight font-extrabold">
                                 {missed} missed {missed === 1 ? "session" : "sessions"}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="mt-1 text-muted-foreground">
                                 Falling behind happens. Reschedule to spread the remaining work from today — finished
                                 sessions are kept.
                             </p>
@@ -127,27 +156,27 @@ export default async function PlanPage({ params }: Props) {
             )}
 
             {plan.summary && (
-                <div className="mb-8 flex gap-3 rounded-xl border bg-card p-4 text-sm leading-relaxed">
-                    <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                <div className="mb-8 flex gap-3 rounded-xl bg-muted p-4 leading-relaxed sm:p-5">
+                    <Sparkles className="mt-1 size-4 shrink-0 text-selected-foreground" aria-hidden />
                     <p>{plan.summary}</p>
                 </div>
             )}
 
             {tasks.length === 0 ? (
-                <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                <p className="rounded-xl bg-muted p-6 text-center text-muted-foreground">
                     This plan has no sessions. Try rescheduling it.
                 </p>
             ) : (
-                <PlanTaskList tasks={tasks} todayDay={todayDay} />
+                <PlanTaskList tasks={tasks} todayDay={todayDay} highlightNext={!archived && !showMissed} />
             )}
         </>
     );
 }
 
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
+function Stat({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
     return (
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-            <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
+        <div className={cn("min-w-0 rounded-xl border bg-card p-4 sm:px-5", className)}>
+            <p className="mb-2 text-[0.8125rem] font-bold text-muted-foreground">{label}</p>
             {children}
         </div>
     );

@@ -14,6 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { createPlan } from "@/app/(app)/plans/actions";
 import { formatMinutes } from "./task-meta";
+import { UnitChip } from "./unit-chip";
 
 export type FormUnit = {
     unitId: string;
@@ -128,29 +129,39 @@ export function NewPlanForm({
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ul className="divide-y rounded-lg border">
+                    <ul className="grid gap-2.5">
                         {units.map((u) => {
                             const on = selected.has(u.unitId);
                             const id = `unit-${u.unitId}`;
                             return (
-                                <li key={u.unitId} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4">
+                                <li
+                                    key={u.unitId}
+                                    className={cn(
+                                        "flex flex-col gap-3 rounded-lg p-4 transition-[background-color,box-shadow] duration-200 ease-out-soft sm:flex-row sm:items-center sm:gap-4",
+                                        on
+                                            ? "bg-selected shadow-[inset_0_0_0_2px_var(--selected-foreground)]"
+                                            : "bg-card shadow-[inset_0_0_0_1.5px_var(--border)] hover:shadow-[inset_0_0_0_1.5px_var(--border-strong)]",
+                                    )}
+                                >
                                     <div className="flex min-w-0 flex-1 items-start gap-3">
                                         <Checkbox
                                             id={id}
-                                            className="mt-0.5"
+                                            className="mt-0.5 size-6 rounded-[8px]"
                                             checked={on}
                                             onCheckedChange={(c) => toggleUnit(u.unitId, c === true)}
                                         />
                                         <Label htmlFor={id} className="block min-w-0 cursor-pointer font-normal">
-                                            <span className="font-medium">{u.code}</span>{" "}
-                                            <span className="text-muted-foreground">· {u.subjectName}</span>
-                                            <span className="block text-sm text-muted-foreground">
+                                            <span className="flex flex-wrap items-center gap-2">
+                                                <UnitChip code={u.code} size="sm" className={on ? "bg-card" : undefined} />
+                                                <span className="font-bold">{u.subjectName}</span>
+                                            </span>
+                                            <span className="mt-1 block text-sm text-muted-foreground">
                                                 {u.name} · {u.topicCount} topics
                                             </span>
                                         </Label>
                                     </div>
-                                    <div className="flex items-center gap-2 pl-7 sm:pl-0">
-                                        <Label htmlFor={`${id}-exam`} className="text-xs whitespace-nowrap text-muted-foreground">
+                                    <div className="flex items-center gap-2 pl-9 sm:pl-0">
+                                        <Label htmlFor={`${id}-exam`} className="text-sm whitespace-nowrap text-muted-foreground">
                                             Exam date
                                         </Label>
                                         <Input
@@ -202,7 +213,7 @@ export function NewPlanForm({
                     <div className="space-y-3">
                         <div className="flex items-baseline justify-between gap-2">
                             <Label id="minutes-label">Time per study day</Label>
-                            <span className="text-sm font-medium tabular-nums">{formatMinutes(minutes)}</span>
+                            <span className="num text-xl leading-none">{formatMinutes(minutes)}</span>
                         </div>
                         <Slider
                             aria-labelledby="minutes-label"
@@ -212,14 +223,14 @@ export function NewPlanForm({
                             value={[minutes]}
                             onValueChange={([v]) => setMinutes(v)}
                         />
-                        <div className="flex justify-between text-xs text-muted-foreground">
+                        <div className="flex justify-between text-sm text-muted-foreground">
                             <span>30 min</span>
                             <span>4 h</span>
                         </div>
                     </div>
 
                     <fieldset className="space-y-3">
-                        <legend className="text-sm leading-none font-medium">Study days</legend>
+                        <legend className="text-sm leading-none font-bold">Study days</legend>
                         <div className="flex flex-wrap gap-2">
                             {DAYS.map((d) => {
                                 const on = studyDays.includes(d.value);
@@ -231,10 +242,10 @@ export function NewPlanForm({
                                         aria-label={d.long}
                                         onClick={() => toggleDay(d.value)}
                                         className={cn(
-                                            "h-9 min-w-12 rounded-full border px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                                            "h-11 min-w-[3.25rem] rounded-full px-3 font-display text-[0.9375rem] font-extrabold transition-[background-color,box-shadow,color] duration-200 ease-out-soft outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",
                                             on
-                                                ? "border-primary bg-primary text-primary-foreground"
-                                                : "bg-background text-muted-foreground hover:bg-muted",
+                                                ? "bg-selected text-selected-foreground shadow-[inset_0_0_0_2px_var(--selected-foreground)]"
+                                                : "bg-card text-muted-foreground shadow-[inset_0_0_0_1.5px_var(--border)] hover:text-foreground hover:shadow-[inset_0_0_0_1.5px_var(--border-strong)]",
                                         )}
                                     >
                                         {d.short}
@@ -245,10 +256,10 @@ export function NewPlanForm({
                     </fieldset>
 
                     {preview && (
-                        <p className="rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground" aria-live="polite">
+                        <p className="rounded-lg bg-muted px-4 py-3 text-muted-foreground" aria-live="polite">
                             {preview.days > 0 ? (
                                 <>
-                                    About <span className="font-medium text-foreground">{preview.days} study days</span> over{" "}
+                                    About <span className="font-bold text-foreground">{preview.days} study days</span> over{" "}
                                     {preview.weeks} {preview.weeks === 1 ? "week" : "weeks"} — roughly{" "}
                                     {formatMinutes(Math.round((preview.days * minutes) / 60) * 60)} of revision.
                                 </>
@@ -268,8 +279,8 @@ export function NewPlanForm({
             )}
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    {aiAvailable && <Sparkles className="size-3.5" aria-hidden />}
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    {aiAvailable && <Sparkles className="size-4 shrink-0 text-selected-foreground" aria-hidden />}
                     {aiAvailable
                         ? "We'll also write a short personalised summary for your plan."
                         : "Built from your mastery scores — you can reschedule any time."}
