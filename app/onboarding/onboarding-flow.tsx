@@ -63,7 +63,7 @@ export function OnboardingFlow({
             {step === 0 ? (
                 <>
                     <div>
-                        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome, {firstName} 👋</h1>
+                        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome, {firstName}</h1>
                         <p className="mt-2 text-muted-foreground">
                             Which units are you taking? We&apos;ll tailor practice, your dashboard and study plans to
                             them. You can change this later.

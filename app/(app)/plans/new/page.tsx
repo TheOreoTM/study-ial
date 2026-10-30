@@ -7,6 +7,8 @@ import { NewPlanForm } from "@/components/plans/new-plan-form";
 import { Button } from "@/components/ui/button";
 import { aiEnabled } from "@/lib/ai";
 import { dayKey } from "@/lib/planner";
+import { localDayKey } from "@/lib/time";
+import { upcomingExamSessions } from "@/components/units/exam-sessions";
 import { getPlannableUnits } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
 
@@ -41,8 +43,9 @@ export default async function NewPlanPage() {
                 />
             ) : (
                 <NewPlanForm
-                    today={dayKey(new Date())}
+                    today={localDayKey()}
                     aiAvailable={aiEnabled}
+                    suggestedExamDate={upcomingExamSessions()[0]?.date}
                     units={units.map((u) => ({
                         unitId: u.unitId,
                         code: u.code,

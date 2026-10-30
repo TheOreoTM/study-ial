@@ -39,16 +39,31 @@ const DEFAULT_DAYS = [0, 1, 2, 3, 4, 6];
 
 const dayNum = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
 
-export function NewPlanForm({ units, today, aiAvailable }: { units: FormUnit[]; today: string; aiAvailable: boolean }) {
+export function NewPlanForm({
+    units,
+    today,
+    aiAvailable,
+    suggestedExamDate,
+}: {
+    units: FormUnit[];
+    today: string;
+    aiAvailable: boolean;
+    /** Next exam session's date, used for units without a (future) exam date yet */
+    suggestedExamDate?: string;
+}) {
     const router = useRouter();
     const [pending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
 
-    const [selected, setSelected] = useState<Set<string>>(
-        () => new Set(units.filter((u) => u.examDate && u.examDate > today).map((u) => u.unitId)),
-    );
+    // Default to units with an upcoming exam; if none have one yet, assume the plan is for all of them.
+    const [selected, setSelected] = useState<Set<string>>(() => {
+        const dated = units.filter((u) => u.examDate && u.examDate > today);
+        return new Set((dated.length > 0 ? dated : units).map((u) => u.unitId));
+    });
     const [examDates, setExamDates] = useState<Record<string, string>>(() =>
-        Object.fromEntries(units.map((u) => [u.unitId, u.examDate])),
+        Object.fromEntries(
+            units.map((u) => [u.unitId, u.examDate && u.examDate > today ? u.examDate : (suggestedExamDate ?? u.examDate)]),
+        ),
     );
     const [title, setTitle] = useState("");
     const [startDate, setStartDate] = useState(today);
