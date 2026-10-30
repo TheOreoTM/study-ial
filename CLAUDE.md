@@ -70,4 +70,10 @@ prisma/
 - UI: use `PageHeader`, `EmptyState`, shadcn `Card`, etc. Colour tokens only (`bg-primary`, `text-muted-foreground`,
   `text-success`, `text-warning`, `text-destructive`) — no raw hex. Must look right in dark mode and at 375px wide.
 - Mastery levels/colours come from `lib/mastery.ts` (`masteryLabel`, `masteryTone`) — don't reinvent them.
+- **Dates**: calendar-day logic ("today", plan task dates, streaks, countdowns) uses `lib/time.ts`
+  (`localDay`, `localDayKey`, Maldives time zone) — never raw UTC days or the server's local time.
+- **Redirect targets** from query params go through `safeRedirect` (`lib/safe-redirect.ts`).
+- **Admins**: `ADMIN_EMAILS` are promoted lazily in `getUser()` only when `emailVerified` is true. Never grant roles
+  from unverified input.
+- After a schema change, restart `pnpm dev` — the Prisma client is cached on `globalThis` across hot reloads.
 - Formatting: 4-space indent, double quotes, 120 cols (see `.prettierrc`).
