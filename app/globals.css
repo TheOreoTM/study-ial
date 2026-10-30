@@ -120,7 +120,7 @@
     --progress: #5532d6;
     --track: #ece3d9;
 
-    --destructive: #b0124f; /* 6.9:1 on white */
+    --destructive: #c0262d; /* danger red, distinct from mastery raspberry; 5.9:1 on white */
     --destructive-foreground: #ffffff;
     --success: #0e766d;
     --warning: #8a5a00;
@@ -159,7 +159,7 @@
     --primary-hover: #ff8c57;
     --primary-press: #f2672b;
     --primary-foreground: #2b1240;
-    --primary-soft: #3f2333; /* tangerine glow on plum */
+    --primary-soft: #4a2238; /* tangerine glow on plum */
 
     --secondary: #2f2041;
     --secondary-foreground: var(--foreground);
@@ -172,7 +172,7 @@
     --progress: #a58bff;
     --track: #3b2b4f;
 
-    --destructive: #ff8fb8;
+    --destructive: #ff7373; /* distinct from mastery bubblegum; ink on it ≈6:1 */
     --destructive-foreground: #2b1240;
     --success: #2ec4b6;
     --warning: #ffd23f;

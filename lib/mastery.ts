@@ -54,7 +54,7 @@ export const masteryLabel: Record<MasteryLevel, string> = {
 export const masteryTone: Record<MasteryLevel, { badge: string; bar: string; fill: string; text: string; pale: string }> = {
     new: {
         badge: "bg-muted text-muted-foreground",
-        bar: "bg-border-strong/40",
+        bar: "bg-border-strong/55",
         fill: "bg-muted text-muted-foreground",
         text: "text-muted-foreground",
         pale: "bg-muted",

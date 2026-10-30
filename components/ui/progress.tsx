@@ -21,7 +21,8 @@ function Progress({
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
         className="h-full w-full flex-1 rounded-full bg-progress transition-transform duration-500 ease-out-soft"
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+        // Any progress at all stays visible (a 1% plan still shows a sliver).
+        style={{ transform: `translateX(-${100 - (value ? Math.max(value, 3) : 0)}%)` }}
       />
     </ProgressPrimitive.Root>
   )

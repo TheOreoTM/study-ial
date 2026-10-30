@@ -40,7 +40,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                                 <Button asChild variant="ghost" size="sm">
                                     <Link href="/sign-in">Sign in</Link>
                                 </Button>
-                                <Button asChild size="sm" className="hidden sm:inline-flex">
+                                {/* Outline: the page itself owns the one orange action. */}
+                                <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
                                     <Link href="/sign-up">Create free account</Link>
                                 </Button>
                             </>
