@@ -14,7 +14,7 @@ demo user for app pages) → fix what's broken → commit → tick.
 
 ## Shared UI
 
-- [ ] `components/ui/*` (button, card, input, badge, tabs, dialog, etc.) restyled to the app tier
+- [x] `components/ui/*` (button, card, input, badge, tabs, dialog, etc.) restyled to the app tier
 - [ ] `components/shell/*` + app layout (top app bar, pill nav, mobile menu), `Logo`, `PageHeader`, `EmptyState`
 - [ ] `components/mastery/*` (badge, bar, breakdown) in the mastery colours
 
