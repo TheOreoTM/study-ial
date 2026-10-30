@@ -28,7 +28,7 @@ demo user for app pages) → fix what's broken → commit → tick.
 - [x] Onboarding
 - [x] Dashboard
 - [x] Subjects: index, subject, unit, topic
-- [ ] Practice
+- [x] Practice
 - [x] Progress
 - [x] Plans: list, new, detail
 - [x] Focus
