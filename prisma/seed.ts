@@ -32,6 +32,8 @@ async function seedCurriculum() {
 async function seedQuestions() {
     const topics = await db.topic.findMany({ select: { id: true, slug: true, unitId: true, unit: { select: { code: true } } } });
     const topicKey = new Map(topics.map((t) => [`${t.unit.code}/${t.slug}`, t]));
+    let drafts = 0;
+    let kept = 0;
 
     for (const q of questions) {
         const topic = topicKey.get(`${q.unitCode}/${q.topicSlug}`);
@@ -49,9 +51,28 @@ async function seedQuestions() {
             markScheme: q.markScheme,
             explanation: q.explanation,
             source: "ORIGINAL" as const,
-            status: "PUBLISHED" as const,
         };
-        const saved = await db.question.upsert({ where: { seedKey: q.seedKey }, create: { ...data, seedKey: q.seedKey }, update: data });
+        const status = q.status ?? "PUBLISHED";
+        let saved;
+        if (status === "DRAFT") {
+            // Draft content waits for an admin. Never publish it, and once an admin has published it the DB copy
+            // (with any corrections) is the source of truth, so leave it alone.
+            const existing = await db.question.findUnique({ where: { seedKey: q.seedKey }, select: { id: true, status: true } });
+            if (existing?.status === "PUBLISHED") {
+                kept++;
+                continue;
+            }
+            saved = existing
+                ? await db.question.update({ where: { id: existing.id }, data })
+                : await db.question.create({ data: { ...data, status, seedKey: q.seedKey } });
+            drafts++;
+        } else {
+            saved = await db.question.upsert({
+                where: { seedKey: q.seedKey },
+                create: { ...data, status, seedKey: q.seedKey },
+                update: { ...data, status },
+            });
+        }
 
         if (q.options) {
             for (const o of q.options) {
@@ -63,7 +84,7 @@ async function seedQuestions() {
             }
         }
     }
-    console.log(`✓ ${questions.length} questions`);
+    console.log(`✓ ${questions.length} questions (${drafts} drafts for review, ${kept} already published and left as is)`);
 }
 
 /** A ready-to-use local account. Never runs in production. */

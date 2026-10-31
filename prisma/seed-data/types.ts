@@ -38,4 +38,15 @@ export type SeedQuestion = {
     markScheme: string; // markdown, one marking point per line, each ending with "(1)"
     explanation?: string;
     options?: { label: "A" | "B" | "C" | "D"; text: string; isCorrect: boolean }[]; // MCQ only, exactly one correct
+    // DRAFT questions wait for an admin to review and publish them; the seed never publishes them and stops
+    // overwriting them once published. Defaults to PUBLISHED (the hand-checked Physics bank).
+    status?: "DRAFT" | "PUBLISHED";
+};
+
+export type SeedFlashcard = {
+    seedKey: string; // stable unique id, e.g. "che-wch11-amount-of-substance-fc-01"
+    unitCode: string;
+    topicSlug: string;
+    front: string; // markdown + $LaTeX$: a prompt, term or equation to recall
+    back: string; // markdown + $LaTeX$: the answer, kept short enough to check at a glance
 };
