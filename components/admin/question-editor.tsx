@@ -263,8 +263,9 @@ export function QuestionEditor({
             </Section>
 
             <Section title="Details">
+                {/* Phones: Type and Status get full rows so "Multiple choice" and "Published" aren't cut off. */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <Field id="q-type" label="Type">
+                    <Field id="q-type" label="Type" className="col-span-2 sm:col-span-1">
                         <Select
                             value={v.type}
                             onValueChange={(t) => {
@@ -316,7 +317,7 @@ export function QuestionEditor({
                             onChange={(e) => set("marks", e.target.value)}
                         />
                     </Field>
-                    <Field id="q-status" label="Status">
+                    <Field id="q-status" label="Status" className="col-span-2 sm:col-span-1">
                         <Select value={v.status} onValueChange={(s) => set("status", s as EditorValues["status"])}>
                             <SelectTrigger id="q-status" className="w-full">
                                 <SelectValue />
@@ -552,14 +553,15 @@ export function QuestionEditor({
                         ))}
                     </ul>
                 ) : null}
-                <div className="flex flex-wrap items-center gap-2">
+                {/* Phones: the main save on its own full-width row, then Delete and "Save & add another". */}
+                <div className="grid grid-cols-[auto_1fr] gap-2 sm:flex sm:flex-wrap sm:items-center">
                     {questionId && (
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="text-destructive hover:text-destructive"
+                                    className="text-destructive hover:text-destructive max-sm:justify-self-start"
                                 >
                                     <Trash2 /> Delete
                                 </Button>
@@ -588,10 +590,16 @@ export function QuestionEditor({
                         </Dialog>
                     )}
                     <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">Ctrl/⌘ + S to save</span>
-                    <Button type="button" variant="outline" onClick={() => save("new")} disabled={saving}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => save("new")}
+                        disabled={saving}
+                        className={cn(!questionId && "col-span-2")}
+                    >
                         Save &amp; add another
                     </Button>
-                    <Button type="submit" disabled={saving} className="max-sm:ml-auto">
+                    <Button type="submit" disabled={saving} className="order-first col-span-2 sm:order-none">
                         {saving && <Loader2 className="animate-spin" />}
                         {questionId ? "Save changes" : "Create question"}
                     </Button>
