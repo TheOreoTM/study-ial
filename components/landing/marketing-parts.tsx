@@ -138,11 +138,21 @@ export function StepFragment({ index }: { index: number }) {
     if (index === 0) {
         return (
             <div className={cx(s.frag, s.fragRow)} aria-hidden="true">
-                <span className={s.fragUnit}>{m.unitCode}</span>
+                <span className={s.fragPick}>
+                    <span className={s.fragUnit}>{m.unitCode}</span>
+                    <span className={s.fragTick}>
+                        <Check size={12} strokeWidth={4} />
+                    </span>
+                </span>
                 <span className={s.fragUnitName}>{m.unitName}</span>
                 <span className={s.fragDate}>
                     <CalendarClock size={14} strokeWidth={2.75} />
                     {m.examCountdown}
+                </span>
+                <span className={s.fragPlan}>
+                    {Array.from({ length: 5 }, (_, i) => (
+                        <span key={i} style={{ "--i": i } as CSSProperties} />
+                    ))}
                 </span>
             </div>
         );
