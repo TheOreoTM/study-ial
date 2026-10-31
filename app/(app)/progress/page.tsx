@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, BookOpen, Target } from "lucide-react";
+import { ProgressAnalyticsPanels } from "@/components/analytics/progress-analytics";
 import { MasteryBreakdown, summarizeMastery } from "@/components/mastery";
 import { lastNDays } from "@/components/focus/stats-math";
 import { WeekBars } from "@/components/focus/week-bars";
@@ -11,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { masteryLabel, masteryTone, revisionPriority } from "@/lib/mastery";
 import { cn } from "@/lib/utils";
+import { getProgressAnalytics } from "@/lib/queries/analytics";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { requireUser } from "@/lib/session";
@@ -70,9 +72,10 @@ export default async function ProgressPage() {
     const units = userUnits.map((uu) => uu.unit).sort((a, b) => a.subject.order - b.subject.order || a.order - b.order);
     const topics = units.flatMap((u) => u.topics.map((t) => ({ ...t, unit: u })));
     const topicIds = topics.map((t) => t.id);
-    const [mastery, questionCounts] = await Promise.all([
+    const [mastery, questionCounts, analytics] = await Promise.all([
         getTopicMastery(user.id, topicIds),
         getQuestionCounts(topicIds),
+        getProgressAnalytics(user.id, now),
     ]);
 
     const attempted = totals._count._all;
@@ -173,6 +176,8 @@ export default async function ProgressPage() {
                             </div>
                         </div>
                     </section>
+
+                    <ProgressAnalyticsPanels data={analytics} />
 
                     {weakest.length > 0 && (
                         <section aria-labelledby="weakest">

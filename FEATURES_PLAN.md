@@ -5,28 +5,28 @@ pnpm test` → Playwright screenshots (light/dark × 1440/375, as demo@study-ial
 subagent against spec + diff → fix → tick.
 
 ## 1. Question bank: Chemistry, Biology, Mathematics, Further Maths ([spec](docs/features/question-bank.md))
-- [ ] Seed format: `status` on SeedQuestion, DRAFT-aware upsert in `prisma/seed.ts`
-- [ ] Content: Chemistry, Biology, Maths (pure + applied), Further Maths questions (≥ 2 per topic, all DRAFT)
-- [ ] Tests: `prisma/seed-data/seed-data.test.ts` (keys, topics, admin rules, draft gate)
-- [ ] Seed locally, check /admin draft counts + /admin/questions; screenshots
-- [ ] Commit
-- [ ] Review (fresh subagent) and fixes
+- [x] Seed format: `status` on SeedQuestion, DRAFT-aware upsert in `prisma/seed.ts`
+- [x] Content: Chemistry, Biology, Maths (pure + applied), Further Maths questions (≥ 2 per topic, all DRAFT)
+- [x] Tests: `prisma/seed-data/seed-data.test.ts` (keys, topics, admin rules, draft gate)
+- [x] Seed locally, check /admin draft counts + /admin/questions; screenshots
+- [x] Commit
+- [x] Review (fresh subagent) and fixes
 
 ## 2. Flashcards with spaced repetition ([spec](docs/features/flashcards.md))
-- [ ] Schema + migration (`Flashcard`, `FlashcardReview`), seed flashcards as DRAFT
-- [ ] Pure logic: `lib/srs.ts` scheduling + queue building, with tests
-- [ ] Queries + server actions (grade, own cards CRUD, admin publish)
-- [ ] UI: /flashcards, /flashcards/review, /flashcards/[topicId], /admin/flashcards, topic page panel, dashboard line, nav
-- [ ] Checks + screenshots
-- [ ] Commit
+- [x] Schema + migration (`Flashcard`, `FlashcardReview`), seed flashcards as DRAFT
+- [x] Pure logic: `lib/srs.ts` scheduling + queue building, with tests
+- [x] Queries + server actions (grade, own cards CRUD, admin publish)
+- [x] UI: /flashcards, /flashcards/review, /flashcards/[topicId], /admin/flashcards, topic page panel, dashboard line, nav
+- [x] Checks + screenshots
+- [x] Commit
 - [ ] Review (fresh subagent) and fixes
 
 ## 3. Analytics on /progress ([spec](docs/features/analytics.md))
-- [ ] Pure logic: `lib/analytics.ts` with tests (local-day bucketing, trends, plan pace)
-- [ ] Queries: `lib/queries/analytics.ts`
-- [ ] UI: time per subject, accuracy trends, plan pace charts on /progress
-- [ ] Checks + screenshots
-- [ ] Commit
+- [x] Pure logic: `lib/analytics.ts` with tests (local-day bucketing, trends, plan pace)
+- [x] Queries: `lib/queries/analytics.ts`
+- [x] UI: time per subject, accuracy trends, plan pace charts on /progress
+- [x] Checks + screenshots
+- [x] Commit
 - [ ] Review (fresh subagent) and fixes
 
 ## 4. AI topic tutor ([spec](docs/features/ai-tutor.md))
