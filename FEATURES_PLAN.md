@@ -57,5 +57,5 @@ subagent against spec + diff → fix → tick.
 - [x] Review (fresh subagent) and fixes
 
 ## Final
-- [ ] Rerun typecheck, lint, test on the final state
-- [ ] FEATURES_REPORT.md
+- [x] Rerun typecheck, lint, test on the final state
+- [x] FEATURES_REPORT.md

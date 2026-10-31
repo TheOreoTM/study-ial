@@ -41,17 +41,22 @@ app/
   (app)/dashboard          today: plan tasks, weak topics, streak
   (app)/subjects/...       curriculum browser — PUBLIC (SEO); practice CTAs need sign-in
   (app)/practice           practice session (topic / unit / weak-topics modes)
-  (app)/progress           mastery breakdown
-  (app)/plans              study plans (generator + task list)
+  (app)/progress           mastery breakdown, analytics (focus time, accuracy trends, plan pace), milestones
+  (app)/flashcards         topic decks with spaced repetition (review, own cards); admin review at (app)/admin/flashcards
+  (app)/plans              study plans (generator + task list); /plans/community shares plans as templates
+  (app)/tutor/actions.ts   AI "explain this" for topic and practice pages (no route; cached, with bank fallback)
   (app)/focus              pomodoro timer, logs FocusSession
   (app)/settings           profile, units, account deletion
   (app)/admin              question bank management (ADMIN only)
 lib/
   db.ts  auth.ts  auth-client.ts  session.ts  ai.ts  email.ts  site.ts  utils.ts
   mastery.ts               pure mastery maths (tested)
+  srs.ts analytics.ts milestones.ts tutor.ts community-plans.ts   pure feature logic (tested)
   queries/*.ts             server-only read helpers
 prisma/
-  schema.prisma  seed.ts  seed-data/   (curriculum + original questions as TS data)
+  schema.prisma  seed.ts  seed-data/   (curriculum, original questions + flashcards as TS data; non-Physics content
+                                        is seeded as DRAFT and never overwritten once in the DB — SEED_REFRESH_DRAFTS=1
+                                        rewrites drafts; deleted seed content is remembered in SeedTombstone)
 ```
 
 ## Conventions
@@ -71,6 +76,7 @@ prisma/
 - Markdown content (question stems, mark schemes, feedback) renders through `components/markdown.tsx` (GFM + KaTeX).
 - UI: use `PageHeader`, `EmptyState`, shadcn `Card`, etc. Colour tokens only (`bg-primary`, `text-muted-foreground`,
   `text-success`, `text-warning`, `text-destructive`) — no raw hex. Must look right in dark mode and at 375px wide.
+- AI quotas per feature live in `lib/ai.ts` (`marking`, `plan`, `tutor`); add new features there.
 - Mastery levels/colours come from `lib/mastery.ts` (`masteryLabel`, `masteryTone`) — don't reinvent them.
 - **Dates**: calendar-day logic ("today", plan task dates, streaks, countdowns) uses `lib/time.ts`
   (`localDay`, `localDayKey`, Maldives time zone) — never raw UTC days or the server's local time.
