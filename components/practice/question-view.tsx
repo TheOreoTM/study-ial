@@ -5,6 +5,7 @@ import { ArrowRight, Check, ClipboardCheck, Loader2, Sparkles, X } from "lucide-
 import { markWithAi, revealMarkScheme, submitMcq, submitSelfMark } from "@/app/(app)/practice/actions";
 import type { MarkSchemeView, PracticeQuestion, SessionTopic } from "@/app/(app)/practice/types";
 import { Markdown } from "@/components/markdown";
+import { QuestionTutor } from "@/components/tutor/question-tutor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -253,7 +254,8 @@ function McqBody(props: Props) {
                                     "bg-mastery-strong-pale shadow-[inset_0_0_0_2px_var(--mastery-strong-text)]",
                                 state === "wrong" &&
                                     "bg-mastery-weak-pale shadow-[inset_0_0_0_2px_var(--mastery-weak-text)]",
-                                state === "dim" && "bg-card text-muted-foreground shadow-[inset_0_0_0_1.5px_var(--border)]",
+                                state === "dim" &&
+                                    "bg-card text-muted-foreground shadow-[inset_0_0_0_1.5px_var(--border)]",
                             )}
                         >
                             <RadioGroupItem value={o.id} id={`opt-${o.id}`} className="sr-only" />
@@ -293,6 +295,7 @@ function McqBody(props: Props) {
                     <Explanation text={result.explanation} bare />
                 </ScoreBanner>
             )}
+            {result && props.ai.enabled && <QuestionTutor questionId={question.id} />}
             <ErrorNote error={error} />
             <Actions>
                 {result ? (
@@ -494,7 +497,12 @@ function WrittenBody(props: Props) {
                             <Explanation text={phase.scheme.explanation} />
                         </>
                     ) : (
-                        <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setShowScheme(true)}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="justify-self-start"
+                            onClick={() => setShowScheme(true)}
+                        >
                             <ClipboardCheck />
                             Show mark scheme
                         </Button>
@@ -538,6 +546,9 @@ function WrittenBody(props: Props) {
                         Save {tickedMarks}/{question.marks} marks
                     </Button>
                 </Actions>
+            )}
+            {(phase.kind === "selfDone" || phase.kind === "aiDone") && ai.enabled && (
+                <QuestionTutor questionId={question.id} />
             )}
             {(phase.kind === "selfDone" || phase.kind === "aiDone") && (
                 <Actions>

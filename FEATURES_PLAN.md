@@ -30,12 +30,12 @@ subagent against spec + diff → fix → tick.
 - [x] Review (fresh subagent) and fixes
 
 ## 4. AI topic tutor ([spec](docs/features/ai-tutor.md))
-- [ ] Schema + migration (`TutorExplanation`), `tutor` AI feature + quota
-- [ ] Pure prompt/fallback builders in `lib/tutor.ts` with tests
-- [ ] Server actions (explainTopic, explainQuestion) with cache, quota, refund, fallback
-- [ ] UI: topic page panel, practice "Explain this question"
-- [ ] Checks + screenshots
-- [ ] Commit
+- [x] Schema + migration (`TutorExplanation`), `tutor` AI feature + quota
+- [x] Pure prompt/fallback builders in `lib/tutor.ts` with tests
+- [x] Server actions (explainTopic, explainQuestion) with cache, quota, refund, fallback
+- [x] UI: topic page panel, practice "Explain this question"
+- [x] Checks + screenshots
+- [x] Commit
 - [ ] Review (fresh subagent) and fixes
 
 ## 5. Milestones ([spec](docs/features/milestones.md))

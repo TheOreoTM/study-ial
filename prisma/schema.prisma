@@ -381,6 +381,20 @@ model FocusSession {
   @@index([userId, endedAt])
 }
 
+// AI tutor explanations. They depend only on curriculum content (never on a student), so one cached explanation
+// serves every student until it expires.
+model TutorExplanation {
+  id        String   @id @default(cuid())
+  kind      String // "topic" | "question"
+  refId     String // Topic.id or Question.id
+  point     Int // spec point index, or -1 for the whole topic / the question
+  content   String
+  model     String
+  createdAt DateTime @default(now())
+
+  @@unique([kind, refId, point])
+}
+
 // Per-user daily counters used to cap AI spend.
 model AiUsage {
   userId  String

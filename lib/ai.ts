@@ -11,9 +11,9 @@ export const fastModel = () => openrouter.chat(process.env.AI_MODEL_FAST || "goo
 /** Stronger model for harder reasoning. */
 export const smartModel = () => openrouter.chat(process.env.AI_MODEL_SMART || "google/gemini-2.5-pro");
 
-export type AiFeature = "marking" | "plan";
+export type AiFeature = "marking" | "plan" | "tutor";
 
-const DEFAULT_LIMITS: Record<AiFeature, number> = { marking: 40, plan: 5 };
+const DEFAULT_LIMITS: Record<AiFeature, number> = { marking: 40, plan: 5, tutor: 20 };
 
 export function dailyLimit(feature: AiFeature) {
     const raw = process.env[`AI_DAILY_LIMIT_${feature.toUpperCase()}`];

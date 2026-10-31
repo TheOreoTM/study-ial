@@ -37,7 +37,8 @@ model TutorExplanation {
 When `aiEnabled` is false, the quota is used up, or the call fails, the panel shows **grounded content from the bank**:
 - topic: the topic summary and the chosen spec point, plus the worked explanations of up to 3 published questions in
   that topic, under "Worked explanations from the question bank";
-- question: the stored explanation and mark scheme, plus a link to the topic page.
+- question: the stored explanation and mark scheme. When AI is switched off entirely, the practice page doesn't offer
+  the button at all, because the explanation and mark scheme it would repeat are already on screen after marking.
 The panel says plainly why ("AI explanations are off" / "You've used today's 20 explanations").
 
 ## Routes and actions

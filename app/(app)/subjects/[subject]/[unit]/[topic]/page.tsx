@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, ChevronRight, History, Layers, Play } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { TopicTutor } from "@/components/tutor/topic-tutor";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
@@ -166,6 +167,19 @@ export default async function TopicPage({ params }: { params: Params }) {
                     )}
                 </section>
 
+                <section
+                    aria-labelledby="tutor"
+                    className="min-w-0 rounded-xl border bg-card p-5 shadow-card sm:p-8 lg:col-start-1"
+                >
+                    <h2 id="tutor" className="text-lg">
+                        Stuck on something?
+                    </h2>
+                    <p className="mt-1 mb-4 text-muted-foreground">
+                        Get a plain-language explanation, a worked example and the usual mistake.
+                    </p>
+                    <TopicTutor topicId={topic.id} specPoints={topic.specPoints} signedIn={!!user} />
+                </section>
+
                 {user && (
                     <section aria-labelledby="recent-attempts" className="mt-2 min-w-0 lg:col-start-1 lg:mt-0">
                         <h2 id="recent-attempts" className="mb-3 text-lg">
@@ -220,7 +234,7 @@ export default async function TopicPage({ params }: { params: Params }) {
                 <aside
                     className={cn(
                         "space-y-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1",
-                        user && "lg:row-span-2",
+                        user ? "lg:row-span-3" : "lg:row-span-2",
                     )}
                 >
                     {mastery && (
