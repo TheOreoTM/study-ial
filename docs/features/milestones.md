@@ -33,6 +33,10 @@ status.
 model UserMilestone { userId → User (cascade), key String, earnedAt DateTime @default(now()), seenAt DateTime?
   @@id([userId, key]) }
 ```
+A student's first sync with existing history records everything earned so far as already seen (past achievements
+aren't news). Milestones already earned skip their queries, and the turnaround check reads only each strong topic's
+first three attempts.
+
 Evaluated lazily by `syncMilestones(userId)` when /dashboard or /progress loads: one small set of queries, inserts
 newly earned keys with `createMany({ skipDuplicates: true })`.
 
@@ -45,8 +49,9 @@ newly earned keys with `createMany({ skipDuplicates: true })`.
   (they mean mastery levels only) and no orange.
 
 ## Server actions
-`dismissMilestones()` in `app/(app)/progress/actions.ts`: calls `assertUser()`, needs no input (it only touches the
-current user's rows), sets `seenAt` and revalidates /dashboard.
+`dismissMilestones({ upTo })` in `app/(app)/progress/actions.ts`: calls `assertUser()`, validates `upTo` (when the
+notice was rendered) with zod, sets `seenAt` on the student's milestones earned up to then (so one earned in another
+tab isn't silently dismissed), and revalidates /dashboard and /progress.
 
 ## Non-AI fallback
 Not applicable (no AI).

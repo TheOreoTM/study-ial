@@ -18,7 +18,7 @@ export function MilestoneNotice({
     more,
     next,
 }: {
-    milestone: { key: MilestoneKey; title: string; detail: string | null };
+    milestone: { key: MilestoneKey; title: string; detail: string | null; earnedAt: string };
     more: number;
     next: { name: string; href: string } | null;
 }) {
@@ -73,7 +73,7 @@ export function MilestoneNotice({
                 disabled={pending}
                 onClick={() =>
                     startTransition(async () => {
-                        const res = await dismissMilestones();
+                        const res = await dismissMilestones({ upTo: milestone.earnedAt });
                         if (!res.ok) toast.error(res.error);
                     })
                 }

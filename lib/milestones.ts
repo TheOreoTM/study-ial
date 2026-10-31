@@ -1,6 +1,6 @@
 // Milestones: a small, calm set of achievements tied to mastery and steady habits (no XP, levels or streak-loss).
 // Pure rules (unit-tested); lib/queries/milestones.ts gathers the facts and stores what's been earned.
-import { computeMastery, type AttemptLike } from "@/lib/mastery";
+import { computeMastery, type AttemptLike, type MasteryLevel } from "@/lib/mastery";
 
 export type UnitFacts = {
     code: string;
@@ -159,18 +159,28 @@ export function evaluateMilestones(f: MilestoneFacts): MilestoneStatus[] {
 
 /** Newer attempts needed after the starting evidence before a turnaround can count. */
 export const TURNAROUND_RECENT = 3;
-/** How many of the oldest attempts make up the "starting point". */
-const TURNAROUND_START = 3;
+/** How many of a topic's first attempts make up the "starting point". */
+export const TURNAROUND_START = 3;
 
 /**
  * True when a topic is strong now but the student's starting point on it (their first three attempts, with at least
  * TURNAROUND_RECENT newer ones since) was under 50%, i.e. it was weak and they fixed it.
  */
-export function isTurnaround(attempts: AttemptLike[]): boolean {
-    if (computeMastery(attempts).level !== "strong") return false;
-    const oldestFirst = [...attempts].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-    const start = oldestFirst.slice(0, Math.min(TURNAROUND_START, oldestFirst.length - TURNAROUND_RECENT));
-    if (start.length < 3) return false;
+export function isTurnaround({
+    level,
+    total,
+    firstAttempts,
+}: {
+    level: MasteryLevel;
+    total: number;
+    /** The topic's oldest attempts (at least TURNAROUND_START of them for a turnaround) */
+    firstAttempts: AttemptLike[];
+}): boolean {
+    if (level !== "strong" || total < TURNAROUND_START + TURNAROUND_RECENT) return false;
+    const start = [...firstAttempts]
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        .slice(0, TURNAROUND_START);
+    if (start.length < TURNAROUND_START) return false;
     const before = computeMastery(start);
     return before.score !== null && before.score < 0.5;
 }

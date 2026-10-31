@@ -45,7 +45,7 @@ subagent against spec + diff → fix → tick.
 - [x] UI: dashboard notice, /progress milestones section
 - [x] Checks + screenshots
 - [x] Commit
-- [ ] Review (fresh subagent) and fixes
+- [x] Review (fresh subagent) and fixes
 
 ## 6. Community plans ([spec](docs/features/community-plans.md))
 - [ ] Schema + migration (`isPublic`, `sharedAt`, `clonedFromId`)

@@ -79,7 +79,12 @@ export default async function DashboardPage() {
 
             {unseen[0] && (
                 <MilestoneNotice
-                    milestone={{ key: unseen[0].key, title: unseen[0].title, detail: unseen[0].detail }}
+                    milestone={{
+                        key: unseen[0].key,
+                        title: unseen[0].title,
+                        detail: unseen[0].detail,
+                        earnedAt: unseen[0].earnedAt!.toISOString(),
+                    }}
                     more={unseen.length - 1}
                     next={
                         weakTopics[0]

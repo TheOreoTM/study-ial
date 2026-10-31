@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
     evaluateMilestones,
     isTurnaround,
+    TURNAROUND_START,
     type MilestoneFacts,
     type MilestoneKey,
     type MilestoneStatus,
@@ -16,7 +17,7 @@ import { APP_TIME_ZONE, localDay, localDayKey } from "@/lib/time";
 const DAY = 86_400_000;
 
 /** Gathers what the milestone rules need. Queries run one after another (the dashboard already runs several). */
-async function gatherFacts(userId: string, now: Date): Promise<MilestoneFacts> {
+async function gatherFacts(userId: string, now: Date, earned: Set<string>): Promise<MilestoneFacts> {
     const userUnits = await db.userUnit.findMany({
         where: { userId },
         select: { unit: { select: { code: true, name: true, topics: { select: { id: true, name: true } } } } },
@@ -38,27 +39,38 @@ async function gatherFacts(userId: string, now: Date): Promise<MilestoneFacts> {
     });
     const strong = topics.filter((t) => mastery.get(t.id)?.level === "strong");
 
-    // Turnaround: among strong topics, the most recently practised one whose starting point was weak.
+    // Turnaround: among strong topics, the most recently practised one whose first three attempts were weak.
+    // Skipped once earned; otherwise only each strong topic's first few attempts are read.
     let turnaround: string | null = null;
-    if (strong.length > 0) {
-        const rows = await db.attempt.findMany({
-            where: { userId, question: { topicId: { in: strong.map((t) => t.id) } } },
-            select: { marksAwarded: true, maxMarks: true, createdAt: true, question: { select: { topicId: true } } },
-            orderBy: { createdAt: "asc" },
-            take: 5000,
-        });
-        const byTopic = new Map<string, typeof rows>();
-        for (const r of rows) byTopic.set(r.question.topicId, [...(byTopic.get(r.question.topicId) ?? []), r]);
+    if (strong.length > 0 && !earned.has("turnaround")) {
+        const rows = await db.$queryRaw<{ topicId: string; marksAwarded: number; maxMarks: number; createdAt: Date }[]>`
+            SELECT "topicId", "marksAwarded", "maxMarks", "createdAt"
+              FROM (
+                    SELECT q."topicId", a."marksAwarded", a."maxMarks", a."createdAt",
+                           ROW_NUMBER() OVER (PARTITION BY q."topicId" ORDER BY a."createdAt" ASC) AS rn
+                      FROM "Attempt" a
+                      JOIN "Question" q ON q.id = a."questionId"
+                     WHERE a."userId" = ${userId} AND q."topicId" = ANY(${strong.map((t) => t.id)})
+                   ) ranked
+             WHERE rn <= ${TURNAROUND_START}`;
+        const firsts = new Map<string, typeof rows>();
+        for (const r of rows) firsts.set(r.topicId, [...(firsts.get(r.topicId) ?? []), r]);
         const recent = [...strong].sort(
             (a, b) =>
                 (mastery.get(b.id)?.lastPracticedAt?.getTime() ?? 0) -
                 (mastery.get(a.id)?.lastPracticedAt?.getTime() ?? 0),
         );
-        turnaround = recent.find((t) => isTurnaround(byTopic.get(t.id) ?? []))?.name ?? null;
+        turnaround =
+            recent.find((t) => {
+                const m = mastery.get(t.id)!;
+                return isTurnaround({ level: m.level, total: m.attempts, firstAttempts: firsts.get(t.id) ?? [] });
+            })?.name ?? null;
     }
 
     const attempts = await db.attempt.count({ where: { userId } });
-    const focus = await db.focusSession.aggregate({ where: { userId }, _sum: { minutes: true } });
+    const focus = earned.has("focus-10h")
+        ? null
+        : await db.focusSession.aggregate({ where: { userId }, _sum: { minutes: true } });
 
     // Distinct local days with any activity in the last week (same sources as the streak).
     const since = new Date(now.getTime() - 8 * DAY);
@@ -75,16 +87,23 @@ async function gatherFacts(userId: string, now: Date): Promise<MilestoneFacts> {
     const week = new Set(lastNDays(localDayKey(now), 7));
     const activeDaysLast7 = days.filter((d) => week.has(d.day)).length;
 
-    const current = await findCurrentPlan(userId, now);
+    const current = earned.has("plan-on-track") ? null : await findCurrentPlan(userId, now);
     let plan: MilestoneFacts["plan"] = null;
     if (current) {
         const today = localDay(now);
-        const [done, pendingBeforeToday, dueBeforeToday] = [
-            await db.studyPlanTask.count({ where: { planId: current.id, status: "DONE" } }),
-            await db.studyPlanTask.count({ where: { planId: current.id, status: "PENDING", date: { lt: today } } }),
-            await db.studyPlanTask.count({ where: { planId: current.id, date: { lt: today } } }),
-        ];
-        plan = { done, pendingBeforeToday, dueBeforeToday };
+        const rows = await db.studyPlanTask.groupBy({
+            by: ["status"],
+            where: { planId: current.id, OR: [{ status: "DONE" }, { date: { lt: today } }] },
+            _count: { _all: true },
+        });
+        const before = await db.studyPlanTask.groupBy({
+            by: ["status"],
+            where: { planId: current.id, date: { lt: today } },
+            _count: { _all: true },
+        });
+        const n = (list: typeof rows, status?: string) =>
+            list.filter((r) => !status || r.status === status).reduce((sum, r) => sum + r._count._all, 0);
+        plan = { done: n(rows, "DONE"), pendingBeforeToday: n(before, "PENDING"), dueBeforeToday: n(before) };
     }
 
     return {
@@ -93,7 +112,7 @@ async function gatherFacts(userId: string, now: Date): Promise<MilestoneFacts> {
         turnaround,
         units,
         activeDaysLast7,
-        focusMinutes: focus._sum.minutes ?? 0,
+        focusMinutes: focus ? (focus._sum.minutes ?? 0) : 600,
         plan,
     };
 }
@@ -105,20 +124,23 @@ export type MilestoneView = MilestoneStatus & { earnedAt: Date | null; seenAt: D
  * milestone with its stored state. Unseen ones are newest first.
  */
 export async function syncMilestones(userId: string, now = new Date()) {
-    const statuses = evaluateMilestones(await gatherFacts(userId, now));
     const stored = await db.userMilestone.findMany({ where: { userId } });
     const have = new Set(stored.map((m) => m.key));
+    const statuses = evaluateMilestones(await gatherFacts(userId, now, have));
     const fresh = statuses.filter((m) => m.earned && !have.has(m.key));
+    // A first sync for a student with history earns several at once; those are past achievements, not news, so
+    // they're recorded as already seen rather than announced.
+    const seenAt = stored.length === 0 && fresh.length > 1 ? now : null;
     if (fresh.length) {
         await db.userMilestone.createMany({
-            data: fresh.map((m) => ({ userId, key: m.key, detail: m.detail, earnedAt: now })),
+            data: fresh.map((m) => ({ userId, key: m.key, detail: m.detail, earnedAt: now, seenAt })),
             skipDuplicates: true,
         });
     }
     const byKey = new Map<string, { earnedAt: Date; seenAt: Date | null; detail: string | null }>(
         stored.map((m) => [m.key, m]),
     );
-    for (const m of fresh) byKey.set(m.key, { earnedAt: now, seenAt: null, detail: m.detail });
+    for (const m of fresh) byKey.set(m.key, { earnedAt: now, seenAt, detail: m.detail });
 
     const milestones: MilestoneView[] = statuses.map((m) => {
         const s = byKey.get(m.key as MilestoneKey);

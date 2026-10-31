@@ -7,9 +7,9 @@ import { milestoneIcon } from "./icons";
 export function MilestoneGrid({ milestones }: { milestones: MilestoneView[] }) {
     const earned = milestones.filter((m) => m.earnedAt).length;
     return (
-        <section aria-labelledby="milestones" id="milestones" className="scroll-mt-24">
+        <section aria-labelledby="milestones-heading" id="milestones" className="scroll-mt-24">
             <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h2 id="milestones" className="text-lg">
+                <h2 id="milestones-heading" className="text-lg">
                     Milestones
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -61,6 +61,7 @@ export function MilestoneGrid({ milestones }: { milestones: MilestoneView[] }) {
                                                 aria-valuemax={m.progress.target}
                                                 aria-valuenow={m.progress.value}
                                                 aria-label={m.title}
+                                                aria-valuetext={`${m.progress.value} of ${m.progress.target} ${m.progress.label}`}
                                             >
                                                 <div
                                                     className="h-full rounded-full bg-progress"

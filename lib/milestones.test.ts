@@ -88,20 +88,19 @@ describe("isTurnaround", () => {
         marksAwarded: marks,
         maxMarks: max,
     });
+    const weakStart = [at(9, 1), at(10, 0), at(8, 1)];
 
-    it("spots a weak topic that is now strong", () => {
-        expect(isTurnaround([at(10, 0), at(9, 1), at(8, 1), at(4, 4), at(3, 4), at(2, 4), at(1, 4), at(0, 4)])).toBe(
-            true,
-        );
+    it("spots a weak start on a topic that is now strong", () => {
+        expect(isTurnaround({ level: "strong", total: 8, firstAttempts: weakStart })).toBe(true);
     });
 
-    it("needs earlier evidence", () => {
-        expect(isTurnaround([at(8, 1), at(2, 4), at(1, 4), at(0, 4)])).toBe(false);
+    it("needs newer evidence after the start", () => {
+        expect(isTurnaround({ level: "strong", total: 5, firstAttempts: weakStart })).toBe(false);
+        expect(isTurnaround({ level: "strong", total: 8, firstAttempts: weakStart.slice(0, 2) })).toBe(false);
     });
 
-    it("ignores topics that were never weak or aren't strong now", () => {
-        expect(isTurnaround([at(10, 4), at(9, 4), at(8, 4), at(2, 4), at(1, 4), at(0, 4)])).toBe(false);
-        // Weak start, but not strong yet.
-        expect(isTurnaround([at(10, 0), at(9, 0), at(8, 0), at(2, 2), at(1, 2), at(0, 2)])).toBe(false);
+    it("ignores topics that started well or aren't strong now", () => {
+        expect(isTurnaround({ level: "strong", total: 8, firstAttempts: [at(10, 4), at(9, 3), at(8, 4)] })).toBe(false);
+        expect(isTurnaround({ level: "developing", total: 8, firstAttempts: weakStart })).toBe(false);
     });
 });
