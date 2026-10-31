@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, BookOpen, Target } from "lucide-react";
 import { MasteryBreakdown, summarizeMastery } from "@/components/mastery";
+import { lastNDays } from "@/components/focus/stats-math";
 import { WeekBars } from "@/components/focus/week-bars";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -13,22 +14,20 @@ import { cn } from "@/lib/utils";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { requireUser } from "@/lib/session";
+import { localDayKey } from "@/lib/time";
 import { MasteryRow } from "./mastery-row";
 
 export const metadata: Metadata = { title: "Progress", robots: { index: false } };
 
 const DAY = 86_400_000;
 
-/** UTC midnight six days ago — the start of a 7-day activity window including today. */
-function startOfWindow() {
-    const d = new Date(Date.now() - 6 * DAY);
-    d.setUTCHours(0, 0, 0, 0);
-    return d;
-}
-
 export default async function ProgressPage() {
     const user = await requireUser();
-    const since = startOfWindow();
+    // The last 7 calendar days in Maldives time, oldest first and ending today. Fetch a day extra so the oldest
+    // local day is fully covered, then bucket by local day.
+    const now = new Date();
+    const dayKeys = lastNDays(localDayKey(now), 7);
+    const since = new Date(now.getTime() - 8 * DAY);
 
     const [userUnits, totals, recent] = await Promise.all([
         db.userUnit.findMany({
@@ -82,18 +81,13 @@ export default async function ProgressPage() {
             ? Math.round(((totals._sum.marksAwarded ?? 0) / totals._sum.maxMarks) * 100)
             : null;
 
-    // Last 7 days, oldest first
-    const days = Array.from({ length: 7 }, (_, i) => {
-        const start = new Date(since.getTime() + i * DAY);
-        return { start, count: 0 };
-    });
+    const days = dayKeys.map((key) => ({ key, count: 0 }));
     for (const a of recent) {
-        const i = Math.floor((a.createdAt.getTime() - since.getTime()) / DAY);
-        if (i >= 0 && i < 7) days[i].count++;
+        const day = days.find((d) => d.key === localDayKey(a.createdAt));
+        if (day) day.count++;
     }
-    const weekCount = recent.length;
+    const weekCount = days.reduce((sum, d) => sum + d.count, 0);
 
-    const now = new Date();
     const weakest = topics
         .filter((t) => (questionCounts.get(t.id) ?? 0) > 0)
         .map((t) => ({ topic: t, m: mastery.get(t.id)!, p: revisionPriority(mastery.get(t.id)!, now) }))
@@ -165,8 +159,8 @@ export default async function ProgressPage() {
                                     <WeekBars
                                         className="h-20"
                                         days={days.map((d, i) => ({
-                                            key: d.start.toISOString(),
-                                            weekday: d.start.toLocaleDateString("en-GB", {
+                                            key: d.key,
+                                            weekday: new Date(`${d.key}T00:00:00Z`).toLocaleDateString("en-GB", {
                                                 weekday: "short",
                                                 timeZone: "UTC",
                                             }),

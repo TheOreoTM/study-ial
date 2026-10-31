@@ -102,7 +102,15 @@ export function OnboardingFlow({
                         </p>
                     </div>
                     <div className="rounded-xl border bg-card p-4 shadow-card sm:p-7">
-                        <UnitPicker subjects={subjects} selectedIds={selectedIds} onChange={setSelectedIds} />
+                        <UnitPicker
+                            subjects={subjects}
+                            selectedIds={selectedIds}
+                            onChange={(ids) => {
+                                setSelectedIds(ids);
+                                // Picking a unit answers "Pick at least one unit", so the message goes.
+                                setError(null);
+                            }}
+                        />
                     </div>
                 </>
             ) : (
