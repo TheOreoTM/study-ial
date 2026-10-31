@@ -45,3 +45,6 @@ next-env.d.ts
 
 # taste skill working files (screenshots, sheets)
 .taste-skill/
+
+# Redesign screenshots (kept locally, not in the repo)
+/screenshots/
