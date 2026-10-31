@@ -135,7 +135,7 @@ export default async function TopicPage({ params }: { params: Params }) {
                     className="min-w-0 rounded-xl border bg-card p-5 shadow-card sm:p-8 lg:col-start-1"
                 >
                     {topic.summary && (
-                        <Markdown className="mb-6 max-w-[62ch] text-[1.0625rem] text-muted-foreground [&_p]:my-0!">
+                        <Markdown className="mb-6 max-w-[62ch] text-[1.0625rem] text-muted-foreground [&_p]:my-0">
                             {topic.summary}
                         </Markdown>
                     )}
@@ -156,7 +156,7 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     >
                                         {i + 1}
                                     </span>
-                                    <Markdown className="min-w-0 flex-1 pt-0.5 text-base [&_p]:my-0!">{point}</Markdown>
+                                    <Markdown className="min-w-0 flex-1 pt-0.5 text-base [&_p]:my-0">{point}</Markdown>
                                 </li>
                             ))}
                         </ol>
@@ -187,7 +187,7 @@ export default async function TopicPage({ params }: { params: Params }) {
                                             className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3.5"
                                         >
                                             <div className="min-w-0 flex-1">
-                                                <Markdown className="line-clamp-2 text-[0.9375rem] [&_.katex-display]:my-0! [&_p]:my-0!">
+                                                <Markdown className="line-clamp-2 text-[0.9375rem] [&_.katex-display]:my-0 [&_p]:my-0">
                                                     {a.question.stem}
                                                 </Markdown>
                                                 <p className="mt-1 text-[0.8125rem] text-muted-foreground">

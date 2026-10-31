@@ -242,35 +242,38 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Rendered markdown (questions, mark schemes, AI feedback) */
-.prose-study {
-    @apply text-[0.975rem] leading-relaxed;
-}
-.prose-study p {
-    @apply my-2;
-}
-.prose-study ul {
-    @apply my-2 list-disc pl-5;
-}
-.prose-study ol {
-    @apply my-2 list-decimal pl-5;
-}
-.prose-study li {
-    @apply my-0.5;
-}
-.prose-study strong {
-    @apply font-bold;
-}
-.prose-study code {
-    @apply rounded-sm bg-muted px-1 py-0.5 font-mono text-[0.85em];
-}
-.prose-study table {
-    @apply my-3 w-full border-collapse text-sm;
-}
-.prose-study th,
-.prose-study td {
-    @apply border px-2 py-1 text-left;
-}
-.prose-study .katex-display {
-    @apply my-3 overflow-x-auto overflow-y-hidden;
+/* Rendered markdown (questions, mark schemes, AI feedback). In the components layer so utilities on <Markdown>
+   (text size, [&_p]:my-0, ...) override it without !important. */
+@layer components {
+    .prose-study {
+        @apply text-[0.975rem] leading-relaxed;
+    }
+    .prose-study p {
+        @apply my-2;
+    }
+    .prose-study ul {
+        @apply my-2 list-disc pl-5;
+    }
+    .prose-study ol {
+        @apply my-2 list-decimal pl-5;
+    }
+    .prose-study li {
+        @apply my-0.5;
+    }
+    .prose-study strong {
+        @apply font-bold;
+    }
+    .prose-study code {
+        @apply rounded-sm bg-muted px-1 py-0.5 font-mono text-[0.85em];
+    }
+    .prose-study table {
+        @apply my-3 w-full border-collapse text-sm;
+    }
+    .prose-study th,
+    .prose-study td {
+        @apply border px-2 py-1 text-left;
+    }
+    .prose-study .katex-display {
+        @apply my-3 overflow-x-auto overflow-y-hidden;
+    }
 }

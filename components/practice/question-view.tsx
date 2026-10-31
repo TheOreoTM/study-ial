@@ -70,7 +70,7 @@ export function QuestionView(props: Props) {
                         </>
                     )}
                 </p>
-                <Markdown className="max-w-[62ch] text-[1.125rem]! leading-normal! font-semibold sm:text-[1.25rem]!">
+                <Markdown className="max-w-[62ch] text-[1.125rem] leading-normal font-semibold sm:text-[1.25rem]">
                     {question.stem}
                 </Markdown>
             </div>
@@ -126,7 +126,7 @@ function Explanation({ text, bare = false }: { text: string | null; bare?: boole
     return (
         <div className={cn(!bare && "rounded-lg bg-muted px-4 py-4 sm:px-5")}>
             <p className="text-sm font-extrabold">Explanation</p>
-            <Markdown className="[&>p:first-child]:mt-1!">{text}</Markdown>
+            <Markdown className="[&>p:first-child]:mt-1">{text}</Markdown>
         </div>
     );
 }
@@ -278,7 +278,7 @@ function McqBody(props: Props) {
                             </span>
                             <span className="min-w-0">
                                 <span className="sr-only">{o.label}. </span>
-                                <Markdown className="text-base! leading-snug! font-semibold [&_p]:my-0!">
+                                <Markdown className="text-base leading-snug font-semibold [&_p]:my-0">
                                     {o.text}
                                 </Markdown>
                                 {state === "correct" && <span className="sr-only"> (correct answer)</span>}
@@ -575,7 +575,7 @@ function SelfMarkList({
             {scheme.notes.length > 0 && (
                 <div className="clear-both text-sm text-muted-foreground">
                     {scheme.notes.map((n, i) => (
-                        <Markdown key={i} className="text-sm! [&_p]:my-0.5!">
+                        <Markdown key={i} className="text-sm [&_p]:my-0.5">
                             {n}
                         </Markdown>
                     ))}
@@ -604,7 +604,7 @@ function SelfMarkList({
                                 htmlFor={id}
                                 className="block flex-1 cursor-pointer text-[0.9375rem] leading-normal font-semibold select-text peer-disabled:cursor-default peer-disabled:opacity-100"
                             >
-                                <Markdown className="text-[0.9375rem]! [&_p]:my-0!">{p.text}</Markdown>
+                                <Markdown className="text-[0.9375rem] [&_p]:my-0">{p.text}</Markdown>
                             </Label>
                             <span className="num shrink-0 rounded-full bg-muted px-2 py-1 text-xs leading-none text-muted-foreground">
                                 {p.marks}
@@ -626,14 +626,14 @@ function MarkSchemeList({ scheme }: { scheme: MarkSchemeView }) {
         <div className="grid gap-2 rounded-lg bg-muted px-4 py-4 sm:px-5">
             <p className="font-display text-lg leading-tight font-extrabold">Mark scheme</p>
             {scheme.notes.map((n, i) => (
-                <Markdown key={`n${i}`} className="text-sm! text-muted-foreground [&_p]:my-0.5!">
+                <Markdown key={`n${i}`} className="text-sm text-muted-foreground [&_p]:my-0.5">
                     {n}
                 </Markdown>
             ))}
             <ul className="grid gap-2">
                 {scheme.points.map((p, i) => (
                     <li key={i} className="flex items-start gap-3 rounded-lg bg-card px-3.5 py-3">
-                        <Markdown className="flex-1 text-[0.9375rem]! [&_p]:my-0!">{p.text}</Markdown>
+                        <Markdown className="flex-1 text-[0.9375rem] [&_p]:my-0">{p.text}</Markdown>
                         <span className="num shrink-0 rounded-full bg-muted px-2 py-1 text-xs leading-none text-muted-foreground">
                             {p.marks}
                             <span className="sr-only"> mark{p.marks === 1 ? "" : "s"}</span>
@@ -677,7 +677,7 @@ function AiFeedback({
                                 />
                             )}
                             <div className="min-w-0">
-                                <Markdown className="text-[0.9375rem]! font-semibold [&_p]:my-0!">{p.point}</Markdown>
+                                <Markdown className="text-[0.9375rem] font-semibold [&_p]:my-0">{p.point}</Markdown>
                                 {p.comment && <p className="mt-0.5 text-muted-foreground">{p.comment}</p>}
                             </div>
                         </li>
