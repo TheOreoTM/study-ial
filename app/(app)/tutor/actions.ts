@@ -1,13 +1,14 @@
 "use server";
 
 import { z } from "zod";
-import { aiEnabled, AiQuotaError, remainingAiQuota } from "@/lib/ai";
+import { aiEnabled, AiQuotaError, fastModelId, remainingAiQuota } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { assertUser } from "@/lib/session";
 import {
     buildQuestionPrompt,
     buildTopicPrompt,
     explainWithAi,
+    MAX_SPEC_POINTS,
     questionFallback,
     topicFallback,
     TUTOR_CACHE_DAYS,
@@ -36,32 +37,47 @@ async function explain(
     userId: string,
     key: { kind: "topic" | "question"; refId: string; point: number },
     prompt: () => string,
-    fallback: () => string,
+    fallback: () => string | Promise<string>,
 ): Promise<TutorResult> {
     const hit = await cached(key.kind, key.refId, key.point);
     if (hit) return { ok: true, source: "cache", content: hit.content, remaining: null };
-    if (!aiEnabled) return { ok: true, source: "fallback", reason: "off", content: fallback() };
+    if (!aiEnabled) return { ok: true, source: "fallback", reason: "off", content: await fallback() };
 
     let content: string;
     try {
         content = await explainWithAi(userId, prompt());
     } catch (e) {
-        if (e instanceof AiQuotaError) return { ok: true, source: "fallback", reason: "quota", content: fallback() };
+        if (e instanceof AiQuotaError)
+            return { ok: true, source: "fallback", reason: "quota", content: await fallback() };
         console.error("[tutor] explanation failed", e);
-        return { ok: true, source: "fallback", reason: "error", content: fallback() };
+        return { ok: true, source: "fallback", reason: "error", content: await fallback() };
     }
-    const model = process.env.AI_MODEL_FAST || "google/gemini-2.5-flash";
-    await db.tutorExplanation.upsert({
-        where: { kind_refId_point: key },
-        create: { ...key, content, model },
-        update: { content, model, createdAt: new Date() },
-    });
+    // The student has their explanation either way; a failed cache write only means the next student pays for one.
+    try {
+        const model = fastModelId();
+        await db.tutorExplanation.upsert({
+            where: { kind_refId_point: key },
+            create: { ...key, content, model },
+            update: { content, model, createdAt: new Date() },
+        });
+    } catch (e) {
+        console.error("[tutor] couldn't cache explanation", e);
+    }
     return { ok: true, source: "ai", content, remaining: await remainingAiQuota(userId, "tutor") };
 }
 
 export async function explainTopic(input: { topicId: string; point: number }): Promise<TutorResult> {
     const user = await assertUser();
-    const parsed = z.object({ topicId: id, point: z.number().int().min(-1).max(99) }).safeParse(input);
+    const parsed = z
+        .object({
+            topicId: id,
+            point: z
+                .number()
+                .int()
+                .min(-1)
+                .max(MAX_SPEC_POINTS - 1),
+        })
+        .safeParse(input);
     if (!parsed.success) return { ok: false, error: "Pick a specification point." };
 
     const topic = await db.topic.findUnique({
@@ -77,7 +93,7 @@ export async function explainTopic(input: { topicId: string; point: number }): P
                 where: { status: "PUBLISHED" },
                 orderBy: { createdAt: "asc" },
                 take: 6,
-                select: { stem: true, markScheme: true, explanation: true },
+                select: { id: true, stem: true, markScheme: true, explanation: true },
             },
         },
     });
@@ -100,7 +116,19 @@ export async function explainTopic(input: { topicId: string; point: number }): P
         user.id,
         { kind: "topic", refId: topic.id, point },
         () => buildTopicPrompt(ctx),
-        () => topicFallback(ctx, topic.questions),
+        async () => {
+            // Worked explanations give answers away, so the fallback only uses questions this student has answered.
+            const answered = await db.attempt.findMany({
+                where: { userId: user.id, questionId: { in: topic.questions.map((q) => q.id) } },
+                select: { questionId: true },
+                distinct: ["questionId"],
+            });
+            const ids = new Set(answered.map((a) => a.questionId));
+            return topicFallback(
+                ctx,
+                topic.questions.filter((q) => ids.has(q.id)),
+            );
+        },
     );
 }
 

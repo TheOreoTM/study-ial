@@ -7,17 +7,51 @@ async function seedCurriculum() {
     for (const [si, s] of subjects.entries()) {
         const subject = await db.subject.upsert({
             where: { slug: s.slug },
-            create: { slug: s.slug, code: s.code, name: s.name, description: s.description, color: s.color, isLocal: s.isLocal ?? false, order: si },
-            update: { code: s.code, name: s.name, description: s.description, color: s.color, isLocal: s.isLocal ?? false, order: si },
+            create: {
+                slug: s.slug,
+                code: s.code,
+                name: s.name,
+                description: s.description,
+                color: s.color,
+                isLocal: s.isLocal ?? false,
+                order: si,
+            },
+            update: {
+                code: s.code,
+                name: s.name,
+                description: s.description,
+                color: s.color,
+                isLocal: s.isLocal ?? false,
+                order: si,
+            },
         });
         for (const [ui, u] of s.units.entries()) {
             const unit = await db.unit.upsert({
                 where: { code: u.code },
-                create: { code: u.code, number: u.number, name: u.name, description: u.description, order: ui, subjectId: subject.id },
-                update: { number: u.number, name: u.name, description: u.description, order: ui, subjectId: subject.id },
+                create: {
+                    code: u.code,
+                    number: u.number,
+                    name: u.name,
+                    description: u.description,
+                    order: ui,
+                    subjectId: subject.id,
+                },
+                update: {
+                    number: u.number,
+                    name: u.name,
+                    description: u.description,
+                    order: ui,
+                    subjectId: subject.id,
+                },
             });
             for (const [ti, t] of u.topics.entries()) {
-                const data = { code: t.code, name: t.name, summary: t.summary, specPoints: t.specPoints ?? [], order: ti };
+                const data = {
+                    code: t.code,
+                    name: t.name,
+                    summary: t.summary,
+                    specPoints: t.specPoints ?? [],
+                    order: ti,
+                };
                 await db.topic.upsert({
                     where: { unitId_slug: { unitId: unit.id, slug: t.slug } },
                     create: { ...data, slug: t.slug, unitId: unit.id },
@@ -40,7 +74,9 @@ async function tombstones() {
 }
 
 async function seedQuestions() {
-    const topics = await db.topic.findMany({ select: { id: true, slug: true, unitId: true, unit: { select: { code: true } } } });
+    const topics = await db.topic.findMany({
+        select: { id: true, slug: true, unitId: true, unit: { select: { code: true } } },
+    });
     const topicKey = new Map(topics.map((t) => [`${t.unit.code}/${t.slug}`, t]));
     const deleted = await tombstones();
     let created = 0;
@@ -65,7 +101,10 @@ async function seedQuestions() {
             source: "ORIGINAL" as const,
         };
         const options = q.type === "MCQ" ? (q.options ?? []) : [];
-        const existing = await db.question.findUnique({ where: { seedKey: q.seedKey }, select: { id: true, status: true } });
+        const existing = await db.question.findUnique({
+            where: { seedKey: q.seedKey },
+            select: { id: true, status: true },
+        });
 
         if ((q.status ?? "PUBLISHED") === "DRAFT") {
             if (existing && !(refreshDrafts && existing.status === "DRAFT")) {
@@ -92,7 +131,9 @@ async function seedQuestions() {
             }
         });
     }
-    console.log(`✓ ${questions.length} questions (${created} new drafts, ${kept} drafts already in the DB left as they are)`);
+    console.log(
+        `✓ ${questions.length} questions (${created} new drafts, ${kept} drafts already in the DB left as they are)`,
+    );
 }
 
 /** Shared flashcards are content like questions: created as DRAFT for an admin to publish, then never overwritten. */
@@ -105,7 +146,10 @@ async function seedFlashcards() {
         const topicId = topicKey.get(`${c.unitCode}/${c.topicSlug}`);
         if (!topicId) throw new Error(`Flashcard ${c.seedKey}: unknown topic ${c.unitCode}/${c.topicSlug}`);
         if (deleted.has(c.seedKey)) continue;
-        const existing = await db.flashcard.findUnique({ where: { seedKey: c.seedKey }, select: { id: true, status: true } });
+        const existing = await db.flashcard.findUnique({
+            where: { seedKey: c.seedKey },
+            select: { id: true, status: true },
+        });
         const data = { topicId, front: c.front, back: c.back };
         if (!existing) {
             await db.flashcard.create({ data: { ...data, seedKey: c.seedKey, status: "DRAFT" } });
@@ -135,7 +179,12 @@ async function seedDemoUser() {
             role: "ADMIN",
             onboardedAt: new Date(),
             accounts: {
-                create: { id: "demo-account", accountId: "demo-user", providerId: "credential", password: await hashPassword("demo-password") },
+                create: {
+                    id: "demo-account",
+                    accountId: "demo-user",
+                    providerId: "credential",
+                    password: await hashPassword("demo-password"),
+                },
             },
             units: { create: physicsUnits.slice(0, 2).map((u) => ({ unitId: u.id, examDate })) },
         },
@@ -143,10 +192,17 @@ async function seedDemoUser() {
     console.log(`✓ demo user ${email} / demo-password`);
 }
 
+/** Seeding can change topics and questions, so cached AI tutor explanations built from them are dropped. */
+async function clearTutorCache() {
+    const { count } = await db.tutorExplanation.deleteMany({});
+    if (count) console.log(`✓ cleared ${count} cached tutor explanations`);
+}
+
 async function main() {
     await seedCurriculum();
     await seedQuestions();
     await seedFlashcards();
+    await clearTutorCache();
     await seedDemoUser();
 }
 

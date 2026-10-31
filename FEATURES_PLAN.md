@@ -36,7 +36,7 @@ subagent against spec + diff → fix → tick.
 - [x] UI: topic page panel, practice "Explain this question"
 - [x] Checks + screenshots
 - [x] Commit
-- [ ] Review (fresh subagent) and fixes
+- [x] Review (fresh subagent) and fixes
 
 ## 5. Milestones ([spec](docs/features/milestones.md))
 - [ ] Schema + migration (`UserMilestone`)

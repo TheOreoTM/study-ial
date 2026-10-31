@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TutorAnswer } from "./tutor-answer";
 
+// Mirrors MAX_SPEC_POINTS in lib/tutor.ts (which imports the AI SDK, so it isn't imported into the client).
+const MAX_SPEC_POINTS = 25;
+
 /** Strip Markdown/LaTeX markers so a spec point reads cleanly inside a select. */
 function plain(text: string) {
     return text
@@ -24,13 +27,14 @@ function plain(text: string) {
 /** "Explain this" for a topic: the student picks a spec point (or the whole topic); there's no free-text box. */
 export function TopicTutor({
     topicId,
-    specPoints,
+    specPoints: allPoints,
     signedIn,
 }: {
     topicId: string;
     specPoints: string[];
     signedIn: boolean;
 }) {
+    const specPoints = allPoints.slice(0, MAX_SPEC_POINTS);
     const [point, setPoint] = useState("-1");
     const [result, setResult] = useState<Extract<TutorResult, { ok: true }> | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -64,33 +68,41 @@ export function TopicTutor({
                     });
                 }}
             >
-                <div className="grid min-w-0 flex-1 gap-1.5">
-                    <Label htmlFor="tutor-point">What should we explain?</Label>
-                    <Select
-                        value={point}
-                        onValueChange={(v) => {
-                            setPoint(v);
-                            setResult(null);
-                        }}
-                    >
-                        <SelectTrigger id="tutor-point" className="w-full min-w-0 [&>span]:truncate">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-w-[min(36rem,calc(100vw-2rem))]">
-                            <SelectItem value="-1">The whole topic</SelectItem>
-                            {specPoints.map((p, i) => (
-                                <SelectItem key={i} value={String(i)}>
-                                    <span className="line-clamp-2 text-left whitespace-normal">
-                                        {i + 1}. {plain(p)}
+                {specPoints.length > 0 && (
+                    <div className="grid min-w-0 flex-1 gap-1.5">
+                        <Label htmlFor="tutor-point">What should we explain?</Label>
+                        <Select
+                            value={point}
+                            onValueChange={(v) => {
+                                setPoint(v);
+                                setResult(null);
+                            }}
+                        >
+                            <SelectTrigger id="tutor-point" className="w-full min-w-0">
+                                <SelectValue>
+                                    <span className="block truncate text-left">
+                                        {point === "-1"
+                                            ? "The whole topic"
+                                            : `${Number(point) + 1}. ${plain(specPoints[Number(point)])}`}
                                     </span>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="max-w-[min(36rem,calc(100vw-2rem))]">
+                                <SelectItem value="-1">The whole topic</SelectItem>
+                                {specPoints.map((p, i) => (
+                                    <SelectItem key={i} value={String(i)}>
+                                        <span className="line-clamp-2 text-left whitespace-normal">
+                                            {i + 1}. {plain(p)}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
                 <Button type="submit" variant="outline" disabled={pending} className="shrink-0">
                     {pending ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                    Explain
+                    {specPoints.length > 0 ? "Explain" : "Explain this topic"}
                 </Button>
             </form>
             {error && (

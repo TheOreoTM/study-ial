@@ -6,8 +6,9 @@ export const aiEnabled = Boolean(process.env.OPENROUTER_API_KEY);
 
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY ?? "" });
 
-/** Cheap, fast model for high-volume work (marking, plan notes). */
-export const fastModel = () => openrouter.chat(process.env.AI_MODEL_FAST || "google/gemini-2.5-flash");
+/** Cheap, fast model for high-volume work (marking, plan notes, tutor). */
+export const fastModelId = () => process.env.AI_MODEL_FAST || "google/gemini-2.5-flash";
+export const fastModel = () => openrouter.chat(fastModelId());
 /** Stronger model for harder reasoning. */
 export const smartModel = () => openrouter.chat(process.env.AI_MODEL_SMART || "google/gemini-2.5-pro");
 

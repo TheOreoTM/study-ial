@@ -33,6 +33,13 @@ model TutorExplanation {
 }
 ```
 
+**Freshness:** admin edits, status changes, deletes and imports drop the cached explanations built from those
+questions (and their topics), and every `pnpm db:seed` clears the cache, so a correction is never contradicted by a
+stale explanation.
+
+**No answer leaks:** the model is told never to solve the listed practice questions (it writes a fresh example),
+and the topic fallback only shows worked explanations of questions the student has already answered.
+
 ## Non-AI fallback
 When `aiEnabled` is false, the quota is used up, or the call fails, the panel shows **grounded content from the bank**:
 - topic: the topic summary and the chosen spec point, plus the worked explanations of up to 3 published questions in

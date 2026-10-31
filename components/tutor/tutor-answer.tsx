@@ -5,7 +5,7 @@ type Done = Extract<TutorResult, { ok: true }>;
 
 const notes: Record<"off" | "quota" | "error", string> = {
     off: "AI explanations aren't switched on, so here's what the question bank says.",
-    quota: "You've used today's AI explanations. Here's what the question bank says; more tomorrow.",
+    quota: "You've used today's AI explanations, so here's what the question bank says.",
     error: "The AI tutor couldn't answer just now. Here's what the question bank says.",
 };
 

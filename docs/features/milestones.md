@@ -18,7 +18,7 @@ raw volume ("answer 500 questions"). Every milestone here must:
 | `first-strong` | First strong topic | ≥ 1 topic at level strong |
 | `strong-5` | Five strong topics | ≥ 5 strong topics |
 | `strong-15` | Fifteen strong topics | ≥ 15 strong topics |
-| `turnaround` | Turned it around | a topic that was weak (mastery over its attempts before the latest 3 was < 0.5, with ≥ 3 earlier attempts) is now strong |
+| `turnaround` | Turned it around | a topic whose starting point was weak (its first 3 attempts scored < 0.5, with ≥ 3 attempts since) is now strong |
 | `unit-covered` | Every topic tried | every practisable topic in one of your units has ≥ 1 attempt |
 | `unit-strong` | Unit secure | every practisable topic in one of your units is strong |
 | `steady-week` | A steady week | activity on ≥ 5 of the last 7 local days (any day, not consecutive: missing one day costs nothing) |

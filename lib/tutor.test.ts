@@ -68,6 +68,11 @@ describe("buildTopicPrompt", () => {
         expect(p).not.toContain("26. point");
     });
 
+    it("tells the model not to solve the listed practice questions", async () => {
+        const { TUTOR_INSTRUCTIONS } = await import("@/lib/tutor");
+        expect(TUTOR_INSTRUCTIONS).toContain("Never solve or give away their answers");
+    });
+
     it("never contains student fields", () => {
         // The context types carry no user data; this guards against someone adding it to the prompt later.
         const p = buildTopicPrompt(topic) + buildQuestionPrompt(question);
@@ -97,13 +102,13 @@ describe("fallbacks", () => {
         ]);
         expect(md).toContain("**Specification point 2:** Interpret motion graphs");
         expect(md).toContain("Uniformly accelerated motion");
-        expect(md).toContain("Worked explanations from the question bank");
+        expect(md).toContain("Worked explanations from questions you've answered");
         expect(md).toContain("Because…");
         expect(md).not.toContain("Q2");
     });
 
     it("says so when there's nothing worked yet", () => {
-        expect(topicFallback({ ...topic, point: -1 }, [])).toContain("no worked explanations");
+        expect(topicFallback({ ...topic, point: -1 }, [])).toContain("its worked explanation will show up here");
     });
 
     it("builds a question fallback from the explanation and mark scheme", () => {

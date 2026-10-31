@@ -39,10 +39,28 @@ function contentData(q: Omit<QuestionInput, "id" | "topicId" | "status"> | Impor
 export class AdminDataError extends Error {}
 
 /** Creates or updates a question from validated editor input. Returns the question id. */
+/**
+ * Drops cached AI tutor explanations that were built from these questions (their own walkthroughs, and topic
+ * explanations that used them as examples), so an admin's correction is never contradicted by a stale explanation.
+ */
+async function forgetTutorExplanations(questionIds: string[], topicIds: string[] = []) {
+    const topics = await db.question.findMany({ where: { id: { in: questionIds } }, select: { topicId: true } });
+    await db.tutorExplanation.deleteMany({
+        where: {
+            OR: [
+                { kind: "question", refId: { in: questionIds } },
+                { kind: "topic", refId: { in: [...new Set([...topicIds, ...topics.map((t) => t.topicId)])] } },
+            ],
+        },
+    });
+}
+
 export async function saveQuestionData(input: QuestionInput) {
     const topic = await db.topic.findUnique({ where: { id: input.topicId }, select: { id: true, unitId: true } });
     if (!topic) throw new AdminDataError("Topic not found");
     const data = { ...contentData(input), status: input.status, topicId: topic.id, unitId: topic.unitId };
+    // Before the write too: the question may be moving away from its old topic.
+    if (input.id) await forgetTutorExplanations([input.id], [topic.id]);
 
     return db.$transaction(async (tx) => {
         let id = input.id;
@@ -59,17 +77,23 @@ export async function saveQuestionData(input: QuestionInput) {
 }
 
 export async function setQuestionStatusData(ids: string[], status: "DRAFT" | "PUBLISHED") {
+    await forgetTutorExplanations(ids);
     const res = await db.question.updateMany({ where: { id: { in: ids } }, data: { status } });
     return res.count;
 }
 
 export async function deleteQuestionData(id: string) {
+    await forgetTutorExplanations([id]);
     return db.$transaction(async (tx) => {
         const q = await tx.question.findUnique({ where: { id }, select: { seedKey: true } });
         if (!q) return false;
         // Remember deleted seed content so the next `pnpm db:seed` doesn't recreate it.
         if (q.seedKey)
-            await tx.seedTombstone.upsert({ where: { seedKey: q.seedKey }, create: { seedKey: q.seedKey }, update: {} });
+            await tx.seedTombstone.upsert({
+                where: { seedKey: q.seedKey },
+                create: { seedKey: q.seedKey },
+                update: {},
+            });
         await tx.question.delete({ where: { id } });
         return true;
     });
@@ -138,6 +162,14 @@ export async function resolveImportRows(rows: ParsedRow[]): Promise<ResolvedRow[
  * current status unless publishing, so a re-import never silently unpublishes content.
  */
 export async function importRowsData(rows: ResolvedRow[], status: "DRAFT" | "PUBLISHED") {
+    const keys = rows.flatMap((r) => (r.ok && r.item.seedKey ? [r.item.seedKey] : []));
+    const existing = keys.length
+        ? await db.question.findMany({ where: { seedKey: { in: keys } }, select: { id: true } })
+        : [];
+    await forgetTutorExplanations(
+        existing.map((q) => q.id),
+        rows.flatMap((r) => (r.ok ? [r.topicId] : [])),
+    );
     let created = 0;
     let updated = 0;
     for (const row of rows) {
