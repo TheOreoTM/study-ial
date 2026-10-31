@@ -18,14 +18,19 @@ weak-topic practice, plans and the dashboard automatically. No code path changes
 - All original; no Pearson past-paper text.
 
 ## Schema changes
-None. `SeedQuestion` gains an optional `status` ("DRAFT" | "PUBLISHED", default PUBLISHED for the existing Physics bank).
+`SeedTombstone` (see below). `SeedQuestion` gains an optional `status` ("DRAFT" | "PUBLISHED", default PUBLISHED for the existing Physics bank).
 
 ## Seed behaviour (the review gate)
 - New questions are **created as DRAFT**. The seed never publishes them.
-- On re-seed, a DRAFT seed question is only updated while it is still DRAFT in the DB. Once an admin publishes it (or
-  edits and publishes it), the DB copy is the source of truth and the seed leaves it alone. This keeps an admin's
-  corrections and decisions from being silently overwritten.
-- Physics keeps its current behaviour.
+- Once a seeded draft exists in the DB it belongs to the admins: re-seeding **never overwrites it**, published or not,
+  so their edits survive. `SEED_REFRESH_DRAFTS=1 pnpm db:seed` deliberately rewrites seeded content that is *still a
+  draft* (e.g. after fixing a mistake in the seed files).
+- Deleting a seeded question (or shared flashcard) in admin records a `SeedTombstone`, so the seed doesn't bring it
+  back.
+- MCQ options are synced exactly (stale labels are removed), inside a transaction per question.
+- Physics keeps being refreshed from its seed file, but the seed no longer re-publishes a question an admin unpublished.
+
+**Schema:** `SeedTombstone { seedKey @id, deletedAt }`.
 
 ## Routes
 None new. Review happens in the existing `/admin` (draft counts per unit/topic) and `/admin/questions` (filter by
@@ -36,7 +41,8 @@ Not applicable: the content is static seed data and needs no AI at runtime.
 
 ## Done means
 - `prisma/seed-data/seed-data.test.ts` passes: unique keys, real topics, every question passes the admin editor's
-  `checkQuestion` rules, and every non-Physics question is DRAFT.
+  `checkQuestion` rules, every non-Physics question is DRAFT, every topic has an MCQ and a written question, MCQ
+  answers are spread across A–D (15–35% each per subject), and all maths parses in KaTeX.
 - Every Chemistry/Biology/Maths/Further Maths topic has ≥ 2 questions.
 - `pnpm db:seed` runs cleanly and `/admin` shows the drafts. Practice and the dashboard still show only published
   questions.
