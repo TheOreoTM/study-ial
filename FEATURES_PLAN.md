@@ -48,12 +48,12 @@ subagent against spec + diff → fix → tick.
 - [x] Review (fresh subagent) and fixes
 
 ## 6. Community plans ([spec](docs/features/community-plans.md))
-- [ ] Schema + migration (`isPublic`, `sharedAt`, `clonedFromId`)
-- [ ] Pure `templateFromPlan` / clone date maths with tests
-- [ ] Actions: share/unshare, clone, admin unshare
-- [ ] UI: /plans/community, /plans/community/[id], share toggle on plan page
-- [ ] Checks + screenshots
-- [ ] Commit
+- [x] Schema + migration (`isPublic`, `sharedAt`, `clonedFromId`)
+- [x] Pure `templateFromPlan` / clone date maths with tests
+- [x] Actions: share/unshare, clone, admin unshare
+- [x] UI: /plans/community, /plans/community/[id], share toggle on plan page
+- [x] Checks + screenshots
+- [x] Commit
 - [ ] Review (fresh subagent) and fixes
 
 ## Final

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Archive, ArrowRight, CalendarCheck, CalendarDays, Plus } from "lucide-react";
+import { Archive, ArrowRight, CalendarCheck, CalendarDays, Plus, Users } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { daysLeftLabel, formatDate, formatMinutes } from "@/components/plans/task-meta";
@@ -32,7 +32,17 @@ export default async function PlansPage() {
             <PageHeader
                 title="Study plans"
                 description="A day-by-day schedule built around your exam dates, weakest topics first."
-                actions={plans.length > 0 ? newButton : undefined}
+                actions={
+                    <>
+                        <Button asChild variant="outline">
+                            <Link href="/plans/community">
+                                <Users />
+                                Community plans
+                            </Link>
+                        </Button>
+                        {plans.length > 0 && newButton}
+                    </>
+                }
             />
             {plans.length === 0 ? (
                 <EmptyState
@@ -101,7 +111,11 @@ function PlanCard({ plan }: { plan: PlanListItem }) {
                             !archived && (soon ? "text-warning" : "text-foreground"),
                         )}
                     >
-                        {archived ? <Archive className="size-3.5" aria-hidden /> : <CalendarDays className="size-3.5" aria-hidden />}
+                        {archived ? (
+                            <Archive className="size-3.5" aria-hidden />
+                        ) : (
+                            <CalendarDays className="size-3.5" aria-hidden />
+                        )}
                         {archived ? "Archived" : daysLeftLabel(plan.daysLeft)}
                     </span>
                 </div>

@@ -24,8 +24,11 @@ template against your own marks and your own exam dates.** You get their rhythm 
 ## Routes
 - `/plans/community`: shared plans (signed-in only), filter chips "For my units" (default) / "All", newest first,
   each card showing units, minutes per day, weeks and uses.
-- `/plans/community/[id]`: the template view, with one primary action "Use this plan".
-- `/plans/[id]`: owner's share toggle in the plan actions menu.
+- `/plans/community/[id]`: the template view (week-by-week mix and minutes, session mix, how using it works), with
+  one primary action "Use this plan" that notes any units it will add. The owner sees their share toggle instead;
+  admins also get "Unshare (admin)".
+- `/plans/[id]`: owner's "Share" / "Stop sharing" outline button in the page header (with a confirm dialog that
+  warns the title becomes public). `/plans` gets an outline "Community plans" link next to "New plan".
 
 ## Server actions (`app/(app)/plans/actions.ts`)
 - `setPlanShared(planId, shared)`: `assertUser`, ownership via `ownPlan`, zod, revalidates `/plans`,

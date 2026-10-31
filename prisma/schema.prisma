@@ -314,6 +314,13 @@ model StudyPlan {
   status         PlanStatus @default(ACTIVE)
   // Optional AI-written overview of the plan
   summary        String?
+  // Shared to the community plan library (template only: no author, progress or notes are shown)
+  isPublic       Boolean    @default(false)
+  sharedAt       DateTime?
+  // The community plan this one was started from
+  clonedFromId   String?
+  clonedFrom     StudyPlan? @relation("PlanClones", fields: [clonedFromId], references: [id], onDelete: SetNull)
+  clones         StudyPlan[] @relation("PlanClones")
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -321,6 +328,7 @@ model StudyPlan {
   units StudyPlanUnit[]
 
   @@index([userId, status])
+  @@index([isPublic, sharedAt])
 }
 
 // The units a plan covers, with the exam date it was planned against.

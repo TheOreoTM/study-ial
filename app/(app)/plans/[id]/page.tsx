@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArchiveRestore, ArrowLeft, CalendarClock, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { ShareToggle } from "@/components/plans/community-actions";
 import { PlanActions, RescheduleButton } from "@/components/plans/plan-actions";
 import { PlanTaskList } from "@/components/plans/plan-task-list";
 import { daysLeftLabel, formatDate, formatMinutes } from "@/components/plans/task-meta";
@@ -79,13 +80,19 @@ export default async function PlanPage({ params }: Props) {
                         )}
                     </>
                 }
-                actions={<PlanActions planId={plan.id} title={plan.title} archived={archived} />}
+                actions={
+                    <>
+                        {!archived && <ShareToggle planId={plan.id} title={plan.title} shared={plan.isPublic} />}
+                        <PlanActions planId={plan.id} title={plan.title} archived={archived} />
+                    </>
+                }
             />
 
             {archived && (
                 <div className="mb-6 flex items-center gap-3 rounded-lg bg-muted px-4 py-3 text-muted-foreground">
                     <ArchiveRestore className="size-5 shrink-0" aria-hidden />
-                    This plan is archived, so its sessions don&apos;t show on your dashboard. Unarchive it from the menu.
+                    This plan is archived, so its sessions don&apos;t show on your dashboard. Unarchive it from the
+                    menu.
                 </div>
             )}
 

@@ -143,7 +143,9 @@ export async function reschedulePlanForUser(userId: string, planId: string, { no
                 : "All the exams in this plan have passed, so there's nothing left to reschedule.",
         );
 
-    const kept = plan.tasks.filter((t) => t.status === "DONE" || (t.status === "SKIPPED" && toDayNumber(t.date) < todayDay));
+    const kept = plan.tasks.filter(
+        (t) => t.status === "DONE" || (t.status === "SKIPPED" && toDayNumber(t.date) < todayDay),
+    );
     const removeIds = plan.tasks.filter((t) => !kept.includes(t)).map((t) => t.id);
 
     const completed: CompletedWork[] = kept

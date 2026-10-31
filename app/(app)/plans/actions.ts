@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { MAX_MINUTES_PER_DAY, PlannerError } from "@/lib/planner";
-import { assertUser } from "@/lib/session";
+import { cloneExamDates } from "@/lib/community-plans";
+import { assertAdmin, assertUser } from "@/lib/session";
+import { localDay } from "@/lib/time";
 import { createPlanForUser, reschedulePlanForUser } from "./service";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -30,7 +32,7 @@ const createSchema = z.object({
 export type CreatePlanFormInput = z.input<typeof createSchema>;
 
 function revalidatePlans(planId?: string) {
-    revalidatePath("/plans");
+    revalidatePath("/plans", "layout");
     if (planId) revalidatePath(`/plans/${planId}`);
     revalidatePath("/dashboard");
 }
@@ -120,4 +122,92 @@ export async function rescheduleMissed(planId: string): Promise<Result<{ created
         console.error("[plans] reschedule failed", e);
         return { ok: false, error: "Couldn't reschedule this plan. Please try again." };
     }
+}
+
+// ─── Community plans ─────────────────────────────────────────────────────────
+
+const planId = z.string().min(1).max(64);
+
+/** Shares a plan to the community library as a template, or stops sharing it. */
+export async function setPlanShared(id: string, shared: boolean): Promise<Result> {
+    const user = await assertUser();
+    const parsed = z.object({ id: planId, shared: z.boolean() }).safeParse({ id, shared });
+    if (!parsed.success) return { ok: false, error: "Invalid plan." };
+    if (!(await ownPlan(user.id, parsed.data.id))) return { ok: false, error: "Plan not found." };
+    await db.studyPlan.update({
+        where: { id: parsed.data.id },
+        data: { isPublic: parsed.data.shared, sharedAt: parsed.data.shared ? new Date() : null },
+    });
+    revalidatePlans(parsed.data.id);
+    return { ok: true };
+}
+
+/**
+ * Starts a new plan from a shared one: same units, daily minutes and study days, but built by the planner from the
+ * student's own mastery and exam dates. Units the student doesn't study yet are added to their list.
+ * Redirects to the new plan (only returns on failure).
+ */
+export async function clonePlan(id: string): Promise<Result> {
+    const user = await assertUser();
+    const parsed = planId.safeParse(id);
+    if (!parsed.success) return { ok: false, error: "Plan not found." };
+
+    const source = await db.studyPlan.findFirst({
+        where: { id: parsed.data, OR: [{ isPublic: true }, { userId: user.id }] },
+        select: {
+            id: true,
+            title: true,
+            startDate: true,
+            minutesPerDay: true,
+            studyDays: true,
+            units: { select: { unitId: true, examDate: true } },
+        },
+    });
+    if (!source || source.units.length === 0) return { ok: false, error: "That plan isn't shared any more." };
+
+    const today = localDay();
+    const mine = await db.userUnit.findMany({
+        where: { userId: user.id, unitId: { in: source.units.map((u) => u.unitId) } },
+        select: { unitId: true, examDate: true },
+    });
+    const units = cloneExamDates(source, new Map(mine.map((u) => [u.unitId, u.examDate])), today);
+    const have = new Set(mine.map((u) => u.unitId));
+    const missing = units.filter((u) => !have.has(u.unitId));
+    if (missing.length) {
+        await db.userUnit.createMany({
+            data: missing.map((u) => ({ userId: user.id, unitId: u.unitId, examDate: u.examDate })),
+            skipDuplicates: true,
+        });
+    }
+
+    let newId: string;
+    try {
+        const res = await createPlanForUser(user.id, {
+            title: source.title,
+            units,
+            startDate: today,
+            minutesPerDay: source.minutesPerDay,
+            studyDays: source.studyDays,
+        });
+        newId = res.planId;
+        await db.studyPlan.update({ where: { id: newId }, data: { clonedFromId: source.id } });
+    } catch (e) {
+        if (e instanceof PlannerError) return { ok: false, error: e.message };
+        console.error("[plans] clonePlan failed", e);
+        return { ok: false, error: "Couldn't start that plan. Please try again." };
+    }
+    revalidatePlans(newId);
+    revalidatePath("/settings");
+    revalidatePath("/progress");
+    redirect(`/plans/${newId}`);
+}
+
+/** Admins can take any plan out of the community library (e.g. an inappropriate title). */
+export async function adminUnsharePlan(id: string): Promise<Result> {
+    await assertAdmin();
+    const parsed = planId.safeParse(id);
+    if (!parsed.success) return { ok: false, error: "Invalid plan." };
+    await db.studyPlan.updateMany({ where: { id: parsed.data }, data: { isPublic: false, sharedAt: null } });
+    revalidatePlans(parsed.data);
+    return { ok: true };
 }
