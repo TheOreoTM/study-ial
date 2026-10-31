@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cn } from "@/lib/utils";
-import { combinations, originals, type LogoOption } from "./logos";
+import { combinations, originals, stairBackgrounds, type LogoOption } from "./logos";
 
 export const metadata: Metadata = { title: "Design lab: logos", robots: { index: false } };
 
@@ -65,11 +65,18 @@ export default function DesignLabPage() {
         <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
             <h1 className="text-[1.75rem] leading-[1.1] tracking-[-0.01em] sm:text-[2.125rem]">Logo options</h1>
             <p className="mt-2 max-w-2xl text-[1.0625rem] text-muted-foreground">
-                Round 2 mixes the three favourites: rising bars, climb and the mastery ring. Each mark is shown large, in
-                the app bar, at favicon sizes, and on cream, plum and tangerine.
+                Bar stairs on new backgrounds, then the round 2 combinations and round 1 favourites. Each mark is shown
+                large, in the app bar, at favicon sizes, and on cream, plum and tangerine.
             </p>
 
-            <h2 className="mt-12 text-2xl">Combinations</h2>
+            <h2 className="mt-12 text-2xl">Bar stairs: backgrounds</h2>
+            <ol className="mt-5 grid gap-6 lg:grid-cols-2">
+                {stairBackgrounds.map((option, i) => (
+                    <LogoCard key={option.id} option={option} n={String(i + 1)} />
+                ))}
+            </ol>
+
+            <h2 className="mt-14 text-2xl">Combinations</h2>
             <ol className="mt-5 grid gap-6 lg:grid-cols-2">
                 {combinations.map((option, i) => (
                     <LogoCard key={option.id} option={option} n={String.fromCharCode(65 + i)} />

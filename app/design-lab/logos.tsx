@@ -97,19 +97,36 @@ export function BarsDotMark({ className }: MarkProps) {
     );
 }
 
-/** Bar stairs: the bars pushed together into a staircase on the orange tile, with the cream dot on top. */
-export function BarStairsMark({ className }: MarkProps) {
+/** Bar stairs: the bars pushed together into a staircase, standing on a baseline, with the "you" dot on top. */
+const stairTones = {
+    tangerine: { tile: "fill-tangerine", base: "fill-ink", dot: "fill-cream" },
+    plum: { tile: "fill-ink", base: "fill-lilac", dot: "fill-tangerine" },
+    grape: { tile: "fill-grape", base: "fill-ink", dot: "fill-tangerine" },
+    cream: { tile: "fill-white", base: "fill-ink", dot: "fill-tangerine" },
+} as const;
+
+function BarStairs({ className, tone }: MarkProps & { tone: keyof typeof stairTones }) {
+    const t = stairTones[tone];
     return (
         <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
-            <rect width="40" height="40" rx="13" className="fill-tangerine" />
+            {tone === "cream" ? (
+                <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="12.25" strokeWidth="1.5" className="fill-white stroke-border" />
+            ) : (
+                <rect width="40" height="40" rx="13" className={t.tile} />
+            )}
             <path d={stepBar(8, 24, 7.5, 32)} className="fill-mastery-weak" />
             <path d={stepBar(16.25, 18.5, 7.5, 32)} className="fill-mastery-developing" />
             <path d={stepBar(24.5, 13, 7.5, 32)} className="fill-mastery-strong" />
-            <rect x="7" y="31" width="26" height="2.5" rx="1.25" className="fill-ink" />
-            <circle cx="28.25" cy="7.5" r="3.5" className="fill-cream" />
+            <rect x="7" y="31" width="26" height="2.5" rx="1.25" className={t.base} />
+            <circle cx="28.25" cy="7.5" r="3.5" className={t.dot} />
         </svg>
     );
 }
+
+export const BarStairsMark = (p: MarkProps) => <BarStairs {...p} tone="tangerine" />;
+export const BarStairsPlumMark = (p: MarkProps) => <BarStairs {...p} tone="plum" />;
+export const BarStairsGrapeMark = (p: MarkProps) => <BarStairs {...p} tone="grape" />;
+export const BarStairsCreamMark = (p: MarkProps) => <BarStairs {...p} tone="cream" />;
 
 /** Ring + bars: a thin mastery ring around the rising bars, like a gauge you are filling. */
 export function RingBarsMark({ className }: MarkProps) {
@@ -216,6 +233,37 @@ export const combinations: LogoOption[] = [
         name: "Orange ring",
         Mark: OrangeRingMark,
         note: "Ring + climb's orange tile. The loudest app icon here; the plum disc keeps the mastery colours bright.",
+        tileOnDark: false,
+    },
+];
+
+export const stairBackgrounds: LogoOption[] = [
+    {
+        id: "stairs-plum",
+        name: "Plum",
+        Mark: BarStairsPlumMark,
+        note: "The app's ink as the tile. All three mastery colours stay bright; orange dot, lilac baseline.",
+        tileOnDark: true,
+    },
+    {
+        id: "stairs-grape",
+        name: "Grape",
+        Mark: BarStairsGrapeMark,
+        note: "The progress purple. Stands out on cream and on tangerine; the plum baseline grounds the steps.",
+        tileOnDark: false,
+    },
+    {
+        id: "stairs-cream",
+        name: "White",
+        Mark: BarStairsCreamMark,
+        note: "A white tile with a hairline, like the app's cards. Lightest feel, but the pink and yellow steps are paler.",
+        tileOnDark: false,
+    },
+    {
+        id: "stairs-tangerine",
+        name: "Tangerine (round 2)",
+        Mark: BarStairsMark,
+        note: "The version you picked, for comparison.",
         tileOnDark: false,
     },
 ];
