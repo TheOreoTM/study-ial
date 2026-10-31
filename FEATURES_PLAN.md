@@ -39,12 +39,12 @@ subagent against spec + diff → fix → tick.
 - [x] Review (fresh subagent) and fixes
 
 ## 5. Milestones ([spec](docs/features/milestones.md))
-- [ ] Schema + migration (`UserMilestone`)
-- [ ] Pure rules `lib/milestones.ts` with tests
-- [ ] `syncMilestones` query + dismiss action
-- [ ] UI: dashboard notice, /progress milestones section
-- [ ] Checks + screenshots
-- [ ] Commit
+- [x] Schema + migration (`UserMilestone`)
+- [x] Pure rules `lib/milestones.ts` with tests
+- [x] `syncMilestones` query + dismiss action
+- [x] UI: dashboard notice, /progress milestones section
+- [x] Checks + screenshots
+- [x] Commit
 - [ ] Review (fresh subagent) and fixes
 
 ## 6. Community plans ([spec](docs/features/community-plans.md))

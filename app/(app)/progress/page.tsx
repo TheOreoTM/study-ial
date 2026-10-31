@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, BookOpen, Target } from "lucide-react";
 import { ProgressAnalyticsPanels } from "@/components/analytics/progress-analytics";
+import { MilestoneGrid } from "@/components/milestones/milestone-grid";
 import { MasteryBreakdown, summarizeMastery } from "@/components/mastery";
 import { lastNDays } from "@/components/focus/stats-math";
 import { WeekBars } from "@/components/focus/week-bars";
@@ -13,6 +14,7 @@ import { db } from "@/lib/db";
 import { masteryLabel, masteryTone, revisionPriority } from "@/lib/mastery";
 import { cn } from "@/lib/utils";
 import { getProgressAnalytics } from "@/lib/queries/analytics";
+import { syncMilestones } from "@/lib/queries/milestones";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { requireUser } from "@/lib/session";
@@ -77,6 +79,8 @@ export default async function ProgressPage() {
         getQuestionCounts(topicIds),
         getProgressAnalytics(user.id, now),
     ]);
+    // Sequential: the local dev Postgres drops connections beyond ~5 concurrent ones.
+    const { milestones } = await syncMilestones(user.id, now);
 
     const attempted = totals._count._all;
     const pct =
@@ -291,6 +295,9 @@ export default async function ProgressPage() {
                     ))}
                 </div>
             )}
+            <div className="mt-10">
+                <MilestoneGrid milestones={milestones} />
+            </div>
         </>
     );
 }

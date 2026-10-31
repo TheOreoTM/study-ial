@@ -34,6 +34,7 @@ model User {
   aiUsage       AiUsage[]
   flashcards    Flashcard[]
   cardReviews   FlashcardReview[]
+  milestones    UserMilestone[]
 
   @@map("user")
 }
@@ -393,6 +394,19 @@ model TutorExplanation {
   createdAt DateTime @default(now())
 
   @@unique([kind, refId, point])
+}
+
+// Milestones a student has earned (rules in lib/milestones.ts). Earned once and never taken away.
+model UserMilestone {
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key      String
+  // What earned it, e.g. the topic name or unit code
+  detail   String?
+  earnedAt DateTime  @default(now())
+  seenAt   DateTime?
+
+  @@id([userId, key])
 }
 
 // Per-user daily counters used to cap AI spend.

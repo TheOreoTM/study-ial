@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Layers, Targe
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { formatDueDay } from "@/components/flashcards/format";
+import { MilestoneNotice } from "@/components/milestones/milestone-notice";
 import { MasteryBar, summarizeMastery } from "@/components/mastery";
 import { TodayTasks } from "@/components/plans/today-tasks";
 import { UnitChip } from "@/components/plans/unit-chip";
@@ -15,6 +16,7 @@ import { masteryTone, revisionPriority } from "@/lib/mastery";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getFlashcardSummary } from "@/lib/queries/flashcards";
 import { getFocusStats } from "@/lib/queries/focus";
+import { syncMilestones } from "@/lib/queries/milestones";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { daysUntil, getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
@@ -45,6 +47,8 @@ export default async function DashboardPage() {
         getFlashcardSummary(user.id),
     ]);
 
+    // After the parallel reads: the local dev Postgres drops connections beyond ~5 concurrent ones.
+    const { unseen } = await syncMilestones(user.id);
     const now = new Date();
     const practisable = topics.filter((t) => (questionCounts.get(t.id) ?? 0) > 0);
     const weakTopics = practisable
@@ -72,6 +76,18 @@ export default async function DashboardPage() {
                     ) : undefined
                 }
             />
+
+            {unseen[0] && (
+                <MilestoneNotice
+                    milestone={{ key: unseen[0].key, title: unseen[0].title, detail: unseen[0].detail }}
+                    more={unseen.length - 1}
+                    next={
+                        weakTopics[0]
+                            ? { name: weakTopics[0].topic.name, href: `/practice?topic=${weakTopics[0].topic.id}` }
+                            : null
+                    }
+                />
+            )}
 
             {/* Stat strip */}
             <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
