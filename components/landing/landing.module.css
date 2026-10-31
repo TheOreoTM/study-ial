@@ -875,9 +875,7 @@
 
 .fragBarFill {
     position: absolute;
-    inset: 0 auto 0 0;
-    width: var(--score);
-    border-radius: inherit;
+    inset: 0;
     background: var(--weak);
 }
 
@@ -891,6 +889,82 @@
     translate: 0 -50%;
     background-image: linear-gradient(90deg, color-mix(in oklab, var(--color-ink) 35%, transparent) 50%, transparent 0);
     background-size: 10px 3px;
+}
+
+/* Hovering a step plays its moment: the card lifts and straightens, the node pops, and the fragment acts out
+   the step (exam chip nudges, marks hop in turn, the weak bar climbs into its goal). Pointer devices only. */
+.stepNode,
+.frag,
+.fragUnit,
+.fragDate svg,
+.fragTrend {
+    transition:
+        translate 280ms var(--ease-spring),
+        rotate 280ms var(--ease-spring),
+        scale 280ms var(--ease-spring),
+        box-shadow 280ms var(--ease-out);
+}
+
+.fragBarFill {
+    clip-path: inset(0 calc(100% - var(--score)) 0 0 round 999px);
+    transition:
+        clip-path 700ms var(--ease-out),
+        background-color 700ms var(--ease-out);
+}
+
+.fragCodeWeak {
+    transition: background-color 700ms var(--ease-out);
+}
+
+.fragBarGoal {
+    transition: opacity 200ms var(--ease-out);
+}
+
+@media (hover: hover) {
+    .step:hover .stepNode {
+        scale: 1.08;
+        rotate: -6deg;
+    }
+
+    .step:nth-child(n):hover .frag {
+        translate: 0 -6px;
+        rotate: 0deg;
+        box-shadow: 0 26px 36px -16px var(--shade-70);
+    }
+
+    .step:hover .fragUnit {
+        rotate: -4deg;
+        scale: 1.06;
+    }
+
+    .step:hover .fragDate svg {
+        rotate: -14deg;
+        scale: 1.15;
+    }
+
+    .step:hover .mark {
+        animation: markHop 420ms var(--ease-spring) both;
+        animation-delay: calc(var(--i, 0) * 70ms);
+    }
+
+    /* Practice lifts the topic out of "weak": the bar climbs to its goal and turns developing. */
+    .step:hover .fragBarFill {
+        clip-path: inset(0 10% 0 0 round 999px);
+        background-color: var(--developing);
+    }
+
+    .step:hover .fragCodeWeak {
+        background-color: var(--developing);
+    }
+
+    .step:hover .fragBarGoal {
+        opacity: 0;
+    }
+
+    .step:hover .fragTrend {
+        translate: 3px -3px;
+        scale: 1.15;
+    }
 }
 
 /* Features */
@@ -1324,6 +1398,13 @@
 @keyframes rowLift {
     to {
         transform: translateY(-2px) rotate(-0.6deg);
+    }
+}
+
+@keyframes markHop {
+    40% {
+        translate: 0 -7px;
+        scale: 1.12;
     }
 }
 

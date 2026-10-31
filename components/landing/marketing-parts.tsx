@@ -156,7 +156,11 @@ export function StepFragment({ index }: { index: number }) {
                 </span>
                 <span className={s.marks}>
                     {marks.map((mk, i) => (
-                        <span key={i} className={cx(s.mark, markClass[mk])}>
+                        <span
+                            key={i}
+                            className={cx(s.mark, markClass[mk])}
+                            style={{ "--i": i } as CSSProperties}
+                        >
                             {mk === "ok" ? <Check size={14} strokeWidth={3.5} /> : null}
                             {mk === "miss" ? <X size={14} strokeWidth={3.5} /> : null}
                         </span>
