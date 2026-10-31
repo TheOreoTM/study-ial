@@ -159,7 +159,7 @@
     --primary-hover: #ff8c57;
     --primary-press: #f2672b;
     --primary-foreground: #2b1240;
-    --primary-soft: #4a2238; /* tangerine glow on plum */
+    --primary-soft: #6f2a00; /* warm tangerine glow on plum (oklch 0.38 0.11 45): cream 9.6:1, mastery text ≥4.8:1 */
 
     --secondary: #2f2041;
     --secondary-foreground: var(--foreground);
