@@ -222,7 +222,7 @@ Marketing is the loud scoreboard that shows the game; the app is the quiet room 
 
 There is one component set and one type pairing, delivered in two tiers. The **app tier** (Operate) is the default token set in `app/globals.css`: a cream page, white cards, ink text, and a plum dark theme. Colour appears only where it means something: orange for the action, purple for progress and "where you are", and the three mastery colours where a mastery level is shown. Everything else is neutral, because the product is used under exam pressure and has to stay calm. The **marketing tier** (Persuade) is the landing page only, built in `components/landing/landing.module.css` from the brand colours: tangerine dot-grid fields, rising-bar skylines, a grape level path, subject identity colours, springy hovers.
 
-Components are **chunky and friendly, never fussy**: pill buttons in Baloo, rounded-square tiles, heavy display numbers, clear state colours. `app/design-lab/system/` remains as the original reference the production app was migrated from; the shipped code is now the source of truth.
+Components are **chunky and friendly, never fussy**: pill buttons in Baloo, rounded-square tiles, heavy display numbers, clear state colours. The shipped code is the source of truth; `app/design-lab` now only holds logo explorations.
 
 **Key Characteristics:**
 - App tier is the default; the marketing tier lives only in the landing CSS module.
