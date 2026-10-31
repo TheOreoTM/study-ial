@@ -244,6 +244,14 @@
     background: var(--color-tangerine-press);
 }
 
+/* Below 720px the board stacks under the copy and hid most of a tall skyline. Keep it a low band that rises
+   behind the audience chip and stats instead. */
+@media (max-width: 719px) {
+    .heroBars {
+        height: 240px;
+    }
+}
+
 .nav {
     max-width: var(--max);
     margin: 0 auto;
