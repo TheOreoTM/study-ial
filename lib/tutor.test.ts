@@ -68,9 +68,12 @@ describe("buildTopicPrompt", () => {
         expect(p).not.toContain("26. point");
     });
 
-    it("tells the model not to solve the listed practice questions", async () => {
+    it("tells the model not to solve the example questions, in topic prompts only", async () => {
         const { TUTOR_INSTRUCTIONS } = await import("@/lib/tutor");
-        expect(TUTOR_INSTRUCTIONS).toContain("Never solve or give away their answers");
+        expect(buildTopicPrompt(topic)).toContain("Don't solve them or give away their answers");
+        // The question walkthrough is for a question the student has already answered, so it must explain it.
+        expect(buildQuestionPrompt(question)).not.toContain("Don't solve");
+        expect(TUTOR_INSTRUCTIONS).not.toContain("Don't solve");
     });
 
     it("never contains student fields", () => {

@@ -243,7 +243,7 @@ async function planGarnish(
             .map((t, i) => `${i}. ${dayKey(t.date)} ${t.type} ${t.minutes} min — ${t.title}`);
         const { output } = await generateText({
             model: fastModel(),
-            abortSignal: AbortSignal.timeout(20_000),
+            abortSignal: AbortSignal.timeout(30_000),
             output: Output.object({ schema: garnishSchema }),
             system:
                 "You are a calm, encouraging study coach for Pearson Edexcel International A Level students. " +

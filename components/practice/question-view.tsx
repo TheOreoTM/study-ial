@@ -689,7 +689,9 @@ function AiFeedback({
                             )}
                             <div className="min-w-0">
                                 <Markdown className="text-[0.9375rem] font-semibold [&_p]:my-0">{p.point}</Markdown>
-                                {p.comment && <p className="mt-0.5 text-muted-foreground">{p.comment}</p>}
+                                {p.comment && (
+                                    <Markdown className="mt-0.5 text-muted-foreground [&_p]:my-0">{p.comment}</Markdown>
+                                )}
                             </div>
                         </li>
                     ))}
