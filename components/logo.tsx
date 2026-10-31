@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** The brand mark: a plum tile with three rising bars (weak → developing → strong). */
+/** The brand mark: mastery bars climbing as steps (weak → developing → strong) on a plum tile, standing on a cream
+ * baseline, with the orange "you" dot about to land on the top step. */
 export function LogoMark({ className }: { className?: string }) {
     return (
         <svg
             viewBox="0 0 40 40"
             aria-hidden="true"
-            className={cn("size-9 shrink-0 text-ink dark:rounded-[13px] dark:ring-1 dark:ring-border", className)}
+            className={cn("size-9 shrink-0 dark:rounded-[13px] dark:ring-1 dark:ring-border", className)}
         >
-            <rect width="40" height="40" rx="13" fill="currentColor" />
-            <rect x="9" y="22" width="6" height="9" rx="3" className="fill-mastery-developing" />
-            <rect x="17" y="16" width="6" height="15" rx="3" className="fill-mastery-weak" />
-            <rect x="25" y="9" width="6" height="22" rx="3" className="fill-mastery-strong" />
+            <rect width="40" height="40" rx="13" className="fill-ink" />
+            <path d="M8 32V26.5Q8 24 10.5 24H13Q15.5 24 15.5 26.5V32Z" className="fill-mastery-weak" />
+            <path d="M16.25 32V21Q16.25 18.5 18.75 18.5H21.25Q23.75 18.5 23.75 21V32Z" className="fill-mastery-developing" />
+            <path d="M24.5 32V15.5Q24.5 13 27 13H29.5Q32 13 32 15.5V32Z" className="fill-mastery-strong" />
+            <rect x="7" y="31" width="26" height="2.5" rx="1.25" className="fill-cream" />
+            <circle cx="28.25" cy="7.5" r="3.5" className="fill-tangerine" />
         </svg>
     );
 }

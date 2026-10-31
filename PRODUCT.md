@@ -37,7 +37,7 @@ Free to use. Not affiliated with Pearson Edexcel; past papers are linked, not re
 
 ## Brand Commitments
 
-Name: Study-IAL. Voice: plain, encouraging, specific; sentence case. Homepage copy is fixed in `design-lab/content.ts`.
+Name: Study-IAL. Voice: plain, encouraging, specific; sentence case. Homepage copy lives in `app/page.tsx` and `components/landing/marketing-parts.tsx`.
 
 ## Evidence on Hand
 

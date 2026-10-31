@@ -222,7 +222,7 @@ Marketing is the loud scoreboard that shows the game; the app is the quiet room 
 
 There is one component set and one type pairing, delivered in two tiers. The **app tier** (Operate) is the default token set in `app/globals.css`: a cream page, white cards, ink text, and a plum dark theme. Colour appears only where it means something: orange for the action, purple for progress and "where you are", and the three mastery colours where a mastery level is shown. Everything else is neutral, because the product is used under exam pressure and has to stay calm. The **marketing tier** (Persuade) is the landing page only, built in `components/landing/landing.module.css` from the brand colours: tangerine dot-grid fields, rising-bar skylines, a grape level path, subject identity colours, springy hovers.
 
-Components are **chunky and friendly, never fussy**: pill buttons in Baloo, rounded-square tiles, heavy display numbers, clear state colours. The shipped code is the source of truth; `app/design-lab` now only holds logo explorations.
+Components are **chunky and friendly, never fussy**: pill buttons in Baloo, rounded-square tiles, heavy display numbers, clear state colours. The shipped code is the source of truth.
 
 **Key Characteristics:**
 - App tier is the default; the marketing tier lives only in the landing CSS module.
@@ -261,7 +261,7 @@ The same plum, lit from below: Ink becomes the room (`dark-background`), cards a
 
 **The One Orange Rule.** Each app view has one tangerine action; everything else is outline, secondary or ghost. When a page has a next task, that task's button is the orange one and the page header's action falls back to outline (the dashboard does exactly this). Signed-out, the app bar's "Create free account" is outline because the page owns the orange.
 
-**The Mastery Monopoly Rule.** Teal, sun and bubblegum are reserved for mastery states in both tiers: tiles, bars, badges, session segments (sun = part marks), and the bubblegum next-up flag. The brand mark's three rising bars use them because they depict the three levels. No decoration, subject identity or illustration may.
+**The Mastery Monopoly Rule.** Teal, sun and bubblegum are reserved for mastery states in both tiers: tiles, bars, badges, session segments (sun = part marks), and the bubblegum next-up flag. The brand mark's three stair bars use them because they depict the three levels. No decoration, subject identity or illustration may.
 
 ## Typography
 
@@ -351,7 +351,7 @@ Chunky Baloo pills that press back.
   - **Focus:** the focus outline on the whole card.
 
 ### Navigation
-- **App bar:** white over Cream with a hairline. The logo (rising-bars mark plus "Study-IAL" in Baloo) leads; section links are Baloo bold pills in muted text, Sand on hover, Lilac Pale with Deep Grape text when current (`aria-current="page"`). Settings lives in the avatar menu on desktop.
+- **App bar:** white over Cream with a hairline. The logo (the bar-stairs mark: weak, developing and strong bars climbing on a plum tile over a cream baseline, with an orange dot on the top step, plus "Study-IAL" in Baloo) leads; section links are Baloo bold pills in muted text, Sand on hover, Lilac Pale with Deep Grape text when current (`aria-current="page"`). Settings lives in the avatar menu on desktop.
 - **Account menu:** a Lilac Pale avatar with Deep Grape initials opening a 14px-radius popover.
 - **Mobile:** a left sheet with a 28px trailing radius, icon-led nav items and the account menu at the foot.
 - **Breadcrumbs:** small muted links underlined in `border-strong`, chevron separators.

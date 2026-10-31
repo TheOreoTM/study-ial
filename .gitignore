@@ -43,5 +43,5 @@ next-env.d.ts
 
 /lib/generated/prisma
 
-# design-lab skill working files (screenshots, sheets)
+# taste skill working files (screenshots, sheets)
 .taste-skill/

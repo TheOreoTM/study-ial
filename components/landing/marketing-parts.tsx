@@ -39,9 +39,11 @@ export function LogoMark({ className }: { className?: string }) {
     return (
         <svg className={cx(s.logo, className)} viewBox="0 0 40 40" aria-hidden="true">
             <rect width="40" height="40" rx="13" fill="currentColor" />
-            <rect className={s.logoBarA} x="9" y="22" width="6" height="9" rx="3" />
-            <rect className={s.logoBarB} x="17" y="16" width="6" height="15" rx="3" />
-            <rect className={s.logoBarC} x="25" y="9" width="6" height="22" rx="3" />
+            <path className={s.logoBarA} d="M8 32V26.5Q8 24 10.5 24H13Q15.5 24 15.5 26.5V32Z" />
+            <path className={s.logoBarB} d="M16.25 32V21Q16.25 18.5 18.75 18.5H21.25Q23.75 18.5 23.75 21V32Z" />
+            <path className={s.logoBarC} d="M24.5 32V15.5Q24.5 13 27 13H29.5Q32 13 32 15.5V32Z" />
+            <rect className={s.logoBase} x="7" y="31" width="26" height="2.5" rx="1.25" />
+            <circle className={s.logoDot} cx="28.25" cy="7.5" r="3.5" />
         </svg>
     );
 }

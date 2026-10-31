@@ -1,6 +1,6 @@
 /*
  * Marketing homepage, "Playful Pop B" (DESIGN.md, marketing tier).
- * Ported from app/design-lab/system/marketing. Colours come only from app/globals.css tokens:
+ * Colours come only from app/globals.css tokens:
  * brand fields (tangerine hero, grape path, ink board) look the same in both themes; the cream
  * sections and white cards follow the theme tokens (--background, --card, --foreground).
  */
@@ -120,15 +120,23 @@
 }
 
 .logoBarA {
-    fill: var(--developing);
+    fill: var(--weak);
 }
 
 .logoBarB {
-    fill: var(--weak);
+    fill: var(--developing);
 }
 
 .logoBarC {
     fill: var(--strong);
+}
+
+.logoBase {
+    fill: var(--color-cream);
+}
+
+.logoDot {
+    fill: var(--color-tangerine);
 }
 
 /* ---------- Buttons ---------- */
@@ -1474,10 +1482,12 @@
     margin-right: auto;
 }
 
+/* The plum tile on the plum footer: a hairline keeps its edge. */
 .page .footerLogo {
     width: 28px;
     height: 28px;
-    color: var(--color-tangerine);
+    border-radius: 9px;
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--white) 22%, transparent);
 }
 
 /* ---------- Dark mode ----------

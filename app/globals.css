@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Study-IAL "Playful Pop" design system (see DESIGN.md and app/design-lab/system).
+ * Study-IAL "Playful Pop" design system (see DESIGN.md).
  * One component set, two tiers:
  *   app tier (default)  cream page, white panels, ink text; orange = action, purple = progress/selection,
  *                       teal/sun/bubblegum = mastery levels and nothing else
