@@ -30,9 +30,7 @@ export default async function FlashcardsPage() {
             },
         },
     });
-    const units = userUnits
-        .map((uu) => uu.unit)
-        .sort((a, b) => a.subject.order - b.subject.order || a.order - b.order);
+    const units = userUnits.map((uu) => uu.unit).sort((a, b) => a.subject.order - b.subject.order || a.order - b.order);
     const topicIds = units.flatMap((u) => u.topics.map((t) => t.id));
     const [summary, counts] = await Promise.all([getFlashcardSummary(user.id), getDeckCounts(user.id, topicIds)]);
     const toReview = summary.due + summary.newToday;
@@ -97,7 +95,7 @@ export default async function FlashcardsPage() {
                                     <h2 className="mt-2 text-lg leading-tight">{unit.name}</h2>
                                 </div>
                                 {unitDue > 0 && (
-                                    <span className="num shrink-0 rounded-full bg-selected px-2.5 py-1 text-sm leading-none text-selected-foreground">
+                                    <span className="num shrink-0 rounded-full bg-muted px-2.5 py-1 text-sm leading-none">
                                         {unitDue} due
                                     </span>
                                 )}
@@ -122,7 +120,10 @@ export default async function FlashcardsPage() {
                                                             : `${c.total} card${c.total === 1 ? "" : "s"}${c.due ? ` · ${c.due} due` : ""}${c.unseen ? ` · ${c.unseen} new` : ""}`}
                                                     </span>
                                                 </span>
-                                                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                                                <ChevronRight
+                                                    className="size-4 shrink-0 text-muted-foreground"
+                                                    aria-hidden
+                                                />
                                             </Link>
                                         </li>
                                     );

@@ -75,7 +75,12 @@ export default async function DashboardPage() {
 
             {/* Stat strip */}
             <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <Stat icon={Flame} label="Day streak" value={focus.streakDays} suffix={focus.streakDays === 1 ? "day" : "days"} />
+                <Stat
+                    icon={Flame}
+                    label="Day streak"
+                    value={focus.streakDays}
+                    suffix={focus.streakDays === 1 ? "day" : "days"}
+                />
                 <Stat icon={Timer} label="Focus today" value={focus.todayMinutes} suffix="min" />
                 <Stat
                     icon={CalendarCheck}
@@ -186,7 +191,12 @@ export default async function DashboardPage() {
                                 <span className="block font-bold">Flashcards</span>
                                 <span className="block text-[0.8125rem] text-muted-foreground">
                                     {cards.due + cards.newToday > 0
-                                        ? `${cards.due} due today${cards.newToday ? ` · ${cards.newToday} new` : ""}`
+                                        ? [
+                                              cards.due && `${cards.due} due today`,
+                                              cards.newToday && `${cards.newToday} new`,
+                                          ]
+                                              .filter(Boolean)
+                                              .join(" · ")
                                         : `All done. Next cards ${formatDueDay(cards.nextDue!, cards.today)}.`}
                                 </span>
                             </p>
@@ -236,11 +246,15 @@ export default async function DashboardPage() {
                                             >
                                                 <div className="mb-2.5 flex items-center gap-3">
                                                     <UnitChip code={unit.code} />
-                                                    <span className="min-w-0 flex-1 truncate font-bold">{unit.name}</span>
+                                                    <span className="min-w-0 flex-1 truncate font-bold">
+                                                        {unit.name}
+                                                    </span>
                                                     <span
                                                         className={cn(
                                                             "num shrink-0 text-lg leading-none",
-                                                            pct === null ? "text-muted-foreground" : masteryTone[summary.level].text,
+                                                            pct === null
+                                                                ? "text-muted-foreground"
+                                                                : masteryTone[summary.level].text,
                                                         )}
                                                     >
                                                         {pct === null ? "–" : `${pct}%`}
@@ -255,7 +269,11 @@ export default async function DashboardPage() {
                                                     />
                                                     <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-muted-foreground">
                                                         <CalendarDays className="size-3.5" aria-hidden />
-                                                        {days === null ? "No exam date" : days >= 0 ? `${days} days` : "Exam passed"}
+                                                        {days === null
+                                                            ? "No exam date"
+                                                            : days >= 0
+                                                              ? `${days} days`
+                                                              : "Exam passed"}
                                                     </span>
                                                 </div>
                                             </Link>

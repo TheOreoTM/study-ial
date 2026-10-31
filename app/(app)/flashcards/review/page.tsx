@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ReviewSession } from "@/components/flashcards/review-session";
 import { formatDueDay } from "@/components/flashcards/format";
 import { db } from "@/lib/db";
@@ -16,17 +17,21 @@ export default async function ReviewPage({ searchParams }: { searchParams: Searc
     const topic = topicParam
         ? await db.topic.findUnique({ where: { id: topicParam }, select: { id: true, name: true } })
         : null;
+    if (topicParam && !topic) notFound();
 
     const [queue, summary] = await Promise.all([
         getReviewQueue(user.id, { topicId: topic?.id }),
         topic ? null : getFlashcardSummary(user.id),
     ]);
-    const back = topic ? { href: `/flashcards/${topic.id}`, label: "Back to the deck" } : { href: "/flashcards", label: "All flashcards" };
+    const back = topic
+        ? { href: `/flashcards/${topic.id}`, label: "Back to the deck" }
+        : { href: "/flashcards", label: "All flashcards" };
 
-    // Always the same client component, with no key: grading revalidates this page, and an in-progress session must
-    // keep its client state (including its summary) even when the fresh server queue comes back empty.
+    // Always the same client component, keyed only by scope: grading revalidates this page, and an in-progress session
+    // must keep its client state (including its summary) even when the fresh server queue comes back empty.
     return (
         <ReviewSession
+            key={topic?.id ?? "all"}
             cards={queue}
             title={topic?.name ?? "Today's cards"}
             back={back}

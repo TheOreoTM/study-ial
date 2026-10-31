@@ -249,7 +249,7 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     : `${deck.total} card${deck.total === 1 ? "" : "s"}${deck.due ? ` · ${deck.due} due today` : ""}${deck.unseen ? ` · ${deck.unseen} new` : ""}`}
                             </p>
                             <div className="flex flex-wrap gap-2">
-                                {deck.due + deck.unseen > 0 && (
+                                {deck.reviewable > 0 && (
                                     <Button asChild variant="outline" size="sm">
                                         <Link href={`/flashcards/review?topic=${topic.id}`}>
                                             <Layers />

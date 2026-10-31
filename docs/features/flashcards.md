@@ -64,5 +64,5 @@ The whole feature is non-AI.
 - `lib/srs.test.ts` covers first review, Again resets, Easy grows faster, the ease floor, interval caps and day
   arithmetic across month ends.
 - Queue tests cover the new-card cap, weakest topics first, and due before new.
-- Demo user can review the published Physics cards; due count shows on the dashboard; screenshots pass in light/dark
-  at 1440/375.
+- Seeded cards (all subjects, Physics included) arrive as DRAFT. Once an admin publishes a deck at /admin/flashcards,
+  the demo user can review it and the due count shows on the dashboard; screenshots pass in light/dark at 1440/375.

@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { UnitChip } from "@/components/plans/unit-chip";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import { visibleCards } from "@/lib/queries/flashcards";
+import { newCardRoom, visibleCards } from "@/lib/queries/flashcards";
 import { requireUser } from "@/lib/session";
 import { localDay, localDayKey } from "@/lib/time";
 
@@ -35,17 +35,20 @@ export default async function DeckPage({ params }: Props) {
     const now = new Date();
     const today = localDay(now);
     const todayKey = localDayKey(now);
-    const cards = await db.flashcard.findMany({
-        where: { AND: [visibleCards(user.id), { topicId: topic.id }] },
-        orderBy: [{ userId: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }, { id: "asc" }],
-        select: {
-            id: true,
-            front: true,
-            back: true,
-            userId: true,
-            reviews: { where: { userId: user.id }, select: { dueDay: true } },
-        },
-    });
+    const [cards, room] = await Promise.all([
+        db.flashcard.findMany({
+            where: { AND: [visibleCards(user.id), { topicId: topic.id }] },
+            orderBy: [{ userId: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }, { id: "asc" }],
+            select: {
+                id: true,
+                front: true,
+                back: true,
+                userId: true,
+                reviews: { where: { userId: user.id }, select: { dueDay: true } },
+            },
+        }),
+        newCardRoom(user.id, now),
+    ]);
     const shared = cards.filter((c) => c.userId === null);
     const own = cards.filter((c) => c.userId === user.id);
     const due = cards.filter((c) => c.reviews[0] && c.reviews[0].dueDay <= today).length;
@@ -86,7 +89,7 @@ export default async function DeckPage({ params }: Props) {
                     </span>
                 }
                 actions={
-                    due + unseen > 0 ? (
+                    due + Math.min(unseen, room) > 0 ? (
                         <Button asChild size="lg">
                             <Link href={`/flashcards/review?topic=${topic.id}`}>
                                 <Layers />
@@ -156,9 +159,7 @@ function CardList({
                         </div>
                         {own && <OwnCardActions card={{ id: c.id, front: c.front, back: c.back }} />}
                     </div>
-                    <p className="mt-2 text-[0.8125rem] font-semibold text-muted-foreground">
-                        {status(c.reviews)}
-                    </p>
+                    <p className="mt-2 text-[0.8125rem] font-semibold text-muted-foreground">{status(c.reviews)}</p>
                 </li>
             ))}
         </ul>

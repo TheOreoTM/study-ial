@@ -39,6 +39,8 @@ export async function getReviewQueue(userId: string, { topicId, now = new Date()
             where: { AND: [cardWhere, { reviews: { none: { userId } } }] },
             select: { id: true, topicId: true },
             orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            // Plenty to rank by topic priority without loading an unbounded deck.
+            take: 2000,
         }),
         db.flashcardReview.count({ where: { userId, introducedDay: today } }),
         getTopicMastery(userId, topicIds),
@@ -86,17 +88,34 @@ export async function getReviewQueue(userId: string, { topicId, now = new Date()
     });
 }
 
-export type DeckCounts = { total: number; due: number; unseen: number };
+export type DeckCounts = {
+    total: number;
+    due: number;
+    unseen: number;
+    /** Cards a review of this topic would show today: due ones plus new ones within the daily cap */
+    reviewable: number;
+};
 
-/** Per-topic card counts for the given topics: visible cards, due today, and never reviewed. */
+/** New cards the student can still start today (shared across all topics). */
+export async function newCardRoom(userId: string, now = new Date()) {
+    const started = await db.flashcardReview.count({ where: { userId, introducedDay: localDay(now) } });
+    return Math.max(0, NEW_CARDS_PER_DAY - started);
+}
+
+/** Per-topic card counts for the given topics: visible cards, due today, never reviewed, and reviewable today. */
 export async function getDeckCounts(userId: string, topicIds: string[], now = new Date()) {
-    const counts = new Map<string, DeckCounts>(topicIds.map((id) => [id, { total: 0, due: 0, unseen: 0 }]));
+    const counts = new Map<string, DeckCounts>(
+        topicIds.map((id) => [id, { total: 0, due: 0, unseen: 0, reviewable: 0 }]),
+    );
     if (topicIds.length === 0) return counts;
     const today = localDay(now);
-    const cards = await db.flashcard.findMany({
-        where: { AND: [visibleCards(userId), { topicId: { in: topicIds } }] },
-        select: { topicId: true, reviews: { where: { userId }, select: { dueDay: true } } },
-    });
+    const [cards, room] = await Promise.all([
+        db.flashcard.findMany({
+            where: { AND: [visibleCards(userId), { topicId: { in: topicIds } }] },
+            select: { topicId: true, reviews: { where: { userId }, select: { dueDay: true } } },
+        }),
+        newCardRoom(userId, now),
+    ]);
     for (const c of cards) {
         const n = counts.get(c.topicId)!;
         n.total++;
@@ -104,6 +123,7 @@ export async function getDeckCounts(userId: string, topicIds: string[], now = ne
         if (!r) n.unseen++;
         else if (r.dueDay <= today) n.due++;
     }
+    for (const n of counts.values()) n.reviewable = n.due + Math.min(n.unseen, room);
     return counts;
 }
 

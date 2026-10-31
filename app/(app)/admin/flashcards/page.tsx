@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Layers } from "lucide-react";
-import { FlashcardAdminRow, PublishTopicButton } from "@/components/admin/flashcard-admin";
+import { FlashcardAdminRow, TopicStatusButtons } from "@/components/admin/flashcard-admin";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { Markdown } from "@/components/markdown";
@@ -71,7 +71,9 @@ export default async function AdminFlashcardsPage({ searchParams }: { searchPara
                                                     <span className="w-16 shrink-0 text-sm font-bold text-muted-foreground">
                                                         {t.unit.code}
                                                     </span>
-                                                    <span className="min-w-0 flex-1 truncate font-semibold">{t.name}</span>
+                                                    <span className="min-w-0 flex-1 truncate font-semibold">
+                                                        {t.name}
+                                                    </span>
                                                     <span className="shrink-0 text-sm tabular-nums">
                                                         {c.published}
                                                         <span className="text-muted-foreground"> pub</span>
@@ -135,7 +137,15 @@ async function TopicDeck({ topicId }: { topicId: string }) {
             <PageHeader
                 title={topic.name}
                 description={`${topic.unit.code} · topic ${topic.code} · ${topic.flashcards.length} shared cards`}
-                actions={drafts > 0 ? <PublishTopicButton topicId={topic.id} drafts={drafts} /> : undefined}
+                actions={
+                    topic.flashcards.length > 0 ? (
+                        <TopicStatusButtons
+                            topicId={topic.id}
+                            drafts={drafts}
+                            published={topic.flashcards.length - drafts}
+                        />
+                    ) : undefined
+                }
             />
             <ul className="space-y-2">
                 {topic.flashcards.map((c) => (

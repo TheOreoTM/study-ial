@@ -19,8 +19,8 @@ const gradeButtons: { grade: Grade; label: string; hint: string; key: string }[]
 ];
 
 /**
- * One review pass: front → reveal → grade. "Again" sends the card to the back of today's queue once, so it's seen
- * again before the session ends.
+ * One review pass: front → reveal → grade. "Again" sends the card to the back of today's queue, so it's seen again
+ * before the session ends.
  */
 export function ReviewSession({
     cards,
@@ -39,10 +39,10 @@ export function ReviewSession({
     const [queue, setQueue] = useState(cards);
     const [revealed, setRevealed] = useState(false);
     const [done, setDone] = useState(0);
-    const [repeated, setRepeated] = useState<Set<string>>(new Set());
+    const [repeats, setRepeats] = useState(0);
     const [pending, startTransition] = useTransition();
     const card = queue[0];
-    const total = initial.length + repeated.size;
+    const total = initial.length + repeats;
 
     const grade = useCallback(
         (g: Grade) => {
@@ -53,14 +53,15 @@ export function ReviewSession({
                     toast.error(res.error);
                     return;
                 }
-                const again = g === "again" && !repeated.has(card.id);
-                if (again) setRepeated((s) => new Set(s).add(card.id));
+                // "Again" keeps the card due today, so it comes back until it's passed.
+                const again = g === "again";
+                if (again) setRepeats((n) => n + 1);
                 setQueue((q) => (again ? [...q.slice(1), q[0]] : q.slice(1)));
                 setDone((n) => n + 1);
                 setRevealed(false);
             });
         },
-        [card, pending, repeated],
+        [card, pending],
     );
 
     useEffect(() => {
@@ -142,7 +143,7 @@ export function ReviewSession({
                         {card.topic.unitCode} · {card.topic.code} {card.topic.name}
                     </span>
                     {card.isNew && (
-                        <span className="rounded-full bg-selected px-2 py-0.5 text-xs text-selected-foreground">New</span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">New</span>
                     )}
                     {card.own && <span className="rounded-full bg-muted px-2 py-0.5 text-xs">Your card</span>}
                 </p>
@@ -190,7 +191,9 @@ export function ReviewSession({
                             </Button>
                         ))}
                     </div>
-                    <p className="mt-2 hidden text-[0.8125rem] text-muted-foreground sm:block">Keys 1, 2 and 3 work too.</p>
+                    <p className="mt-2 hidden text-[0.8125rem] text-muted-foreground sm:block">
+                        Keys 1, 2 and 3 work too.
+                    </p>
                 </div>
             )}
         </div>

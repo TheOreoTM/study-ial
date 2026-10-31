@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { visibleCards } from "@/lib/queries/flashcards";
 import { assertUser } from "@/lib/session";
-import { GRADES, scheduleCard } from "@/lib/srs";
+import { GRADES, NEW_CARDS_PER_DAY, scheduleCard } from "@/lib/srs";
 import { localDay, localDayKey } from "@/lib/time";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -42,6 +42,13 @@ export async function gradeCard(input: { cardId: string; grade: string }): Promi
     const now = new Date();
     const todayKey = localDayKey(now);
     const prev = card.reviews[0];
+    // The queue already caps new cards, but enforce it here too (e.g. two tabs open).
+    if (
+        !prev &&
+        (await db.flashcardReview.count({ where: { userId: user.id, introducedDay: localDay(now) } })) >=
+            NEW_CARDS_PER_DAY
+    )
+        return { ok: false, error: `You've started today's ${NEW_CARDS_PER_DAY} new cards. More tomorrow.` };
     const next = scheduleCard(
         prev
             ? {
@@ -71,6 +78,7 @@ export async function gradeCard(input: { cardId: string; grade: string }): Promi
     // The review session keeps its own client state; refresh the summaries it links back to.
     revalidatePath("/dashboard");
     revalidatePath("/flashcards");
+    revalidatePath("/subjects", "layout");
     return { ok: true, dueDay: next.dueDay };
 }
 

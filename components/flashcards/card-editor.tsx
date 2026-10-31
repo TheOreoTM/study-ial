@@ -147,7 +147,13 @@ export function OwnCardActions({ card }: { card: Card }) {
                         <DialogTitle>Edit card</DialogTitle>
                         <DialogDescription>Your review schedule for this card stays the same.</DialogDescription>
                     </DialogHeader>
-                    <CardFields front={front} back={back} setFront={setFront} setBack={setBack} idPrefix={`edit-${card.id}`} />
+                    <CardFields
+                        front={front}
+                        back={back}
+                        setFront={setFront}
+                        setBack={setBack}
+                        idPrefix={`edit-${card.id}`}
+                    />
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setDialog(null)}>
                             Cancel

@@ -19,7 +19,7 @@ subagent against spec + diff → fix → tick.
 - [x] UI: /flashcards, /flashcards/review, /flashcards/[topicId], /admin/flashcards, topic page panel, dashboard line, nav
 - [x] Checks + screenshots
 - [x] Commit
-- [ ] Review (fresh subagent) and fixes
+- [x] Review (fresh subagent) and fixes
 
 ## 3. Analytics on /progress ([spec](docs/features/analytics.md))
 - [x] Pure logic: `lib/analytics.ts` with tests (local-day bucketing, trends, plan pace)
