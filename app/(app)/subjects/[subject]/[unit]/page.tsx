@@ -95,7 +95,12 @@ export default async function UnitPage({ params }: { params: Params }) {
                 }
                 actions={
                     totalQuestions > 0 ? (
-                        <>
+                        // Phones: full-width buttons, the main action on top. From 640px they sit in a row with the
+                        // main action on the right.
+                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row-reverse">
+                            <PracticeLink href={`/practice?unit=${unit.id}`} signedIn={!!user}>
+                                Practise this unit
+                            </PracticeLink>
                             <PracticeLink
                                 href={`/practice?mode=weak&unit=${unit.id}`}
                                 signedIn={!!user}
@@ -104,10 +109,7 @@ export default async function UnitPage({ params }: { params: Params }) {
                                 <Target />
                                 Practise weak topics
                             </PracticeLink>
-                            <PracticeLink href={`/practice?unit=${unit.id}`} signedIn={!!user}>
-                                Practise this unit
-                            </PracticeLink>
-                        </>
+                        </div>
                     ) : undefined
                 }
             />
