@@ -35,7 +35,9 @@ app/
   page.tsx                 landing (public)
   (auth)/                  sign-in, sign-up, forgot/reset password
   onboarding/              pick units + exam dates (sets user.onboardedAt)
-  (app)/layout.tsx         app shell (sidebar); works signed-in or out
+  (app)/layout.tsx         app shell: sticky top app bar (logo, pill nav, avatar menu with Settings) from
+                           1024px, menu button + slide-in sheet below; parts in components/shell/.
+                           Works signed-in or out
   (app)/dashboard          today: plan tasks, weak topics, streak
   (app)/subjects/...       curriculum browser — PUBLIC (SEO); practice CTAs need sign-in
   (app)/practice           practice session (topic / unit / weak-topics modes)
