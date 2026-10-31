@@ -125,9 +125,17 @@ export function PlanTaskList({
         <div className="space-y-10">
             {past.length > 0 && (
                 <div className="space-y-8">
-                    <Button variant="ghost" size="sm" className="-ml-3" onClick={() => setShowPast((v) => !v)} aria-expanded={showPast}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="-ml-3"
+                        onClick={() => setShowPast((v) => !v)}
+                        aria-expanded={showPast}
+                    >
                         {showPast ? <ChevronUp /> : <ChevronDown />}
-                        {showPast ? "Hide earlier weeks" : `Show ${past.length} earlier ${past.length === 1 ? "week" : "weeks"}`}
+                        {showPast
+                            ? "Hide earlier weeks"
+                            : `Show ${past.length} earlier ${past.length === 1 ? "week" : "weeks"}`}
                     </Button>
                     {showPast && past.map(renderWeek)}
                 </div>

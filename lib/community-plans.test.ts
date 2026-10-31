@@ -65,6 +65,10 @@ describe("cloneExamDates", () => {
         });
     });
 
+    it("treats an exam today as upcoming", () => {
+        expect(cloneExamDates(template, new Map([["u1", today]]), today)[0].examDate).toEqual(today);
+    });
+
     it("falls back to the template's runway from today, ignoring past dates", () => {
         const [u1, u2] = cloneExamDates(template, new Map([["u1", d("2026-06-01")]]), today);
         expect(u1.examDate).toEqual(d("2026-12-31"));

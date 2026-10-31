@@ -39,6 +39,13 @@ template against your own marks and your own exam dates.** You get their rhythm 
   AI-notes path with its quota and non-AI fallback applies). Sets `clonedFromId` and redirects to the new plan.
 - `adminUnsharePlan(planId)`: `assertAdmin`.
 
+**From review:** a clone never overwrites the student's own exam dates (units it adds get an estimated date, which
+the button says); units added for a clone that then fails are removed again; `clonedFromId` is written with the
+plan; "Used by N" counts distinct other students; archiving a plan unshares it and the library lists active plans
+only; renaming a shared plan warns that the name is public; sharing needs a verified email and is capped at 5
+plans. Known limitation: the week-by-week outline is built from the plan's tasks, so a rescheduled plan's early weeks
+can look thinner than they were, which is an indirect hint of missed sessions.
+
 ## Non-AI fallback
 Cloning uses the deterministic planner. The AI plan notes are optional, just as they are today.
 

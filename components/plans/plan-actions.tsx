@@ -43,7 +43,18 @@ export function RescheduleButton({ planId, variant = "outline" }: { planId: stri
     );
 }
 
-export function PlanActions({ planId, title, archived }: { planId: string; title: string; archived: boolean }) {
+export function PlanActions({
+    planId,
+    title,
+    archived,
+    shared = false,
+}: {
+    planId: string;
+    title: string;
+    archived: boolean;
+    /** Shared to community plans: renaming changes the public title */
+    shared?: boolean;
+}) {
     const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
     const [name, setName] = useState(title);
     const [pending, startTransition] = useTransition();
@@ -80,7 +91,10 @@ export function PlanActions({ planId, title, archived }: { planId: string; title
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         onSelect={() =>
-                            run(() => setPlanArchived(planId, !archived), archived ? "Plan restored." : "Plan archived.")
+                            run(
+                                () => setPlanArchived(planId, !archived),
+                                archived ? "Plan restored." : "Plan archived.",
+                            )
                         }
                     >
                         {archived ? <ArchiveRestore /> : <Archive />}
@@ -105,10 +119,22 @@ export function PlanActions({ planId, title, archived }: { planId: string; title
                     >
                         <DialogHeader>
                             <DialogTitle>Rename plan</DialogTitle>
+                            {shared && (
+                                <DialogDescription>
+                                    This plan is shared, so other students will see the new name. Keep it free of
+                                    anything personal.
+                                </DialogDescription>
+                            )}
                         </DialogHeader>
                         <div className="space-y-2">
                             <Label htmlFor="plan-name">Name</Label>
-                            <Input id="plan-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoFocus />
+                            <Input
+                                id="plan-name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                maxLength={80}
+                                autoFocus
+                            />
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setDialog(null)}>
@@ -128,8 +154,8 @@ export function PlanActions({ planId, title, archived }: { planId: string; title
                     <DialogHeader>
                         <DialogTitle>Delete this plan?</DialogTitle>
                         <DialogDescription>
-                            &ldquo;{title}&rdquo; and all its sessions will be removed. Your practice history and mastery are
-                            not affected. This can&apos;t be undone.
+                            &ldquo;{title}&rdquo; and all its sessions will be removed. Your practice history and
+                            mastery are not affected. This can&apos;t be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

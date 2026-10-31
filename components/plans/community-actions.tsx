@@ -35,7 +35,8 @@ export function UsePlanButton({ planId, missingUnits }: { planId: string; missin
             </Button>
             {missingUnits.length > 0 && (
                 <p className="max-w-xs text-[0.8125rem] text-muted-foreground sm:text-right">
-                    Adds {missingUnits.join(", ")} to your units.
+                    Adds {missingUnits.join(", ")} to your units, with an estimated exam date you can change in
+                    Settings.
                 </p>
             )}
         </div>

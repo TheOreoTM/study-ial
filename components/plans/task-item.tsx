@@ -138,7 +138,12 @@ export function TaskItem({
             </div>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className={cn("-mr-1", compact ? "-my-1" : "-mt-1")} aria-label={`More actions for "${task.title}"`}>
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className={cn("-mr-1", compact ? "-my-1" : "-mt-1")}
+                        aria-label={`More actions for "${task.title}"`}
+                    >
                         <MoreHorizontal />
                     </Button>
                 </DropdownMenuTrigger>

@@ -63,7 +63,10 @@ export function NewPlanForm({
     });
     const [examDates, setExamDates] = useState<Record<string, string>>(() =>
         Object.fromEntries(
-            units.map((u) => [u.unitId, u.examDate && u.examDate > today ? u.examDate : (suggestedExamDate ?? u.examDate)]),
+            units.map((u) => [
+                u.unitId,
+                u.examDate && u.examDate > today ? u.examDate : (suggestedExamDate ?? u.examDate),
+            ]),
         ),
     );
     const [title, setTitle] = useState("");
@@ -152,7 +155,11 @@ export function NewPlanForm({
                                         />
                                         <Label htmlFor={id} className="block min-w-0 cursor-pointer font-normal">
                                             <span className="flex flex-wrap items-center gap-2">
-                                                <UnitChip code={u.code} size="sm" className={on ? "bg-card" : undefined} />
+                                                <UnitChip
+                                                    code={u.code}
+                                                    size="sm"
+                                                    className={on ? "bg-card" : undefined}
+                                                />
                                                 <span className="font-bold">{u.subjectName}</span>
                                             </span>
                                             <span className="mt-1 block text-sm text-muted-foreground">
@@ -161,7 +168,10 @@ export function NewPlanForm({
                                         </Label>
                                     </div>
                                     <div className="flex items-center gap-2 pl-9 sm:pl-0">
-                                        <Label htmlFor={`${id}-exam`} className="text-sm whitespace-nowrap text-muted-foreground">
+                                        <Label
+                                            htmlFor={`${id}-exam`}
+                                            className="text-sm whitespace-nowrap text-muted-foreground"
+                                        >
                                             Exam date
                                         </Label>
                                         <Input
@@ -171,7 +181,9 @@ export function NewPlanForm({
                                             disabled={!on}
                                             min={today}
                                             value={examDates[u.unitId] ?? ""}
-                                            onChange={(e) => setExamDates((d) => ({ ...d, [u.unitId]: e.target.value }))}
+                                            onChange={(e) =>
+                                                setExamDates((d) => ({ ...d, [u.unitId]: e.target.value }))
+                                            }
                                         />
                                     </div>
                                 </li>
@@ -184,7 +196,9 @@ export function NewPlanForm({
             <Card>
                 <CardHeader>
                     <CardTitle>Your schedule</CardTitle>
-                    <CardDescription>We&apos;ll fill each study day up to your daily time, weakest topics first.</CardDescription>
+                    <CardDescription>
+                        We&apos;ll fill each study day up to your daily time, weakest topics first.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -259,8 +273,8 @@ export function NewPlanForm({
                         <p className="rounded-lg bg-muted px-4 py-3 text-muted-foreground" aria-live="polite">
                             {preview.days > 0 ? (
                                 <>
-                                    About <span className="font-bold text-foreground">{preview.days} study days</span> over{" "}
-                                    {preview.weeks} {preview.weeks === 1 ? "week" : "weeks"} — roughly{" "}
+                                    About <span className="font-bold text-foreground">{preview.days} study days</span>{" "}
+                                    over {preview.weeks} {preview.weeks === 1 ? "week" : "weeks"} — roughly{" "}
                                     {formatMinutes(Math.round((preview.days * minutes) / 60) * 60)} of revision.
                                 </>
                             ) : (

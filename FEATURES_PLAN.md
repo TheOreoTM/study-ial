@@ -54,7 +54,7 @@ subagent against spec + diff → fix → tick.
 - [x] UI: /plans/community, /plans/community/[id], share toggle on plan page
 - [x] Checks + screenshots
 - [x] Commit
-- [ ] Review (fresh subagent) and fixes
+- [x] Review (fresh subagent) and fixes
 
 ## Final
 - [ ] Rerun typecheck, lint, test on the final state

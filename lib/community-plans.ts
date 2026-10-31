@@ -75,7 +75,7 @@ export function cloneExamDates(
     const start = dayNumber(template.startDate);
     return template.units.map((u) => {
         const own = studentDates.get(u.unitId);
-        if (own && dayNumber(own) > t) return { unitId: u.unitId, examDate: own };
+        if (own && dayNumber(own) >= t) return { unitId: u.unitId, examDate: own };
         const runway = Math.max(MIN_CLONE_DAYS, dayNumber(u.examDate) - start);
         return { unitId: u.unitId, examDate: new Date((t + runway) * DAY) };
     });

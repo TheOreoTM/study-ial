@@ -56,7 +56,10 @@ export function TodayTasks({ tasks, highlightNext = true }: { tasks: TodayTaskIt
                 </span>
             </div>
             {allDone && (
-                <p className="flex items-center gap-2 rounded-lg bg-muted px-4 py-3 font-semibold text-success" role="status">
+                <p
+                    className="flex items-center gap-2 rounded-lg bg-muted px-4 py-3 font-semibold text-success"
+                    role="status"
+                >
                     <PartyPopper className="size-4" aria-hidden />
                     All done for today. Nice work.
                 </p>
@@ -70,7 +73,10 @@ export function TodayTasks({ tasks, highlightNext = true }: { tasks: TodayTaskIt
                         onStatus={(s) => setStatus(t.id, s)}
                         context={
                             multiplePlans ? (
-                                <Link href={`/plans/${t.planId}`} className="underline decoration-border-strong underline-offset-2 hover:decoration-current">
+                                <Link
+                                    href={`/plans/${t.planId}`}
+                                    className="underline decoration-border-strong underline-offset-2 hover:decoration-current"
+                                >
                                     {t.planTitle}
                                 </Link>
                             ) : undefined

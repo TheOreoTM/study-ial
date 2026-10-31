@@ -83,7 +83,7 @@ export default async function PlanPage({ params }: Props) {
                 actions={
                     <>
                         {!archived && <ShareToggle planId={plan.id} title={plan.title} shared={plan.isPublic} />}
-                        <PlanActions planId={plan.id} title={plan.title} archived={archived} />
+                        <PlanActions planId={plan.id} title={plan.title} archived={archived} shared={plan.isPublic} />
                     </>
                 }
             />

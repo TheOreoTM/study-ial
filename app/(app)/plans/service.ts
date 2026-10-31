@@ -74,7 +74,19 @@ const toRows = (
 export async function createPlanForUser(
     userId: string,
     input: CreatePlanInput,
-    { now = localDay(), useAi = true }: { now?: Date; useAi?: boolean } = {},
+    {
+        now = localDay(),
+        useAi = true,
+        syncUnitDates = true,
+        clonedFromId = null,
+    }: {
+        now?: Date;
+        useAi?: boolean;
+        /** Save the plan's exam dates to the student's units (off for clones, whose dates may be estimates) */
+        syncUnitDates?: boolean;
+        /** The community plan this one was started from */
+        clonedFromId?: string | null;
+    } = {},
 ) {
     const units = await loadPlannerUnits(userId, input.units);
     const tasks = buildPlan({
@@ -100,12 +112,13 @@ export async function createPlanForUser(
                 minutesPerDay: input.minutesPerDay,
                 studyDays: [...new Set(input.studyDays)].sort(),
                 summary: garnish?.summary ?? null,
+                clonedFromId,
                 units: { create: input.units.map((u) => ({ unitId: u.unitId, examDate: u.examDate })) },
             },
         });
         await tx.studyPlanTask.createMany({ data: toRows(plan.id, tasks, garnish?.notes) });
         // Keep the student's unit exam dates in sync with what they entered here.
-        for (const u of input.units) {
+        for (const u of syncUnitDates ? input.units : []) {
             await tx.userUnit.update({
                 where: { userId_unitId: { userId, unitId: u.unitId } },
                 data: { examDate: u.examDate },

@@ -1,15 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /** Unit code label (e.g. WPH11): lilac rounded square with deep-grape Baloo text. */
-export function UnitChip({
-    code,
-    size = "md",
-    className,
-}: {
-    code: string;
-    size?: "sm" | "md";
-    className?: string;
-}) {
+export function UnitChip({ code, size = "md", className }: { code: string; size?: "sm" | "md"; className?: string }) {
     return (
         <span
             className={cn(

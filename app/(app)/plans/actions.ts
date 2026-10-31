@@ -96,7 +96,11 @@ export async function renamePlan(planId: string, title: string): Promise<Result>
 export async function setPlanArchived(planId: string, archived: boolean): Promise<Result> {
     const user = await assertUser();
     if (!(await ownPlan(user.id, planId))) return { ok: false, error: "Plan not found." };
-    await db.studyPlan.update({ where: { id: planId }, data: { status: archived ? "ARCHIVED" : "ACTIVE" } });
+    // Archiving also takes the plan out of the community library.
+    await db.studyPlan.update({
+        where: { id: planId },
+        data: archived ? { status: "ARCHIVED", isPublic: false, sharedAt: null } : { status: "ACTIVE" },
+    });
     revalidatePlans(planId);
     return { ok: true };
 }
@@ -127,15 +131,27 @@ export async function rescheduleMissed(planId: string): Promise<Result<{ created
 // ─── Community plans ─────────────────────────────────────────────────────────
 
 const planId = z.string().min(1).max(64);
+const MAX_SHARED_PLANS = 5;
 
 /** Shares a plan to the community library as a template, or stops sharing it. */
 export async function setPlanShared(id: string, shared: boolean): Promise<Result> {
     const user = await assertUser();
     const parsed = z.object({ id: planId, shared: z.boolean() }).safeParse({ id, shared });
     if (!parsed.success) return { ok: false, error: "Invalid plan." };
-    if (!(await ownPlan(user.id, parsed.data.id))) return { ok: false, error: "Plan not found." };
+    const plan = await db.studyPlan.findFirst({
+        where: { id: parsed.data.id, userId: user.id },
+        select: { id: true, status: true },
+    });
+    if (!plan) return { ok: false, error: "Plan not found." };
+    if (parsed.data.shared) {
+        if (!user.emailVerified) return { ok: false, error: "Verify your email address before sharing plans." };
+        if (plan.status !== "ACTIVE") return { ok: false, error: "Unarchive this plan before sharing it." };
+        const shared = await db.studyPlan.count({ where: { userId: user.id, isPublic: true, id: { not: plan.id } } });
+        if (shared >= MAX_SHARED_PLANS)
+            return { ok: false, error: `You can share up to ${MAX_SHARED_PLANS} plans. Stop sharing one first.` };
+    }
     await db.studyPlan.update({
-        where: { id: parsed.data.id },
+        where: { id: plan.id },
         data: { isPublic: parsed.data.shared, sharedAt: parsed.data.shared ? new Date() : null },
     });
     revalidatePlans(parsed.data.id);
@@ -156,6 +172,7 @@ export async function clonePlan(id: string): Promise<Result> {
         where: { id: parsed.data, OR: [{ isPublic: true }, { userId: user.id }] },
         select: {
             id: true,
+            userId: true,
             title: true,
             startDate: true,
             minutesPerDay: true,
@@ -182,16 +199,26 @@ export async function clonePlan(id: string): Promise<Result> {
 
     let newId: string;
     try {
-        const res = await createPlanForUser(user.id, {
-            title: source.title,
-            units,
-            startDate: today,
-            minutesPerDay: source.minutesPerDay,
-            studyDays: source.studyDays,
-        });
+        const res = await createPlanForUser(
+            user.id,
+            {
+                title: source.title,
+                units,
+                startDate: today,
+                minutesPerDay: source.minutesPerDay,
+                studyDays: source.studyDays,
+            },
+            // Clone dates may be estimates, so they never overwrite the student's own exam dates; cloning your own
+            // plan doesn't count as a use.
+            { syncUnitDates: false, clonedFromId: source.userId === user.id ? null : source.id },
+        );
         newId = res.planId;
-        await db.studyPlan.update({ where: { id: newId }, data: { clonedFromId: source.id } });
     } catch (e) {
+        // Don't leave units on the student's list for a plan that was never made.
+        if (missing.length)
+            await db.userUnit
+                .deleteMany({ where: { userId: user.id, unitId: { in: missing.map((u) => u.unitId) } } })
+                .catch(() => {});
         if (e instanceof PlannerError) return { ok: false, error: e.message };
         console.error("[plans] clonePlan failed", e);
         return { ok: false, error: "Couldn't start that plan. Please try again." };
@@ -207,7 +234,11 @@ export async function adminUnsharePlan(id: string): Promise<Result> {
     await assertAdmin();
     const parsed = planId.safeParse(id);
     if (!parsed.success) return { ok: false, error: "Invalid plan." };
-    await db.studyPlan.updateMany({ where: { id: parsed.data }, data: { isPublic: false, sharedAt: null } });
+    const res = await db.studyPlan.updateMany({
+        where: { id: parsed.data },
+        data: { isPublic: false, sharedAt: null },
+    });
+    if (res.count === 0) return { ok: false, error: "Plan not found." };
     revalidatePlans(parsed.data);
     return { ok: true };
 }
