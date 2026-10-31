@@ -972,7 +972,8 @@
         box-shadow 200ms var(--ease-out),
         opacity 200ms var(--ease-out),
         scale 280ms var(--ease-spring);
-    transition-delay: calc(var(--i, 0) * 70ms + 120ms);
+    /* Leaving plays the wave back right to left (5 marks, so the last is --i: 4). */
+    transition-delay: calc((4 - var(--i, 0)) * 70ms + 120ms);
 }
 
 .stepNode,
@@ -1035,9 +1036,20 @@
         scale: 1.15;
     }
 
+    /* A second, identical keyframe set lets the wave replay on hover-out (a changed animation-name restarts). */
+    .mark {
+        animation: markHopBack 420ms var(--ease-spring) both;
+        animation-delay: calc((4 - var(--i, 0)) * 70ms);
+    }
+
     .step:hover .mark {
         animation: markHop 420ms var(--ease-spring) both;
         animation-delay: calc(var(--i, 0) * 70ms);
+    }
+
+    .step:hover .mark,
+    .step:hover .mark > svg {
+        transition-delay: calc(var(--i, 0) * 70ms + 120ms);
     }
 
     .step:hover .markMiss,
@@ -1516,6 +1528,13 @@
 }
 
 @keyframes markHop {
+    40% {
+        translate: 0 -7px;
+        scale: 1.12;
+    }
+}
+
+@keyframes markHopBack {
     40% {
         translate: 0 -7px;
         scale: 1.12;
