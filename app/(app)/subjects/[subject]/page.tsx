@@ -47,9 +47,22 @@ export default async function SubjectPage({ params }: { params: Params }) {
         <>
             <Breadcrumbs items={[{ href: "/subjects", label: "Subjects" }, { label: subject.name }]} />
             <PageHeader
-                eyebrow={subject.isLocal ? "Local subject" : `Pearson Edexcel IAL · ${subject.code}`}
                 title={subject.name}
-                description={subject.description}
+                description={
+                    <>
+                        <span className="mt-1 flex flex-wrap items-center gap-2">
+                            {subject.isLocal ? (
+                                <Chip>Local subject</Chip>
+                            ) : (
+                                <>
+                                    <Chip>Pearson Edexcel IAL</Chip>
+                                    <Chip>{subject.code}</Chip>
+                                </>
+                            )}
+                        </span>
+                        {subject.description && <span className="mt-3 block">{subject.description}</span>}
+                    </>
+                }
             />
 
             {subject.units.length === 0 ? (

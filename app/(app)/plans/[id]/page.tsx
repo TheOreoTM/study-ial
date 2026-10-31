@@ -66,17 +66,19 @@ export default async function PlanPage({ params }: Props) {
                 </Link>
             </Button>
             <PageHeader
-                eyebrow={
-                    codes.length ? (
-                        <span className="flex flex-wrap gap-1.5">
-                            {codes.sort().map((c) => (
-                                <UnitChip key={c} code={c} size="sm" />
-                            ))}
-                        </span>
-                    ) : undefined
-                }
                 title={plan.title}
-                description={`${formatMinutes(plan.minutesPerDay)} a day, ${describeDays(plan.studyDays)}.`}
+                description={
+                    <>
+                        {formatMinutes(plan.minutesPerDay)} a day, {describeDays(plan.studyDays)}.
+                        {codes.length > 0 && (
+                            <span className="mt-3 flex flex-wrap gap-1.5">
+                                {codes.sort().map((c) => (
+                                    <UnitChip key={c} code={c} size="sm" />
+                                ))}
+                            </span>
+                        )}
+                    </>
+                }
                 actions={<PlanActions planId={plan.id} title={plan.title} archived={archived} />}
             />
 

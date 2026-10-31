@@ -16,18 +16,10 @@ import { getFocusStats } from "@/lib/queries/focus";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { daysUntil, getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
-import { APP_TIME_ZONE } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { ReviseRow } from "./revise-row";
 
 export const metadata: Metadata = { title: "Today" };
-
-function greeting(now = new Date()) {
-    const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, hour: "numeric", hourCycle: "h23" }).format(now));
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-}
 
 export default async function DashboardPage() {
     const user = await requireUser();
@@ -66,7 +58,6 @@ export default async function DashboardPage() {
     return (
         <>
             <PageHeader
-                eyebrow={greeting(now)}
                 title={`${firstName}, here's today`}
                 actions={
                     practisable.length > 0 ? (

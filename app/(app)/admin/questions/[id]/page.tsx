@@ -29,8 +29,8 @@ export default async function EditQuestionPage({ params }: { params: Promise<{ i
     return (
         <>
             <PageHeader
-                eyebrow={`${question.unit.code} · ${question.topic.code} ${question.topic.name}`}
                 title="Edit question"
+                description={`${question.unit.code} · ${question.topic.code} ${question.topic.name}`}
                 className="mb-6"
             />
             <QuestionEditor
