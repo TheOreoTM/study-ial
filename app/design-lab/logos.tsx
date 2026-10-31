@@ -1,16 +1,53 @@
 import { cn } from "@/lib/utils";
 
 /*
- * Five logo directions for Study-IAL, all drawn from the Playful Pop palette: ink, tangerine, grape, cream and the
- * three mastery colours (bubblegum = weak, sun = developing, teal = strong). Each mark is a 40×40 SVG so it can
- * become the favicon and app icon as-is.
+ * Logo directions for Study-IAL, all drawn from the Playful Pop palette: ink, tangerine, cream and the three mastery
+ * colours (bubblegum = weak, sun = developing, teal = strong). Each mark is a 40×40 SVG so it can become the favicon
+ * and app icon as-is. The combinations mix the three favourites from the first round: rising bars, climb and ring.
  */
 
 type MarkProps = { className?: string };
 
 const markBase = "size-10 shrink-0";
 
-/** 1. Rising bars: the current mark. Three bars climb weak → developing → strong on a plum tile. */
+const masteryStroke = ["stroke-mastery-weak", "stroke-mastery-developing", "stroke-mastery-strong"] as const;
+
+/** Arcs of a ring, as percentages of the circumference starting from 12 o'clock. */
+function RingArcs({
+    r,
+    width,
+    arcs,
+}: {
+    r: number;
+    width: number | readonly number[];
+    arcs: readonly (readonly [start: number, length: number])[];
+}) {
+    return arcs.map(([start, length], i) => (
+        <circle
+            key={start}
+            cx="20"
+            cy="20"
+            r={r}
+            fill="none"
+            strokeWidth={typeof width === "number" ? width : width[i]}
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray={`${length} ${100 - length}`}
+            strokeDashoffset={-start}
+            transform="rotate(-90 20 20)"
+            className={masteryStroke[i]}
+        />
+    ));
+}
+
+/** A bar with rounded top corners and a square foot, so bars can stand side by side as steps. */
+function stepBar(x: number, top: number, width: number, bottom: number, r = 2.5) {
+    return `M${x} ${bottom}V${top + r}Q${x} ${top} ${x + r} ${top}H${x + width - r}Q${x + width} ${top} ${x + width} ${top + r}V${bottom}Z`;
+}
+
+/* ---------- Round 1 favourites ---------- */
+
+/** Rising bars: three bars climb weak → developing → strong on a plum tile. */
 export function RisingBarsMark({ className }: MarkProps) {
     return (
         <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
@@ -22,144 +59,175 @@ export function RisingBarsMark({ className }: MarkProps) {
     );
 }
 
-/** 2. Climb: a staircase of topics with you (the cream dot) standing on the top step. */
+/** Climb: a staircase of topics with you (the cream dot) standing on the top step. */
 export function ClimbMark({ className }: MarkProps) {
     return (
         <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
             <rect width="40" height="40" rx="13" className="fill-tangerine" />
-            <path
-                d="M8 32V26H16V20H24V14H32V32Z"
-                strokeWidth="3"
-                strokeLinejoin="round"
-                className="fill-ink stroke-ink"
-            />
+            <path d="M8 32V26H16V20H24V14H32V32Z" strokeWidth="3" strokeLinejoin="round" className="fill-ink stroke-ink" />
             <circle cx="28" cy="8.5" r="3.5" className="fill-cream" />
         </svg>
     );
 }
 
-/** 3. Mastery ring: a progress ring in the three mastery colours, still filling, around an orange "next" dot. */
+/** Mastery ring: a progress ring in the three mastery colours, still filling, around an orange "next" dot. */
 export function RingMark({ className }: MarkProps) {
-    const segments = [
-        { start: 0, length: 18, tone: "stroke-mastery-weak" },
-        { start: 28, length: 18, tone: "stroke-mastery-developing" },
-        { start: 56, length: 24, tone: "stroke-mastery-strong" },
-    ];
     return (
         <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
             <rect width="40" height="40" rx="13" className="fill-ink" />
             <circle cx="20" cy="20" r="11" fill="none" strokeWidth="5" className="stroke-ink-soft" />
-            {segments.map((s) => (
-                <circle
-                    key={s.start}
-                    cx="20"
-                    cy="20"
-                    r="11"
-                    fill="none"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                    pathLength={100}
-                    strokeDasharray={`${s.length} ${100 - s.length}`}
-                    strokeDashoffset={-s.start}
-                    transform="rotate(-90 20 20)"
-                    className={s.tone}
-                />
-            ))}
+            <RingArcs r={11} width={5} arcs={[[0, 18], [28, 18], [56, 24]]} />
             <circle cx="20" cy="20" r="4" className="fill-tangerine" />
         </svg>
     );
 }
 
-/** 4. Open book: notes on the left page, a rising mastery chart on the right. Revision that shows its working. */
-export function BookMark({ className }: MarkProps) {
+/* ---------- Combinations ---------- */
+
+/** Bars + climb: the rising bars with the orange "you" dot hopping onto the tallest one. */
+export function BarsDotMark({ className }: MarkProps) {
     return (
         <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
-            <rect width="40" height="40" rx="13" className="fill-grape" />
+            <rect width="40" height="40" rx="13" className="fill-ink" />
+            <rect x="9" y="24" width="6" height="8" rx="3" className="fill-mastery-weak" />
+            <rect x="17" y="19" width="6" height="13" rx="3" className="fill-mastery-developing" />
+            <rect x="25" y="14.5" width="6" height="17.5" rx="3" className="fill-mastery-strong" />
+            <circle cx="28" cy="8.5" r="3.5" className="fill-tangerine" />
+        </svg>
+    );
+}
+
+/** Bar stairs: the bars pushed together into a staircase on the orange tile, with the cream dot on top. */
+export function BarStairsMark({ className }: MarkProps) {
+    return (
+        <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
+            <rect width="40" height="40" rx="13" className="fill-tangerine" />
+            <path d={stepBar(8, 24, 7.5, 32)} className="fill-mastery-weak" />
+            <path d={stepBar(16.25, 18.5, 7.5, 32)} className="fill-mastery-developing" />
+            <path d={stepBar(24.5, 13, 7.5, 32)} className="fill-mastery-strong" />
+            <rect x="7" y="31" width="26" height="2.5" rx="1.25" className="fill-ink" />
+            <circle cx="28.25" cy="7.5" r="3.5" className="fill-cream" />
+        </svg>
+    );
+}
+
+/** Ring + bars: a thin mastery ring around the rising bars, like a gauge you are filling. */
+export function RingBarsMark({ className }: MarkProps) {
+    return (
+        <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
+            <rect width="40" height="40" rx="13" className="fill-ink" />
+            <circle cx="20" cy="20" r="13" fill="none" strokeWidth="3.5" className="stroke-ink-soft" />
+            <RingArcs r={13} width={3.5} arcs={[[0, 16], [23, 18], [48, 27]]} />
+            <rect x="13.7" y="21.5" width="3.6" height="5" rx="1.8" className="fill-mastery-weak" />
+            <rect x="18.2" y="18.5" width="3.6" height="8" rx="1.8" className="fill-mastery-developing" />
+            <rect x="22.7" y="15" width="3.6" height="11.5" rx="1.8" className="fill-mastery-strong" />
+        </svg>
+    );
+}
+
+/** Ring + climb: the mastery ring with a tangerine staircase inside and the cream dot on the top step. */
+export function RingClimbMark({ className }: MarkProps) {
+    return (
+        <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
+            <rect width="40" height="40" rx="13" className="fill-ink" />
+            <circle cx="20" cy="20" r="13" fill="none" strokeWidth="3.5" className="stroke-ink-soft" />
+            <RingArcs r={13} width={3.5} arcs={[[0, 16], [23, 18], [48, 27]]} />
             <path
-                d="M7 12.5Q13.5 10.5 20 13.5Q26.5 10.5 33 12.5V29.5Q26.5 27.5 20 30.5Q13.5 27.5 7 29.5Z"
+                d="M13.5 26.5V23H17.5V19.5H21.5V16H26.5V26.5Z"
                 strokeWidth="1.5"
                 strokeLinejoin="round"
-                className="fill-cream stroke-cream"
+                className="fill-tangerine stroke-tangerine"
             />
-            <path d="M20 14V29.5" strokeWidth="1.5" strokeLinecap="round" className="stroke-grape-deep" />
-            <path
-                d="M10.5 17.5H16.5M10.5 21H16.5M10.5 24.5H14.5"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                className="stroke-ink"
-            />
-            <rect x="22.5" y="21.5" width="2.6" height="4.5" rx="1.3" className="fill-mastery-weak" />
-            <rect x="26" y="18.5" width="2.6" height="7.5" rx="1.3" className="fill-mastery-developing" />
-            <rect x="29.5" y="15.5" width="2.6" height="10.5" rx="1.3" className="fill-mastery-strong" />
+            <circle cx="24" cy="12.2" r="2.2" className="fill-cream" />
         </svg>
     );
 }
 
-/** 5. A* sticker: the top IAL grade as a tilted tangerine sticker with a cream die-cut edge, the reward every topic is pointing at. */
-export function StarStickerMark({ className }: MarkProps) {
-    const points = Array.from({ length: 24 }, (_, i) => {
-        const angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
-        const radius = i % 2 === 0 ? 16.5 : 14.3;
-        return `${(20 + radius * Math.cos(angle)).toFixed(2)},${(20 + radius * Math.sin(angle)).toFixed(2)}`;
-    }).join(" ");
+/** Rising ring: the ring's three arcs thicken as the level rises, so the ring itself climbs. */
+export function RisingRingMark({ className }: MarkProps) {
     return (
         <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
-            <g transform="rotate(-8 20 20)">
-                <polygon points={points} strokeWidth="5" strokeLinejoin="round" className="fill-cream stroke-cream" />
-                <polygon points={points} strokeWidth="2" strokeLinejoin="round" className="fill-tangerine stroke-tangerine" />
-                <path
-                    d="M12.5 27.5L18 12.5L23.5 27.5M14.4 22.5H21.6"
-                    fill="none"
-                    strokeWidth="3.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="stroke-ink"
-                />
-                <path
-                    d="M28 11.5V18.5M25 13.25L31 16.75M25 16.75L31 13.25"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    className="stroke-ink"
-                />
-            </g>
+            <rect width="40" height="40" rx="13" className="fill-ink" />
+            <RingArcs r={11.5} width={[2.5, 4.5, 6.5]} arcs={[[3, 20], [32, 22], [63, 27]]} />
+            <circle cx="20" cy="20" r="3.8" className="fill-tangerine" />
         </svg>
     );
 }
 
-export const logoOptions = [
+/** Orange ring: the climb's orange tile carrying the mastery ring on a plum disc. */
+export function OrangeRingMark({ className }: MarkProps) {
+    return (
+        <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
+            <rect width="40" height="40" rx="13" className="fill-tangerine" />
+            <circle cx="20" cy="20" r="15" className="fill-ink" />
+            <RingArcs r={10} width={4.5} arcs={[[0, 18], [28, 18], [56, 24]]} />
+            <circle cx="20" cy="20" r="3.5" className="fill-cream" />
+        </svg>
+    );
+}
+
+export type LogoOption = {
+    id: string;
+    name: string;
+    Mark: (props: MarkProps) => React.JSX.Element;
+    note: string;
+    /** The mark sits on a plum tile, so it needs an outline on plum backgrounds. */
+    tileOnDark: boolean;
+};
+
+export const combinations: LogoOption[] = [
+    {
+        id: "bars-dot",
+        name: "Bars and dot",
+        Mark: BarsDotMark,
+        note: "Rising bars + climb. The orange dot is you, about to land on the strong bar. Still crisp at 16px.",
+        tileOnDark: true,
+    },
+    {
+        id: "bar-stairs",
+        name: "Bar stairs",
+        Mark: BarStairsMark,
+        note: "Rising bars + climb. The bars close up into steps on the orange tile, with the cream dot on top.",
+        tileOnDark: false,
+    },
+    {
+        id: "ring-bars",
+        name: "Ring and bars",
+        Mark: RingBarsMark,
+        note: "Ring + rising bars. A gauge you are filling, with the chart inside. Busiest at small sizes.",
+        tileOnDark: true,
+    },
+    {
+        id: "ring-climb",
+        name: "Ring and climb",
+        Mark: RingClimbMark,
+        note: "Ring + climb. An orange staircase inside the mastery ring, cream dot on the top step.",
+        tileOnDark: true,
+    },
+    {
+        id: "rising-ring",
+        name: "Rising ring",
+        Mark: RisingRingMark,
+        note: "Ring + rising bars. The arcs thicken weak → strong, so the ring itself climbs. Calmest of the set.",
+        tileOnDark: true,
+    },
+    {
+        id: "orange-ring",
+        name: "Orange ring",
+        Mark: OrangeRingMark,
+        note: "Ring + climb's orange tile. The loudest app icon here; the plum disc keeps the mastery colours bright.",
+        tileOnDark: false,
+    },
+];
+
+export const originals: LogoOption[] = [
     {
         id: "rising-bars",
         name: "Rising bars",
         Mark: RisingBarsMark,
-        note: "Today's mark, with the bars in level order: bubblegum, sun, teal. Reads as a chart at any size.",
+        note: "Round 1, option 1. The current mark.",
         tileOnDark: true,
     },
-    {
-        id: "climb",
-        name: "Climb",
-        Mark: ClimbMark,
-        note: "Topic by topic, step by step. The loudest of the five; the orange tile is unmistakable in a tab bar.",
-        tileOnDark: false,
-    },
-    {
-        id: "ring",
-        name: "Mastery ring",
-        Mark: RingMark,
-        note: "A ring still filling up, with the orange dot as the next thing to practise. Most app-icon-like.",
-        tileOnDark: true,
-    },
-    {
-        id: "book",
-        name: "Open book",
-        Mark: BookMark,
-        note: "Notes on one page, a mastery chart on the other. The most literal; detail drops out below 32px.",
-        tileOnDark: false,
-    },
-    {
-        id: "a-star",
-        name: "A* sticker",
-        Mark: StarStickerMark,
-        note: "The grade everyone wants, as a sticker slapped on the page. Most playful, least about mastery.",
-        tileOnDark: false,
-    },
-] as const;
+    { id: "climb", name: "Climb", Mark: ClimbMark, note: "Round 1, option 2.", tileOnDark: false },
+    { id: "ring", name: "Mastery ring", Mark: RingMark, note: "Round 1, option 3.", tileOnDark: true },
+];
