@@ -97,13 +97,14 @@ export function topicTrends(
         list.push(a);
         byTopic.set(a.topicId, list);
     }
-    const rank = (c: number | null) => (c === null ? 0 : c);
+    // Changes under 3 points are noise, not a trend.
+    const rank = (c: number | null) => (c === null || Math.abs(c) < 0.03 ? 0 : c);
     return [...byTopic]
         .map(([topicId, list]) => {
             const w = weeklyAccuracy(list, today, weeks, timeZone);
             return { topicId, weeks: w, change: accuracyChange(w), attempts: w.reduce((n, x) => n + x.attempts, 0) };
         })
-        .filter((t) => t.attempts > 0)
+        .filter((t) => t.weeks.some((w) => w.accuracy !== null))
         .sort((a, b) => rank(a.change) - rank(b.change) || b.attempts - a.attempts);
 }
 
@@ -115,13 +116,15 @@ export type PlanPace = {
     total: number;
     done: number;
     skipped: number;
-    /** Tasks dated on or before today */
+    /** Tasks dated on or before today that weren't skipped */
     scheduledByToday: number;
+    /** Of those, how many are done */
+    doneByToday: number;
     /** Pending tasks dated before today */
     behind: number;
     /** Local days from today until the exam (negative after it) */
     daysLeft: number;
-    /** One point per day from the plan's start to its exam day: cumulative tasks scheduled and done */
+    /** One point per day from the plan's start to its exam day: cumulative tasks scheduled (not skipped) and done */
     series: { day: string; scheduled: number; done: number | null }[];
 };
 
@@ -150,7 +153,10 @@ export function planPace(
     for (let d = first; d <= last && days.length < 800; d = addDays(d, 1)) days.push(d);
 
     const scheduledOn = new Map<string, number>();
-    for (const k of taskDays) scheduledOn.set(k, (scheduledOn.get(k) ?? 0) + 1);
+    // Skipped tasks drop out of the schedule: they were dealt with, they just won't be done.
+    tasks.forEach((t, i) => {
+        if (t.status !== "SKIPPED") scheduledOn.set(taskDays[i], (scheduledOn.get(taskDays[i]) ?? 0) + 1);
+    });
     const doneOn = new Map<string, number>();
     for (const t of tasks) {
         if (t.status !== "DONE") continue;
@@ -173,7 +179,8 @@ export function planPace(
         total: tasks.length,
         done: tasks.filter((t) => t.status === "DONE").length,
         skipped: tasks.filter((t) => t.status === "SKIPPED").length,
-        scheduledByToday: taskDays.filter((k) => k <= today).length,
+        scheduledByToday: tasks.filter((t, i) => t.status !== "SKIPPED" && taskDays[i] <= today).length,
+        doneByToday: tasks.filter((t, i) => t.status === "DONE" && taskDays[i] <= today).length,
         behind: tasks.filter((t, i) => t.status === "PENDING" && taskDays[i] < today).length,
         daysLeft: Math.round((Date.parse(`${exam}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000),
         series,

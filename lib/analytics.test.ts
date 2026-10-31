@@ -96,6 +96,22 @@ describe("accuracyChange and topicTrends", () => {
         );
     });
 
+    it("ignores topics whose attempts carry no marks, and treats tiny changes as no change", () => {
+        const trends = topicTrends(
+            [
+                { ...at("2026-10-31", 0, 0), topicId: "zero" },
+                { ...at("2026-10-10", 50, 100), topicId: "flat" },
+                { ...at("2026-10-31", 49, 100), topicId: "flat" },
+                { ...at("2026-10-10", 4), topicId: "down" },
+                { ...at("2026-10-31", 1), topicId: "down" },
+            ],
+            today,
+            6,
+            TZ,
+        );
+        expect(trends.map((t) => t.topicId)).toEqual(["down", "flat"]);
+    });
+
     it("lists slipping topics first, then topics with no change yet, then improving ones", () => {
         const trends = topicTrends(
             [
@@ -127,7 +143,15 @@ describe("planPace", () => {
 
     it("reports progress mid-plan", () => {
         const pace = planPace(tasks, { ...plan, today: "2026-10-31" });
-        expect(pace).toMatchObject({ total: 5, done: 2, skipped: 1, scheduledByToday: 4, behind: 1, daysLeft: 2 });
+        expect(pace).toMatchObject({
+            total: 5,
+            done: 2,
+            skipped: 1,
+            scheduledByToday: 3,
+            doneByToday: 2,
+            behind: 1,
+            daysLeft: 2,
+        });
         expect(pace.series.map((p) => p.day)).toEqual([
             "2026-10-28",
             "2026-10-29",
@@ -136,7 +160,8 @@ describe("planPace", () => {
             "2026-11-01",
             "2026-11-02",
         ]);
-        expect(pace.series.map((p) => p.scheduled)).toEqual([1, 2, 3, 4, 5, 5]);
+        // The skipped task on the 30th drops out of the schedule.
+        expect(pace.series.map((p) => p.scheduled)).toEqual([1, 2, 2, 3, 4, 4]);
         // The task done at 19:30 UTC on the 31st counts on 1 November locally, which is after today.
         expect(pace.series.map((p) => p.done)).toEqual([1, 1, 1, 1, null, null]);
     });
@@ -154,7 +179,7 @@ describe("planPace", () => {
         const pace = planPace(tasks, { ...plan, today: "2026-11-10" });
         expect(pace.daysLeft).toBe(-8);
         expect(pace.behind).toBe(2);
-        expect(pace.series.at(-1)).toEqual({ day: "2026-11-02", scheduled: 5, done: 2 });
+        expect(pace.series.at(-1)).toEqual({ day: "2026-11-02", scheduled: 4, done: 2 });
     });
 
     it("draws an empty plan from start to exam", () => {

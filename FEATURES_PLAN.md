@@ -27,7 +27,7 @@ subagent against spec + diff → fix → tick.
 - [x] UI: time per subject, accuracy trends, plan pace charts on /progress
 - [x] Checks + screenshots
 - [x] Commit
-- [ ] Review (fresh subagent) and fixes
+- [x] Review (fresh subagent) and fixes
 
 ## 4. AI topic tutor ([spec](docs/features/ai-tutor.md))
 - [ ] Schema + migration (`TutorExplanation`), `tutor` AI feature + quota

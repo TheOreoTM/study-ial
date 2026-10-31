@@ -122,21 +122,24 @@ export default async function ProgressPage() {
             />
 
             {attempted === 0 ? (
-                <EmptyState
-                    icon={BarChart3}
-                    title="No attempts yet"
-                    description="Answer a few questions and your mastery of each topic will show up here."
-                    action={
-                        <div className="flex flex-wrap justify-center gap-2">
-                            <Button asChild>
-                                <Link href="/practice?mode=weak">Start practising</Link>
-                            </Button>
-                            <Button asChild variant="outline">
-                                <Link href="/subjects">Browse topics</Link>
-                            </Button>
-                        </div>
-                    }
-                />
+                <div className="space-y-10">
+                    <EmptyState
+                        icon={BarChart3}
+                        title="No attempts yet"
+                        description="Answer a few questions and your mastery of each topic will show up here."
+                        action={
+                            <div className="flex flex-wrap justify-center gap-2">
+                                <Button asChild>
+                                    <Link href="/practice?mode=weak">Start practising</Link>
+                                </Button>
+                                <Button asChild variant="outline">
+                                    <Link href="/subjects">Browse topics</Link>
+                                </Button>
+                            </div>
+                        }
+                    />
+                    <ProgressAnalyticsPanels data={analytics} />
+                </div>
             ) : (
                 <div className="space-y-10">
                     <section aria-label="Totals" className="rounded-xl border bg-card shadow-card">

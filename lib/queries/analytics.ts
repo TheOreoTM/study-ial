@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { minutesBySubject, planPace, topicTrends, windowDays } from "@/lib/analytics";
+import { findCurrentPlan } from "@/lib/queries/plans";
 import { localDayKey } from "@/lib/time";
 
 const DAY = 86_400_000;
@@ -15,27 +16,37 @@ export async function getProgressAnalytics(userId: string, now = new Date()) {
     const attemptsSince = new Date(now.getTime() - (TREND_WEEKS * 7 + 1) * DAY);
 
     const topicSubject = { select: { unit: { select: { subject: { select: { slug: true, name: true } } } } } };
-    const [sessions, attempts, plan] = await Promise.all([
+    const [sessions, attempts] = await Promise.all([
         db.focusSession.findMany({
             where: { userId, endedAt: { gte: focusSince } },
             select: { endedAt: true, minutes: true, topic: topicSubject, task: { select: { topic: topicSubject } } },
         }),
         db.attempt.findMany({
             where: { userId, createdAt: { gte: attemptsSince } },
-            select: { createdAt: true, marksAwarded: true, maxMarks: true, question: { select: { topicId: true } } },
-        }),
-        db.studyPlan.findFirst({
-            where: { userId, status: "ACTIVE" },
-            orderBy: { createdAt: "desc" },
             select: {
-                id: true,
-                title: true,
-                startDate: true,
-                examDate: true,
-                tasks: { select: { date: true, status: true, completedAt: true } },
+                createdAt: true,
+                marksAwarded: true,
+                maxMarks: true,
+                question: {
+                    select: {
+                        topicId: true,
+                        topic: { select: { id: true, code: true, name: true, unit: { select: { code: true } } } },
+                    },
+                },
             },
         }),
     ]);
+    // The same plan the dashboard shows. Sequential: the local dev Postgres drops connections beyond ~5 concurrent.
+    const current = await findCurrentPlan(userId, now);
+    const plan = current
+        ? {
+              ...current,
+              tasks: await db.studyPlanTask.findMany({
+                  where: { planId: current.id },
+                  select: { date: true, status: true, completedAt: true },
+              }),
+          }
+        : null;
 
     const focus = minutesBySubject(
         sessions.map((s) => ({
@@ -51,11 +62,7 @@ export async function getProgressAnalytics(userId: string, now = new Date()) {
         today,
         TREND_WEEKS,
     );
-    const trendTopics = await db.topic.findMany({
-        where: { id: { in: trends.map((t) => t.topicId) } },
-        select: { id: true, code: true, name: true, unit: { select: { code: true } } },
-    });
-    const topicById = new Map(trendTopics.map((t) => [t.id, t]));
+    const topicById = new Map(attempts.map((a) => [a.question.topicId, a.question.topic]));
 
     return {
         today,

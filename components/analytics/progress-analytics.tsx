@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarClock, Clock, TrendingDown, TrendingUp } from "lucide-react";
+import { RescheduleButton } from "@/components/plans/plan-actions";
 import { Button } from "@/components/ui/button";
 import type { ProgressAnalytics } from "@/lib/queries/analytics";
 import { FOCUS_WINDOW_DAYS, TREND_WEEKS } from "@/lib/queries/analytics";
@@ -25,7 +26,8 @@ export function ProgressAnalyticsPanels({ data }: { data: ProgressAnalytics }) {
                     Accuracy by topic
                 </h2>
                 <p className="mt-1 mb-4 text-sm text-muted-foreground">
-                    Marks scored per week over the last {TREND_WEEKS} weeks. Topics that are slipping come first.
+                    Marks scored per week over the last {TREND_WEEKS} weeks. Topics that are slipping come first; tap
+                    one to practise it.
                 </p>
                 {trends.length === 0 ? (
                     <p className="rounded-lg bg-muted px-4 py-3 text-muted-foreground">
@@ -42,7 +44,15 @@ export function ProgressAnalyticsPanels({ data }: { data: ProgressAnalytics }) {
                                     className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0"
                                 >
                                     <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
-                                        <p className="leading-snug font-bold sm:truncate">{t.topic.name}</p>
+                                        <p className="leading-snug font-bold sm:truncate">
+                                            <Link
+                                                href={`/practice?topic=${t.topicId}`}
+                                                aria-label={`Practise ${t.topic.name}`}
+                                                className="underline decoration-border-strong decoration-2 underline-offset-4 hover:decoration-current"
+                                            >
+                                                {t.topic.name}
+                                            </Link>
+                                        </p>
                                         <p className="flex flex-wrap items-center gap-x-2 text-[0.8125rem] text-muted-foreground">
                                             <span>
                                                 {t.topic.unit.code} · {t.attempts} answer{t.attempts === 1 ? "" : "s"}
@@ -128,15 +138,17 @@ function PacePanel({ data }: { data: ProgressAnalytics }) {
         );
     }
     const { pace } = data.plan;
-    const finished = pace.done + pace.skipped;
+    const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
     const summary =
-        pace.daysLeft < 0
-            ? `The exam date has passed. You finished ${pace.done} of ${pace.total} tasks.`
-            : pace.behind > 0
-              ? `${pace.behind} task${pace.behind === 1 ? "" : "s"} behind, ${pace.daysLeft} day${pace.daysLeft === 1 ? "" : "s"} to go.`
-              : pace.scheduledByToday === 0
-                ? `Your plan starts soon. ${pace.daysLeft} days to go.`
-                : `On track: ${finished} of ${pace.scheduledByToday} tasks so far, ${pace.daysLeft} day${pace.daysLeft === 1 ? "" : "s"} to go.`;
+        pace.total === 0
+            ? "This plan has no tasks yet."
+            : pace.daysLeft < 0
+              ? `The exam date has passed. You finished ${pace.done} of ${pace.total} tasks.`
+              : pace.behind > 0
+                ? `${pace.behind} task${pace.behind === 1 ? "" : "s"} behind, ${days(pace.daysLeft)} to go.`
+                : pace.scheduledByToday === 0
+                  ? `Your first task is coming up. ${days(pace.daysLeft)} to go.`
+                  : `On track: ${pace.doneByToday} of ${pace.scheduledByToday} tasks due so far are done, ${days(pace.daysLeft)} to go.`;
     return (
         <>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -155,12 +167,9 @@ function PacePanel({ data }: { data: ProgressAnalytics }) {
                     </p>
                 </div>
                 {pace.behind > 0 && pace.daysLeft >= 0 && (
-                    <Button asChild variant="outline" size="sm" className="shrink-0 self-start">
-                        <Link href={`/plans/${data.plan.id}`}>
-                            <CalendarClock />
-                            Catch up
-                        </Link>
-                    </Button>
+                    <div className="shrink-0 self-start">
+                        <RescheduleButton planId={data.plan.id} />
+                    </div>
                 )}
             </div>
             <dl className="mb-5 grid grid-cols-3 gap-3 sm:max-w-lg">
@@ -168,7 +177,7 @@ function PacePanel({ data }: { data: ProgressAnalytics }) {
                 <PaceStat label="Due so far" value={pace.scheduledByToday} />
                 <PaceStat label="Days left" value={Math.max(0, pace.daysLeft)} />
             </dl>
-            <PlanPaceChart pace={pace} today={data.today} />
+            {pace.total > 0 && <PlanPaceChart pace={pace} today={data.today} />}
         </>
     );
 }

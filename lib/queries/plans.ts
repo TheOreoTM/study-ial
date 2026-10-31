@@ -63,21 +63,33 @@ export type ActivePlanSummary = {
     overdueTasks: number;
 };
 
-/** The active plan with the soonest upcoming exam (or the newest active plan if all exams have passed). */
-export async function getActivePlanSummary(userId: string, now = new Date()): Promise<ActivePlanSummary | null> {
+/** The student's current plan: the active plan with the soonest upcoming exam, else the newest active plan. */
+export async function findCurrentPlan(userId: string, now = new Date()) {
     const today = utcToday(now);
-    const plan =
+    return (
         (await db.studyPlan.findFirst({
             where: { userId, status: "ACTIVE", examDate: { gte: today } },
             orderBy: [{ examDate: "asc" }, { createdAt: "desc" }],
-        })) ??
-        (await db.studyPlan.findFirst({ where: { userId, status: "ACTIVE" }, orderBy: { createdAt: "desc" } }));
+        })) ?? (await db.studyPlan.findFirst({ where: { userId, status: "ACTIVE" }, orderBy: { createdAt: "desc" } }))
+    );
+}
+
+/** Summary of the current plan (see findCurrentPlan) for the dashboard. */
+export async function getActivePlanSummary(userId: string, now = new Date()): Promise<ActivePlanSummary | null> {
+    const today = utcToday(now);
+    const plan = await findCurrentPlan(userId, now);
     if (!plan) return null;
 
     // Sequential on purpose: the dashboard already runs several queries in parallel and the local
     // Prisma dev Postgres drops connections beyond ~5 concurrent ones.
-    const counts = await db.studyPlanTask.groupBy({ by: ["status"], where: { planId: plan.id }, _count: { _all: true } });
-    const overdueTasks = await db.studyPlanTask.count({ where: { planId: plan.id, status: "PENDING", date: { lt: today } } });
+    const counts = await db.studyPlanTask.groupBy({
+        by: ["status"],
+        where: { planId: plan.id },
+        _count: { _all: true },
+    });
+    const overdueTasks = await db.studyPlanTask.count({
+        where: { planId: plan.id, status: "PENDING", date: { lt: today } },
+    });
     const count = (s: string) => counts.find((c) => c.status === s)?._count._all ?? 0;
     const totalTasks = counts.reduce((s, c) => s + c._count._all, 0);
     const doneTasks = count("DONE");

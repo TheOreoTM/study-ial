@@ -15,7 +15,7 @@ export function PlanPaceChart({ pace, today }: { pace: PlanPace; today: string }
     const [hover, setHover] = useState<number | null>(null);
     // Draw at the real pixel width so text and strokes stay their true size on phones.
     const box = useRef<HTMLDivElement>(null);
-    const [W, setW] = useState(640);
+    const [W, setW] = useState<number | null>(null);
     useEffect(() => {
         const el = box.current;
         if (!el) return;
@@ -24,6 +24,10 @@ export function PlanPaceChart({ pace, today }: { pace: PlanPace; today: string }
         return () => ro.disconnect();
     }, []);
     const s = pace.series;
+    if (W === null) {
+        // Measure first, so the chart never flashes at the wrong size.
+        return <div ref={box} style={{ height: H + 30 }} aria-hidden />;
+    }
     const n = s.length;
     const yMax = Math.max(1, pace.total);
     const x = (i: number) => M.left + (n === 1 ? 0 : (i / (n - 1)) * (W - M.left - M.right));
@@ -43,14 +47,18 @@ export function PlanPaceChart({ pace, today }: { pace: PlanPace; today: string }
     const ticks = [0, Math.round(yMax / 2), yMax].filter((v, i, a) => a.indexOf(v) === i);
     const active = hover !== null ? s[hover] : null;
 
+    const width = W;
     function pick(clientX: number, rect: DOMRect) {
-        const px = ((clientX - rect.left) / rect.width) * W;
-        const i = Math.round(((px - M.left) / (W - M.left - M.right)) * (n - 1));
+        const px = ((clientX - rect.left) / rect.width) * width;
+        const i = Math.round(((px - M.left) / (width - M.left - M.right)) * (n - 1));
         setHover(Math.min(n - 1, Math.max(0, i)));
     }
 
+    // Weekly rows for the screen-reader table: every 7th day plus the last.
+    const tableRows = s.filter((_, i) => i % 7 === 0 || i === n - 1);
+
     return (
-        <div>
+        <div ref={box}>
             <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[0.8125rem] font-semibold text-muted-foreground">
                 <span className="flex items-center gap-2">
                     <svg width="22" height="8" aria-hidden>
@@ -73,7 +81,7 @@ export function PlanPaceChart({ pace, today }: { pace: PlanPace; today: string }
                     Done
                 </span>
             </div>
-            <div className="relative" ref={box}>
+            <div className="relative">
                 <svg
                     viewBox={`0 0 ${W} ${H}`}
                     width={W}
@@ -84,7 +92,9 @@ export function PlanPaceChart({ pace, today }: { pace: PlanPace; today: string }
                     tabIndex={0}
                     onPointerMove={(e) => pick(e.clientX, e.currentTarget.getBoundingClientRect())}
                     onPointerLeave={() => setHover(null)}
+                    onFocus={() => setHover((h) => h ?? (todayIdx >= 0 ? todayIdx : n - 1))}
                     onBlur={() => setHover(null)}
+                    aria-describedby="pace-chart-hint"
                     onKeyDown={(e) => {
                         if (e.key === "ArrowRight") setHover((h) => Math.min(n - 1, (h ?? todayIdx) + 1));
                         else if (e.key === "ArrowLeft") setHover((h) => Math.max(0, (h ?? todayIdx) - 1));
@@ -198,7 +208,7 @@ export function PlanPaceChart({ pace, today }: { pace: PlanPace; today: string }
                     <div
                         className="pointer-events-none absolute top-0 z-10 w-max -translate-x-1/2 rounded-md border bg-popover px-3 py-2 text-[0.8125rem] shadow-raised"
                         style={{ left: `${Math.min(85, Math.max(15, (x(hover) / W) * 100))}%` }}
-                        role="status"
+                        aria-hidden
                     >
                         <p className="font-bold">{shortDay(active.day)}</p>
                         <p className="tabular-nums">Scheduled: {active.scheduled}</p>
@@ -206,6 +216,31 @@ export function PlanPaceChart({ pace, today }: { pace: PlanPace; today: string }
                     </div>
                 )}
             </div>
+            <p id="pace-chart-hint" className="sr-only">
+                Use the left and right arrow keys to move through the days.
+            </p>
+            <p className="sr-only" aria-live="polite">
+                {active ? `${shortDay(active.day)}: ${active.scheduled} scheduled, ${active.done ?? "no"} done.` : ""}
+            </p>
+            <table className="sr-only">
+                <caption>Tasks scheduled and done by date</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Scheduled</th>
+                        <th scope="col">Done</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {tableRows.map((p) => (
+                        <tr key={p.day}>
+                            <th scope="row">{shortDay(p.day)}</th>
+                            <td>{p.scheduled}</td>
+                            <td>{p.done ?? "–"}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }
