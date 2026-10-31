@@ -9,6 +9,7 @@ const links = [
     { href: "/admin/questions", label: "Questions", exact: false },
     { href: "/admin/questions/new", label: "New question", exact: true },
     { href: "/admin/import", label: "Import", exact: true },
+    { href: "/admin/flashcards", label: "Flashcards", exact: false },
 ];
 
 export function AdminNav() {

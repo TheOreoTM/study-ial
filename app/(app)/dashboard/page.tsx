@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Target, Timer } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Layers, Target, Timer } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { formatDueDay } from "@/components/flashcards/format";
 import { MasteryBar, summarizeMastery } from "@/components/mastery";
 import { TodayTasks } from "@/components/plans/today-tasks";
 import { UnitChip } from "@/components/plans/unit-chip";
@@ -12,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { db } from "@/lib/db";
 import { masteryTone, revisionPriority } from "@/lib/mastery";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
+import { getFlashcardSummary } from "@/lib/queries/flashcards";
 import { getFocusStats } from "@/lib/queries/focus";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { daysUntil, getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
@@ -34,12 +36,13 @@ export default async function DashboardPage() {
     const topics = userUnits.flatMap((uu) => uu.unit.topics.map((t) => ({ ...t, unit: uu.unit })));
     const topicIds = topics.map((t) => t.id);
 
-    const [mastery, questionCounts, focus, todayTasks, plan] = await Promise.all([
+    const [mastery, questionCounts, focus, todayTasks, plan, cards] = await Promise.all([
         getTopicMastery(user.id, topicIds),
         getQuestionCounts(topicIds),
         getFocusStats(user.id),
         getTodayTasks(user.id),
         getActivePlanSummary(user.id),
+        getFlashcardSummary(user.id),
     ]);
 
     const now = new Date();
@@ -173,6 +176,26 @@ export default async function DashboardPage() {
                                 />
                             ))}
                         </ul>
+                    )}
+                    {(cards.due + cards.newToday > 0 || cards.nextDue) && (
+                        <div className="mt-5 flex items-center gap-3 border-t border-border-strong/25 pt-5">
+                            <span className="grid size-11 shrink-0 place-items-center rounded-[12px] bg-card text-selected-foreground shadow-card">
+                                <Layers className="size-5" aria-hidden />
+                            </span>
+                            <p className="min-w-0 flex-1 leading-snug">
+                                <span className="block font-bold">Flashcards</span>
+                                <span className="block text-[0.8125rem] text-muted-foreground">
+                                    {cards.due + cards.newToday > 0
+                                        ? `${cards.due} due today${cards.newToday ? ` · ${cards.newToday} new` : ""}`
+                                        : `All done. Next cards ${formatDueDay(cards.nextDue!, cards.today)}.`}
+                                </span>
+                            </p>
+                            <Button asChild variant="outline" size="sm" className="shrink-0">
+                                <Link href={cards.due + cards.newToday > 0 ? "/flashcards/review" : "/flashcards"}>
+                                    {cards.due + cards.newToday > 0 ? "Review" : "Decks"}
+                                </Link>
+                            </Button>
+                        </div>
                     )}
                 </section>
 

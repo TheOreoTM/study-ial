@@ -32,6 +32,8 @@ model User {
   studyPlans    StudyPlan[]
   focusSessions FocusSession[]
   aiUsage       AiUsage[]
+  flashcards    Flashcard[]
+  cardReviews   FlashcardReview[]
 
   @@map("user")
 }
@@ -132,6 +134,7 @@ model Topic {
   questions  Question[]
   planTasks  StudyPlanTask[]
   focusTimes FocusSession[]
+  flashcards Flashcard[]
 
   @@unique([unitId, slug])
 }
@@ -227,6 +230,56 @@ model Attempt {
 
   @@index([userId, createdAt])
   @@index([userId, questionId])
+}
+
+// Seed keys of seeded questions/flashcards an admin deleted, so re-running the seed doesn't bring them back.
+model SeedTombstone {
+  seedKey   String   @id
+  deletedAt DateTime @default(now())
+}
+
+// ─── Flashcards ──────────────────────────────────────────────────────────────
+
+// A card in a topic's deck. Shared cards (userId null) are seeded or written by admins and go through the same
+// DRAFT → PUBLISHED review as questions. A student's own cards (userId set) are private to them.
+model Flashcard {
+  id        String         @id @default(cuid())
+  seedKey   String?        @unique
+  topicId   String
+  topic     Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Markdown, supports $LaTeX$
+  front     String
+  back      String
+  status    QuestionStatus @default(DRAFT)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  reviews FlashcardReview[]
+
+  @@index([topicId, status])
+  @@index([userId, topicId])
+}
+
+// A student's spaced-repetition state for one card (created on first review).
+model FlashcardReview {
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcardId    String
+  flashcard      Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  // Local calendar day (lib/time.ts) the card is next due
+  dueDay         DateTime  @db.Date
+  intervalDays   Int
+  ease           Float
+  reps           Int       @default(0)
+  lapses         Int       @default(0)
+  lastReviewedAt DateTime
+  // Local day of the first review; caps how many new cards a student starts per day
+  introducedDay  DateTime  @db.Date
+
+  @@id([userId, flashcardId])
+  @@index([userId, dueDay])
 }
 
 // ─── Student data ────────────────────────────────────────────────────────────

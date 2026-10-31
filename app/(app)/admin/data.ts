@@ -64,8 +64,15 @@ export async function setQuestionStatusData(ids: string[], status: "DRAFT" | "PU
 }
 
 export async function deleteQuestionData(id: string) {
-    const { count } = await db.question.deleteMany({ where: { id } });
-    return count > 0;
+    return db.$transaction(async (tx) => {
+        const q = await tx.question.findUnique({ where: { id }, select: { seedKey: true } });
+        if (!q) return false;
+        // Remember deleted seed content so the next `pnpm db:seed` doesn't recreate it.
+        if (q.seedKey)
+            await tx.seedTombstone.upsert({ where: { seedKey: q.seedKey }, create: { seedKey: q.seedKey }, update: {} });
+        await tx.question.delete({ where: { id } });
+        return true;
+    });
 }
 
 // ─── Import ──────────────────────────────────────────────────────────────────

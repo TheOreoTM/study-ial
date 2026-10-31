@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, ChevronRight, History, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, Layers, Play } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
 import { db } from "@/lib/db";
 import { masteryTone, type MasteryLevel } from "@/lib/mastery";
 import { getTopic, getTopicQuestionTypeCounts, getUnitByCode } from "@/lib/queries/curriculum";
+import { getDeckCounts } from "@/lib/queries/flashcards";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { getUser } from "@/lib/session";
 import { site } from "@/lib/site";
@@ -73,8 +75,9 @@ export default async function TopicPage({ params }: { params: Params }) {
     if (subjectSlug !== unit.subject.slug || code !== unit.code.toLowerCase())
         permanentRedirect(`${unitHref}/${topic.slug}`);
 
-    const [typeCounts, mastery, recent] = await Promise.all([
+    const [typeCounts, deck, mastery, recent] = await Promise.all([
         getTopicQuestionTypeCounts(topic.id),
+        user ? getDeckCounts(user.id, [topic.id]).then((d) => d.get(topic.id)!) : null,
         user ? getTopicMastery(user.id, [topic.id]).then((m) => m.get(topic.id)!) : null,
         user
             ? db.attempt.findMany({
@@ -232,6 +235,34 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     {formatDistanceToNow(mastery.lastPracticedAt!, { addSuffix: true })}
                                 </p>
                             )}
+                        </section>
+                    )}
+
+                    {deck && (
+                        <section aria-labelledby="flashcards" className="rounded-xl bg-muted p-5">
+                            <h2 id="flashcards" className="mb-1 text-lg">
+                                Flashcards
+                            </h2>
+                            <p className="mb-4 text-muted-foreground">
+                                {deck.total === 0
+                                    ? "No cards for this topic yet. Write your own for the things you keep forgetting."
+                                    : `${deck.total} card${deck.total === 1 ? "" : "s"}${deck.due ? ` · ${deck.due} due today` : ""}${deck.unseen ? ` · ${deck.unseen} new` : ""}`}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {deck.due + deck.unseen > 0 && (
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/flashcards/review?topic=${topic.id}`}>
+                                            <Layers />
+                                            Review
+                                        </Link>
+                                    </Button>
+                                )}
+                                <Button asChild variant="ghost" size="sm">
+                                    <Link href={`/flashcards/${topic.id}`}>
+                                        {deck.total === 0 ? "Add a card" : "Open deck"}
+                                    </Link>
+                                </Button>
+                            </div>
                         </section>
                     )}
 
