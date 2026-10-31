@@ -105,8 +105,27 @@ const stairTones = {
     cream: { tile: "fill-white", base: "fill-ink", dot: "fill-tangerine" },
 } as const;
 
-function BarStairs({ className, tone }: MarkProps & { tone: keyof typeof stairTones }) {
+const stairBases = {
+    lilac: "fill-lilac",
+    tangerine: "fill-tangerine",
+    cream: "fill-cream",
+    soft: "fill-ink-soft",
+} as const;
+
+function BarStairs({
+    className,
+    tone,
+    base,
+}: MarkProps & { tone: keyof typeof stairTones; base?: keyof typeof stairBases | "none" }) {
     const t = stairTones[tone];
+    const baseFill = base === undefined ? t.base : base === "none" ? null : stairBases[base];
+    // With no baseline the steps get rounded feet too, so they don't end in a hard edge.
+    const bar = (x: number, top: number) =>
+        baseFill ? (
+            <path d={stepBar(x, top, 7.5, 32)} />
+        ) : (
+            <rect x={x} y={top} width="7.5" height={32 - top} rx="2.5" />
+        );
     return (
         <svg viewBox="0 0 40 40" aria-hidden="true" className={cn(markBase, className)}>
             {tone === "cream" ? (
@@ -114,10 +133,10 @@ function BarStairs({ className, tone }: MarkProps & { tone: keyof typeof stairTo
             ) : (
                 <rect width="40" height="40" rx="13" className={t.tile} />
             )}
-            <path d={stepBar(8, 24, 7.5, 32)} className="fill-mastery-weak" />
-            <path d={stepBar(16.25, 18.5, 7.5, 32)} className="fill-mastery-developing" />
-            <path d={stepBar(24.5, 13, 7.5, 32)} className="fill-mastery-strong" />
-            <rect x="7" y="31" width="26" height="2.5" rx="1.25" className={t.base} />
+            <g className="fill-mastery-weak">{bar(8, 24)}</g>
+            <g className="fill-mastery-developing">{bar(16.25, 18.5)}</g>
+            <g className="fill-mastery-strong">{bar(24.5, 13)}</g>
+            {baseFill ? <rect x="7" y="31" width="26" height="2.5" rx="1.25" className={baseFill} /> : null}
             <circle cx="28.25" cy="7.5" r="3.5" className={t.dot} />
         </svg>
     );
@@ -127,6 +146,10 @@ export const BarStairsMark = (p: MarkProps) => <BarStairs {...p} tone="tangerine
 export const BarStairsPlumMark = (p: MarkProps) => <BarStairs {...p} tone="plum" />;
 export const BarStairsGrapeMark = (p: MarkProps) => <BarStairs {...p} tone="grape" />;
 export const BarStairsCreamMark = (p: MarkProps) => <BarStairs {...p} tone="cream" />;
+export const PlumNoBaseMark = (p: MarkProps) => <BarStairs {...p} tone="plum" base="none" />;
+export const PlumTangerineBaseMark = (p: MarkProps) => <BarStairs {...p} tone="plum" base="tangerine" />;
+export const PlumCreamBaseMark = (p: MarkProps) => <BarStairs {...p} tone="plum" base="cream" />;
+export const PlumSoftBaseMark = (p: MarkProps) => <BarStairs {...p} tone="plum" base="soft" />;
 
 /** Ring + bars: a thin mastery ring around the rising bars, like a gauge you are filling. */
 export function RingBarsMark({ className }: MarkProps) {
@@ -234,6 +257,44 @@ export const combinations: LogoOption[] = [
         Mark: OrangeRingMark,
         note: "Ring + climb's orange tile. The loudest app icon here; the plum disc keeps the mastery colours bright.",
         tileOnDark: false,
+    },
+];
+
+export const plumBases: LogoOption[] = [
+    {
+        id: "base-none",
+        name: "No baseline",
+        Mark: PlumNoBaseMark,
+        note: "The bars stand on their own with rounded feet. Simplest, and the cleanest at 16px.",
+        tileOnDark: true,
+    },
+    {
+        id: "base-tangerine",
+        name: "Orange baseline",
+        Mark: PlumTangerineBaseMark,
+        note: "The floor matches the orange dot, so the two orange marks frame the climb.",
+        tileOnDark: true,
+    },
+    {
+        id: "base-cream",
+        name: "Cream baseline",
+        Mark: PlumCreamBaseMark,
+        note: "A bright cream floor. The strongest line, like the axis of a chart.",
+        tileOnDark: true,
+    },
+    {
+        id: "base-soft",
+        name: "Quiet baseline",
+        Mark: PlumSoftBaseMark,
+        note: "A muted plum floor that's there when you look for it and invisible at favicon sizes.",
+        tileOnDark: true,
+    },
+    {
+        id: "base-lilac",
+        name: "Lilac baseline (current)",
+        Mark: BarStairsPlumMark,
+        note: "Option 1 as you picked it, for comparison.",
+        tileOnDark: true,
     },
 ];
 
