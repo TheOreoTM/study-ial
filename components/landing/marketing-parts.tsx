@@ -25,6 +25,8 @@ export const masteryExample = {
 
 const m = masteryExample;
 const weakTopic = m.topics.find((t) => t.isNext) ?? m.topics[0];
+/** Where the "Fix what's weak" step lands on hover: a developing score (50–74%, see lib/mastery.ts). */
+const PRACTISED_SCORE = 64;
 
 const levelClass: Record<Level, string> = {
     strong: s.levelStrong,
@@ -161,8 +163,8 @@ export function StepFragment({ index }: { index: number }) {
                             className={cx(s.mark, markClass[mk])}
                             style={{ "--i": i } as CSSProperties}
                         >
-                            {mk === "ok" ? <Check size={14} strokeWidth={3.5} /> : null}
-                            {mk === "miss" ? <X size={14} strokeWidth={3.5} /> : null}
+                            <Check className={s.markCheck} size={14} strokeWidth={3.5} />
+                            {mk === "miss" ? <X className={s.markX} size={14} strokeWidth={3.5} /> : null}
                         </span>
                     ))}
                 </span>
@@ -173,10 +175,16 @@ export function StepFragment({ index }: { index: number }) {
         <div className={s.frag} aria-hidden="true">
             <span className={s.fragTopic}>
                 <span className={cx(s.fragCode, s.fragCodeWeak)}>{weakTopic.code}</span>
-                <span className={s.fragScore}>{weakTopic.score}%</span>
+                <span
+                    className={s.fragScore}
+                    style={{ "--from": weakTopic.score, "--to": PRACTISED_SCORE } as CSSProperties}
+                />
                 <TrendingUp className={s.fragTrend} size={20} strokeWidth={3} />
             </span>
-            <span className={s.fragBar} style={{ "--score": `${weakTopic.score}%` } as CSSProperties}>
+            <span
+                className={s.fragBar}
+                style={{ "--score": `${weakTopic.score}%`, "--goal": `${PRACTISED_SCORE}%` } as CSSProperties}
+            >
                 <span className={s.fragBarFill} />
                 <span className={s.fragBarGoal} />
             </span>

@@ -827,12 +827,29 @@
     line-height: 1.25;
 }
 
+/* The score is a CSS counter so it can count up on hover; --n animates between --from and --to. */
+@property --n {
+    syntax: "<integer>";
+    inherits: false;
+    initial-value: 0;
+}
+
 .fragScore {
+    --n: var(--from);
+    counter-reset: score var(--n);
     font-family: var(--font-display);
     font-weight: 800;
     font-size: 1.5rem;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
     color: var(--weak-deep);
+    transition:
+        --n 700ms var(--ease-out),
+        color 700ms var(--ease-out);
+}
+
+.fragScore::before {
+    content: counter(score) "%";
 }
 
 .fragTrend {
@@ -864,6 +881,18 @@
     box-shadow: inset 0 0 0 2.5px var(--shade-30);
 }
 
+/* Every mark carries a tick; a miss stacks its cross on top. On hover the misses and the unanswered
+   mark turn correct in turn. */
+.mark > svg {
+    grid-area: 1 / 1;
+}
+
+.markMiss .markCheck,
+.markTodo .markCheck {
+    opacity: 0;
+    scale: 0.4;
+}
+
 .fragBar {
     position: relative;
     display: block;
@@ -893,6 +922,16 @@
 
 /* Hovering a step plays its moment: the card lifts and straightens, the node pops, and the fragment acts out
    the step (exam chip nudges, marks hop in turn, the weak bar climbs into its goal). Pointer devices only. */
+.mark,
+.mark > svg {
+    transition:
+        background-color 200ms var(--ease-out),
+        box-shadow 200ms var(--ease-out),
+        opacity 200ms var(--ease-out),
+        scale 280ms var(--ease-spring);
+    transition-delay: calc(var(--i, 0) * 70ms + 120ms);
+}
+
 .stepNode,
 .frag,
 .fragUnit,
@@ -947,14 +986,35 @@
         animation-delay: calc(var(--i, 0) * 70ms);
     }
 
+    .step:hover .markMiss,
+    .step:hover .markTodo {
+        background: var(--strong);
+        box-shadow: none;
+    }
+
+    .step:hover .markCheck {
+        opacity: 1;
+        scale: 1;
+    }
+
+    .step:hover .markX {
+        opacity: 0;
+        scale: 0.4;
+    }
+
     /* Practice lifts the topic out of "weak": the bar climbs to its goal and turns developing. */
     .step:hover .fragBarFill {
-        clip-path: inset(0 10% 0 0 round 999px);
+        clip-path: inset(0 calc(100% - var(--goal)) 0 0 round 999px);
         background-color: var(--developing);
     }
 
     .step:hover .fragCodeWeak {
         background-color: var(--developing);
+    }
+
+    .step:hover .fragScore {
+        --n: var(--to);
+        color: color-mix(in oklab, var(--developing) 40%, var(--color-ink));
     }
 
     .step:hover .fragBarGoal {
