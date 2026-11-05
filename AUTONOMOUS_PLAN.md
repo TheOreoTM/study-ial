@@ -132,9 +132,9 @@ upcoming exams, no email, no answers, `noindex`. Schema `ProgressShare`.
 - [x] Content (original) + tests that every unit code exists
 - [x] Unit page panel
 
-### 14. Offline fallback (PWA) — [ ]
+### 14. Offline fallback (PWA) — [x]
 **Why:** phones on patchy island connections; an installable app with a friendly offline page is better than a
 browser error.
 **Scope:** minimal service worker that caches the offline page and static assets only (never authenticated HTML),
 registered in production only.
-- [ ] `public/sw.js` + offline page + registration
+- [x] `public/sw.js` + offline page + registration
