@@ -99,10 +99,10 @@ since, `/search` noindex for empty queries.
 - [x] JSON-LD helper + tests
 - [x] Robots update
 
-### 9. Practice keyboard shortcuts — [ ]
+### 9. Practice keyboard shortcuts — [x]
 **Why:** answering 30 MCQs with a mouse is slow; A–D and Enter are how people drill.
 **Scope:** A–D/1–4 to pick an option, Enter to check/continue, with a visible hint (hidden on touch devices).
-- [ ] Pure key mapping + tests, wired into the question view
+- [x] Pure key mapping + tests, wired into the question view
 
 ### 10. Dev tooling: demo activity — [x]
 **Why:** lets anyone see populated dashboards locally.
