@@ -37,6 +37,7 @@ model User {
   milestones    UserMilestone[]
   mockExams     MockExam[]
   specRatings   SpecPointRating[]
+  progressShare ProgressShare?
 
   @@map("user")
 }
@@ -481,6 +482,16 @@ model UserMilestone {
   seenAt   DateTime?
 
   @@id([userId, key])
+}
+
+// A student's read-only progress link for a parent or teacher (lib/share.ts). One per student; replacing it changes
+// the token, deleting it turns sharing off. Only the token's SHA-256 is stored.
+model ProgressShare {
+  userId     String    @id
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  createdAt  DateTime  @default(now())
+  lastViewed DateTime?
 }
 
 // Per-user daily counters used to cap AI spend.
