@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="min-h-dvh">
-            <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+            <header className="sticky top-0 z-30 print:hidden border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
                 <div className="mx-auto flex h-16 w-full max-w-[1180px] items-center gap-2 px-4 sm:px-6 lg:gap-6">
                     {user && (
                         <div className="lg:hidden">
