@@ -11,6 +11,8 @@ export default function robots(): MetadataRoute.Robots {
                 "/dashboard",
                 "/practice",
                 "/progress",
+                "/flashcards",
+                "/mistakes",
                 "/plans",
                 "/focus",
                 "/settings",

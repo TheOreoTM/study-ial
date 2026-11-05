@@ -1,4 +1,15 @@
-import { BarChart3, BookOpen, CalendarCheck, Layers, LayoutDashboard, Settings, Shield, Timer, type LucideIcon } from "lucide-react";
+import {
+    BarChart3,
+    BookOpen,
+    CalendarCheck,
+    Layers,
+    LayoutDashboard,
+    NotebookPen,
+    Settings,
+    Shield,
+    Timer,
+    type LucideIcon,
+} from "lucide-react";
 
 export const site = {
     name: "Study-IAL",
@@ -14,6 +25,7 @@ export const appNav: NavItem[] = [
     { href: "/dashboard", label: "Today", icon: LayoutDashboard },
     { href: "/subjects", label: "Subjects", icon: BookOpen },
     { href: "/progress", label: "Progress", icon: BarChart3 },
+    { href: "/mistakes", label: "Mistakes", icon: NotebookPen },
     { href: "/flashcards", label: "Flashcards", icon: Layers },
     { href: "/plans", label: "Study plans", icon: CalendarCheck },
     { href: "/focus", label: "Focus", icon: Timer },

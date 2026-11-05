@@ -48,7 +48,7 @@ export function ReviseRow({
                         : "bg-card hover:shadow-[inset_0_0_0_1.5px_var(--border-strong)]",
                 )}
             >
-                <MasteryTile code={code} level={level} className="h-auto min-h-11 w-12 self-stretch [grid-area:tile]" />
+                <MasteryTile code={code} level={level} className="h-11 w-12 self-center [grid-area:tile]" />
                 <span className="min-w-0 self-end leading-tight font-bold [grid-area:name]">
                     {name} <span className="text-xs font-bold whitespace-nowrap text-muted-foreground">{unitCode}</span>
                 </span>

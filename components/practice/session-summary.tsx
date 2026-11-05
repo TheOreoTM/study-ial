@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, RotateCcw, Target } from "lucide-react";
+import { ArrowRight, NotebookPen, RotateCcw, Target } from "lucide-react";
 import type { PracticeQuestion, SessionTopic } from "@/app/(app)/practice/types";
 import { MasteryBadge } from "@/components/mastery/mastery-badge";
 import { MasteryBar } from "@/components/mastery/mastery-bar";
@@ -33,6 +33,7 @@ export function SessionSummary({
     const skipped = questions.length - answered.length;
     const earned = answered.reduce((n, o) => n + o.marksAwarded, 0);
     const possible = answered.reduce((n, o) => n + o.maxMarks, 0);
+    const missed = answered.filter((o) => o.marksAwarded < o.maxMarks).length;
     const pct = possible > 0 ? Math.round((earned / possible) * 100) : null;
 
     const perTopic = topics
@@ -134,6 +135,14 @@ export function SessionSummary({
                 <Button variant="outline" asChild>
                     <Link href={back.href}>{back.label}</Link>
                 </Button>
+                {missed > 0 && (
+                    <Button variant="outline" asChild>
+                        <Link href="/mistakes">
+                            <NotebookPen />
+                            Review {missed === 1 ? "the one" : `the ${missed}`} you missed
+                        </Link>
+                    </Button>
+                )}
                 <Button variant="outline" onClick={() => start("mode=weak")}>
                     <Target />
                     Weak topics

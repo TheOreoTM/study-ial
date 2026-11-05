@@ -47,4 +47,6 @@ next-env.d.ts
 .taste-skill/
 
 # Redesign screenshots (kept locally, not in the repo)
-/screenshots/
+/screenshots/*
+# …except the autonomous run's per-feature screenshots, which are committed
+!/screenshots/autonomous/

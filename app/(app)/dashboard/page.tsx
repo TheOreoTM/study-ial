@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Layers, Target, Timer } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Layers, NotebookPen, Target, Timer } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { formatDueDay } from "@/components/flashcards/format";
@@ -18,6 +18,7 @@ import { getFlashcardSummary } from "@/lib/queries/flashcards";
 import { getFocusStats } from "@/lib/queries/focus";
 import { syncMilestones } from "@/lib/queries/milestones";
 import { getTopicMastery } from "@/lib/queries/mastery";
+import { countOpenMistakes } from "@/lib/queries/mistakes";
 import { daysUntil, getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ export default async function DashboardPage() {
 
     // After the parallel reads: the local dev Postgres drops connections beyond ~5 concurrent ones.
     const { unseen } = await syncMilestones(user.id);
+    const mistakes = await countOpenMistakes(user.id);
     const now = new Date();
     const practisable = topics.filter((t) => (questionCounts.get(t.id) ?? 0) > 0);
     const weakTopics = practisable
@@ -203,6 +205,15 @@ export default async function DashboardPage() {
                             ))}
                         </ul>
                     )}
+                    {mistakes > 0 && (
+                        <RailLine
+                            icon={NotebookPen}
+                            title="Mistakes"
+                            detail={`${mistakes} question${mistakes === 1 ? "" : "s"} to get right`}
+                            href="/mistakes"
+                            action="Review"
+                        />
+                    )}
                     {(cards.due + cards.newToday > 0 || cards.nextDue) && (
                         <div className="mt-5 flex items-center gap-3 border-t border-border-strong/25 pt-5">
                             <span className="grid size-11 shrink-0 place-items-center rounded-[12px] bg-card text-selected-foreground shadow-card">
@@ -307,6 +318,36 @@ export default async function DashboardPage() {
                 </Card>
             </div>
         </>
+    );
+}
+
+/** A secondary line at the foot of the "Revise next" rail: icon tile, two lines of text and an outline button. */
+function RailLine({
+    icon: Icon,
+    title,
+    detail,
+    href,
+    action,
+}: {
+    icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+    title: string;
+    detail: string;
+    href: string;
+    action: string;
+}) {
+    return (
+        <div className="mt-5 flex items-center gap-3 border-t border-border-strong/25 pt-5">
+            <span className="grid size-11 shrink-0 place-items-center rounded-[12px] bg-card text-selected-foreground shadow-card">
+                <Icon className="size-5" aria-hidden />
+            </span>
+            <p className="min-w-0 flex-1 leading-snug">
+                <span className="block font-bold">{title}</span>
+                <span className="block text-[0.8125rem] text-muted-foreground">{detail}</span>
+            </p>
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link href={href}>{action}</Link>
+            </Button>
+        </div>
     );
 }
 
