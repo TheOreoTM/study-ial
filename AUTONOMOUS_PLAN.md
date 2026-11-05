@@ -155,10 +155,10 @@ your own cards (stem on the front, right answer or mark-scheme points and the ex
 - [x] Pure `cardFromQuestion` with formula-safe clipping, tests
 - [x] Action (only for questions you've attempted; not during a running paper; no duplicates) and button
 
-### 17. Dashboard nudge for the next exam — [ ]
+### 17. Dashboard nudge for the next exam — [x]
 **Why:** the dashboard should say what this paper needs now (a timed paper in the final stretch, mistakes, an
 untried topic) using the same rules as /exams.
-- [ ] Rail line on the dashboard from `nextStep` for the nearest exam
+- [x] A slim panel under the stats, from `nextStep`, for the nearest exam within 60 days (outline button: the dashboard keeps one orange)
 
 ### 18. Docs: README, CLAUDE.md and the landing page know about the new features — [ ]
 - [ ] README features, CLAUDE.md layout, landing feature list

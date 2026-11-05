@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { masteryTone, revisionPriority } from "@/lib/mastery";
+import { masteryTone, revisionPriority, type Mastery } from "@/lib/mastery";
+import { lengthAvailable } from "@/lib/mock-exam";
+import { nextStep, phaseFor, phaseHint, phaseLabel } from "@/lib/readiness";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getFlashcardSummary } from "@/lib/queries/flashcards";
 import { getFocusStats } from "@/lib/queries/focus";
@@ -51,6 +53,7 @@ export default async function DashboardPage() {
     // After the parallel reads: the local dev Postgres drops connections beyond ~5 concurrent ones.
     const { unseen } = await syncMilestones(user.id);
     const mistakes = await countOpenMistakes(user.id);
+    const examNudge = await nextExamStep(user.id, userUnits, mastery, questionCounts);
     const now = new Date();
     const practisable = topics.filter((t) => (questionCounts.get(t.id) ?? 0) > 0);
     const weakTopics = practisable
@@ -121,6 +124,30 @@ export default async function DashboardPage() {
                     href="/exams"
                 />
             </div>
+
+            {examNudge && (
+                <section
+                    aria-label="Next exam"
+                    className="-mt-4 mb-8 flex flex-col gap-3 rounded-xl bg-muted p-4 sm:flex-row sm:items-center sm:px-5"
+                >
+                    <p className="min-w-0 flex-1 leading-snug">
+                        <span className="font-bold">
+                            {examNudge.code} in {examNudge.days} day{examNudge.days === 1 ? "" : "s"}
+                        </span>{" "}
+                        <span className="text-muted-foreground">
+                            · {phaseLabel[examNudge.phase]}. {phaseHint[examNudge.phase]}
+                        </span>
+                    </p>
+                    <div className="flex shrink-0 gap-2">
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={examNudge.step.href}>{examNudge.step.label}</Link>
+                        </Button>
+                        <Button asChild variant="ghost" size="sm">
+                            <Link href="/exams">All exams</Link>
+                        </Button>
+                    </div>
+                </section>
+            )}
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
                 {/* Today's plan */}
@@ -320,6 +347,57 @@ export default async function DashboardPage() {
             </div>
         </>
     );
+}
+
+/**
+ * The nearest exam within 60 days and one next step for it (the same rules as /exams), or null. A few small reads
+ * for that one unit only.
+ */
+async function nextExamStep(
+    userId: string,
+    userUnits: { unitId: string; examDate: Date | null; unit: { code: string; subject: { slug: string }; topics: { id: string; name: string; order: number; slug: string }[] } }[],
+    mastery: Map<string, Mastery>,
+    counts: Map<string, number>,
+) {
+    const now = new Date();
+    const next = userUnits.find((uu) => uu.examDate && daysUntil(uu.examDate, now) >= 0);
+    if (!next?.examDate) return null;
+    const days = daysUntil(next.examDate, now);
+    if (days > 60) return null;
+    const [openMistakes, lastMock, marks] = await Promise.all([
+        countOpenMistakes(userId, { unitId: next.unitId }),
+        db.mockExam.findFirst({
+            where: { userId, unitId: next.unitId, status: "FINISHED" },
+            orderBy: { finishedAt: "desc" },
+            select: { finishedAt: true },
+        }),
+        db.question.aggregate({ where: { unitId: next.unitId, status: "PUBLISHED" }, _sum: { marks: true } }),
+    ]);
+    const available = marks._sum.marks ?? 0;
+    const unitHref = `/subjects/${next.unit.subject.slug}/${next.unit.code.toLowerCase()}`;
+    const step = nextStep(
+        {
+            unitId: next.unitId,
+            daysLeft: days,
+            topics: next.unit.topics.map((t) => ({
+                id: t.id,
+                name: t.name,
+                order: t.order,
+                href: `${unitHref}/${t.slug}`,
+                hasQuestions: (counts.get(t.id) ?? 0) > 0,
+                mastery: mastery.get(t.id)!,
+            })),
+            openMistakes,
+            daysSinceMock: lastMock?.finishedAt
+                ? Math.floor((now.getTime() - lastMock.finishedAt.getTime()) / 86_400_000)
+                : null,
+            mockAvailable: lengthAvailable("short", available),
+            fullMockAvailable: lengthAvailable("full", available),
+        },
+        now,
+    );
+    if (step.kind === "none") return null;
+    return { code: next.unit.code, days, phase: phaseFor(days), step };
 }
 
 /** A secondary line at the foot of the "Revise next" rail: icon tile, two lines of text and an outline button. */
