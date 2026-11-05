@@ -1,4 +1,4 @@
-// Key equations (Physics, Chemistry) and key formulae (Mathematics) for each unit, grouped by topic code. Original summaries of standard physics, written for
+// Key equations (Physics, Chemistry, Biology) and key formulae (Mathematics) for each unit, grouped by topic code. Original summaries of standard physics, written for
 // Study-IAL (not copied from any data or formulae sheet). Shown on unit pages; tested in key-equations.test.ts so every
 // topic code exists and every formula renders.
 
@@ -580,6 +580,50 @@ export const keyEquations: Record<string, KeyEquationGroup[]> = {
         {
             topic: "1.6",
             equations: [{ tex: "Z = \\dfrac{X - \\mu}{\\sigma}", meaning: "standardising a Normal variable" }],
+        },
+    ],
+    WBI12: [
+        {
+            topic: "2.1",
+            equations: [
+                {
+                    tex: "\\text{magnification} = \\dfrac{\\text{image size}}{\\text{actual size}}",
+                    meaning: "use the same units for both sizes (1 mm = 1000 μm)",
+                },
+            ],
+        },
+        {
+            topic: "2.6",
+            equations: [
+                {
+                    tex: "D = \\dfrac{N(N - 1)}{\\sum n(n - 1)}",
+                    meaning: "index of diversity: $N$ = total organisms, $n$ = organisms of each species",
+                },
+            ],
+        },
+    ],
+    WBI14: [
+        {
+            topic: "4.2",
+            equations: [
+                { tex: "\\text{NPP} = \\text{GPP} - R", meaning: "net primary productivity: what's left after respiration" },
+                {
+                    tex: "\\text{efficiency} = \\dfrac{\\text{energy passed on}}{\\text{energy received}} \\times 100",
+                    meaning: "energy transfer between trophic levels, as a percentage",
+                },
+            ],
+        },
+    ],
+    WBI15: [
+        {
+            topic: "5.2",
+            equations: [
+                { tex: "\\text{cardiac output} = \\text{stroke volume} \\times \\text{heart rate}", meaning: "volume of blood pumped per minute" },
+                {
+                    tex: "\\text{ventilation rate} = \\text{tidal volume} \\times \\text{breathing rate}",
+                    meaning: "volume of air breathed per minute",
+                },
+            ],
         },
     ],
 };

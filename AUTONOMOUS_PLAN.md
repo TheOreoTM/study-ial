@@ -181,7 +181,7 @@ main route, signed in and out, light and dark, 1440 and 375, with every `<detail
 - [x] Seeded as DRAFT (an admin checks them first); once published, WPH13 has 30 marks and WPH16 32
 
 ### 21. Key equations and formulae beyond Physics — [x]
-- [x] Chemistry (WCH11, 12, 14, 15) and Maths (WMA11–14, WME01, WST01); Maths panels say "Key formulae"
+- [x] Chemistry (WCH11, 12, 14, 15), Biology (WBI12, 14, 15) and Maths (WMA11–14, WME01, WST01); Maths panels say "Key formulae"
 - [x] Same tests: every topic code exists, every formula renders
 
 ### 22. Optional AI suggestions while self-marking a mock — [x]
