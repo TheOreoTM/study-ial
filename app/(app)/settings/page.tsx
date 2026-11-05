@@ -11,15 +11,17 @@ import { updateMyUnits } from "./actions";
 import { ProfileForm } from "./profile-form";
 import { PasswordForm } from "./password-form";
 import { DeleteAccount } from "./delete-account";
+import { ShareProgress } from "./share-progress";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
     const user = await requireUser();
-    const [subjects, myUnits, credential] = await Promise.all([
+    const [subjects, myUnits, credential, share] = await Promise.all([
         getSubjects(),
         db.userUnit.findMany({ where: { userId: user.id }, select: { unitId: true, examDate: true } }),
         db.account.findFirst({ where: { userId: user.id, providerId: "credential" }, select: { id: true } }),
+        db.progressShare.findUnique({ where: { userId: user.id }, select: { createdAt: true, lastViewed: true } }),
     ]);
     const pickerSubjects = toPickerSubjects(subjects);
     const order = pickerSubjects.flatMap((s) => s.units.map((u) => u.id));
@@ -56,6 +58,25 @@ export default async function SettingsPage() {
                             initial={initial}
                             today={new Date().toISOString()}
                             action={updateMyUnits}
+                        />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Share your progress</CardTitle>
+                        <CardDescription>A read-only link for a parent or teacher. No account needed.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ShareProgress
+                            active={
+                                share
+                                    ? {
+                                          since: share.createdAt.toISOString(),
+                                          lastViewed: share.lastViewed?.toISOString() ?? null,
+                                      }
+                                    : null
+                            }
                         />
                     </CardContent>
                 </Card>
