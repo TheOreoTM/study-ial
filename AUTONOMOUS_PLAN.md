@@ -76,14 +76,14 @@ with an accessible table fallback. Pure grid builder in `lib/heatmap.ts`.
 - [x] Query + component on /progress
 - [x] Screenshots, review, fixes
 
-### 6. Exam countdown page — [ ]
+### 6. Exam countdown page — [x]
 **Why:** before an exam session, the question is "how ready am I for each paper, and how many days are left?"
 **Scope:** `/exams` lists your units by exam date with days left, topic coverage (tried/strong), confidence
 ratings, open mistakes and a single "do this next" per paper; links to mock, mistakes and practice. Pure readiness
 summary in `lib/readiness.ts`.
-- [ ] `lib/readiness.ts` + tests
-- [ ] Page + dashboard link
-- [ ] Screenshots, review, fixes
+- [x] `lib/readiness.ts` + tests
+- [x] Page + dashboard link
+- [x] Screenshots, review, fixes
 
 ### 7. Printable unit revision sheet — [x]
 **Why:** many students still revise on paper; a one-page sheet of the unit's spec points with their own mastery

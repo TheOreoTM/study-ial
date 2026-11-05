@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
                 "/flashcards",
                 "/mistakes",
                 "/mock",
+                "/exams",
                 "/search",
                 "/plans",
                 "/focus",

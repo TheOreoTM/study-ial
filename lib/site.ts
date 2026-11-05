@@ -36,7 +36,7 @@ export const appNav: NavItem[] = [
     { href: "/mistakes", label: "Mistakes", icon: NotebookPen },
     { href: "/flashcards", label: "Flashcards", icon: Layers },
     { href: "/plans", label: "Plans", icon: CalendarCheck },
-    { href: "/mock", label: "Exams", icon: ClipboardList, also: ["/exams"] },
+    { href: "/exams", label: "Exams", icon: ClipboardList, also: ["/mock"] },
     { href: "/focus", label: "Focus", icon: Timer },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/admin", label: "Admin", icon: Shield, adminOnly: true },

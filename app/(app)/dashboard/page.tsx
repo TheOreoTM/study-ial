@@ -118,6 +118,7 @@ export default async function DashboardPage() {
                     label="Next exam"
                     value={nextExam ? daysUntil(nextExam.examDate!, now) : "–"}
                     suffix={nextExam ? `days · ${nextExam.unit.code}` : undefined}
+                    href="/exams"
                 />
             </div>
 
