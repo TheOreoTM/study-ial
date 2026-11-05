@@ -61,6 +61,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
                 </p>
             ) : hits.length === 0 ? (
                 <EmptyState
+                    headingLevel={2}
                     icon={SearchX}
                     title={`Nothing matches “${q}”`}
                     description="Check the spelling, try fewer words, or search by paper code (like WPH11)."

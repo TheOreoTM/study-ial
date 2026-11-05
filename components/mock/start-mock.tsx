@@ -66,7 +66,6 @@ export function StartMock({
                         disabled={!ok || pending}
                         onClick={() => start(length)}
                         className={cn("h-auto min-h-14 flex-col gap-0.5 py-2 whitespace-normal")}
-                        aria-label={`${MOCK_LENGTH_LABEL[length]}: ${marks} marks, ${formatDuration(durationFor(marks, subjectSlug))}`}
                     >
                         <span className="flex items-center gap-1.5">
                             {pending && which === length ? <Loader2 className="animate-spin" /> : <Timer />}

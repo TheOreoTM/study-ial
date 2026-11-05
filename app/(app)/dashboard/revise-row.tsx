@@ -40,7 +40,6 @@ export function ReviseRow({
             )}
             <Link
                 href={href}
-                aria-label={`Practise ${name}`}
                 className={cn(
                     "group grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 [grid-template-areas:'tile_name_name_chev'_'tile_level_level_chev'_'tile_bar_score_chev'] sm:gap-y-2 sm:[grid-template-areas:'tile_name_score_chev'_'tile_bar_level_chev'] rounded-lg py-3 pr-2.5 pl-3 outline-none transition-[box-shadow,background-color] duration-200 ease-out-soft focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     isNext
@@ -50,6 +49,8 @@ export function ReviseRow({
             >
                 <MasteryTile code={code} level={level} className="h-11 w-12 self-center [grid-area:tile]" />
                 <span className="min-w-0 self-end leading-tight font-bold [grid-area:name]">
+                    {/* The name is read with its visible text (WCAG 2.5.3), with the action in front. */}
+                    <span className="sr-only">Practise </span>
                     {name} <span className="text-xs font-bold whitespace-nowrap text-muted-foreground">{unitCode}</span>
                 </span>
                 <span className={cn("num justify-self-end text-xl leading-none [grid-area:score] sm:self-end", pct === null ? "text-muted-foreground" : tone.text)}>

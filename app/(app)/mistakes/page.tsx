@@ -37,6 +37,7 @@ export default async function MistakesPage({ searchParams }: { searchParams: Sea
             <>
                 <PageHeader title="Mistakes" />
                 <EmptyState
+                    headingLevel={2}
                     icon={CircleCheck}
                     title="No open mistakes"
                     description={

@@ -118,6 +118,7 @@ export default async function ExamsPage() {
             <>
                 <PageHeader title="Exams" />
                 <EmptyState
+                    headingLevel={2}
                     icon={CalendarPlus}
                     title="No units yet"
                     description="Add the units you're sitting and their exam dates to see your countdown."

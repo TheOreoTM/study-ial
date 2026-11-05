@@ -162,3 +162,11 @@ untried topic) using the same rules as /exams.
 
 ### 18. Docs: README, CLAUDE.md and the landing page know about the new features — [x]
 - [x] README features, CLAUDE.md layout and conventions, PRODUCT.md capabilities, landing feature tile
+
+### 19. Accessibility audit (axe-core, WCAG 2.2 AA + best practice) — [x]
+**Why:** the new pages must hold the bar the redesign set. Ran axe (the copy already in the pnpm store) on every
+main route, signed in and out, light and dark, 1440 and 375, with every `<details>` opened.
+- [x] Label-in-name (WCAG 2.5.3): the account menu trigger, mock length buttons, dashboard Revise-next rows and
+  plan study-day buttons had aria-labels that didn't contain their visible text
+- [x] Heading order: `EmptyState` takes `headingLevel={2}` where it sits straight under the page's h1
+- [x] No contrast, name, role or nesting violations remain

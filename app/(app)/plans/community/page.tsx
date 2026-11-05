@@ -55,6 +55,7 @@ export default async function CommunityPlansPage({ searchParams }: { searchParam
 
             {plans.length === 0 ? (
                 <EmptyState
+                    headingLevel={2}
                     icon={Users}
                     title={all ? "No shared plans yet" : "No shared plans for your units yet"}
                     description="Share one of your plans from its menu and it'll show up here for other students."
