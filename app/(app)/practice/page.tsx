@@ -20,21 +20,26 @@ export default async function PracticePage({ searchParams }: { searchParams: Sea
 
     if (!mode) {
         return (
-            <EmptyState
-                icon={BookOpen}
-                title="Pick something to practise"
-                description="Choose a topic or unit from your subjects, or let us pick your weakest topics."
-                action={
-                    <div className="flex flex-wrap justify-center gap-2">
-                        <Button asChild>
-                            <Link href="/practice?mode=weak">Practise weak topics</Link>
-                        </Button>
-                        <Button asChild variant="outline">
-                            <Link href="/subjects">Browse subjects</Link>
-                        </Button>
-                    </div>
-                }
-            />
+            <>
+                {/* Every page needs an h1; the empty state's title is the next heading down. */}
+                <h1 className="sr-only">Practice</h1>
+                <EmptyState
+                    headingLevel={2}
+                    icon={BookOpen}
+                    title="Pick something to practise"
+                    description="Choose a topic or unit from your subjects, or let us pick your weakest topics."
+                    action={
+                        <div className="flex flex-wrap justify-center gap-2">
+                            <Button asChild>
+                                <Link href="/practice?mode=weak">Practise weak topics</Link>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <Link href="/subjects">Browse subjects</Link>
+                            </Button>
+                        </div>
+                    }
+                />
+            </>
         );
     }
 
@@ -46,51 +51,66 @@ export default async function PracticePage({ searchParams }: { searchParams: Sea
 
     if (!session) {
         return (
-            <EmptyState
-                icon={SearchX}
-                title="We couldn't find that topic"
-                description="It may have been moved or removed."
-                action={
-                    <Button asChild variant="outline">
-                        <Link href="/subjects">Browse subjects</Link>
-                    </Button>
-                }
-            />
+            <>
+                {/* Every page needs an h1; the empty state's title is the next heading down. */}
+                <h1 className="sr-only">Practice</h1>
+                <EmptyState
+                    headingLevel={2}
+                    icon={SearchX}
+                    title="We couldn't find that topic"
+                    description="It may have been moved or removed."
+                    action={
+                        <Button asChild variant="outline">
+                            <Link href="/subjects">Browse subjects</Link>
+                        </Button>
+                    }
+                />
+            </>
         );
     }
 
     if (session.questions.length === 0 && mode.kind === "mistakes") {
         return (
-            <EmptyState
-                icon={CircleCheck}
-                title="No mistakes to redo"
-                description="Every question you've answered here got full marks last time. Practise something new and come back."
-                action={
-                    <Button asChild variant="outline">
-                        <Link href="/practice?mode=weak">Practise weak topics</Link>
-                    </Button>
-                }
-            />
+            <>
+                {/* Every page needs an h1; the empty state's title is the next heading down. */}
+                <h1 className="sr-only">Practice</h1>
+                <EmptyState
+                    headingLevel={2}
+                    icon={CircleCheck}
+                    title="No mistakes to redo"
+                    description="Every question you've answered here got full marks last time. Practise something new and come back."
+                    action={
+                        <Button asChild variant="outline">
+                            <Link href="/practice?mode=weak">Practise weak topics</Link>
+                        </Button>
+                    }
+                />
+            </>
         );
     }
 
     if (session.questions.length === 0) {
         const weakWithoutUnits = mode.kind === "weak" && !mode.unitId;
         return (
-            <EmptyState
-                icon={BookOpen}
-                title={weakWithoutUnits ? "No questions for your units yet" : "No questions here yet"}
-                description={
-                    weakWithoutUnits
-                        ? "Add the units you're studying in Settings, or browse subjects to practise any topic."
-                        : "We're still writing questions for this part of the course. Try another topic in the meantime."
-                }
-                action={
-                    <Button asChild variant="outline">
-                        <Link href={session.back.href}>{session.back.label}</Link>
-                    </Button>
-                }
-            />
+            <>
+                {/* Every page needs an h1; the empty state's title is the next heading down. */}
+                <h1 className="sr-only">Practice</h1>
+                <EmptyState
+                    headingLevel={2}
+                    icon={BookOpen}
+                    title={weakWithoutUnits ? "No questions for your units yet" : "No questions here yet"}
+                    description={
+                        weakWithoutUnits
+                            ? "Add the units you're studying in Settings, or browse subjects to practise any topic."
+                            : "We're still writing questions for this part of the course. Try another topic in the meantime."
+                    }
+                    action={
+                        <Button asChild variant="outline">
+                            <Link href={session.back.href}>{session.back.label}</Link>
+                        </Button>
+                    }
+                />
+            </>
         );
     }
 
