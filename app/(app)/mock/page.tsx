@@ -44,7 +44,11 @@ export default async function MockPage() {
                     {units.map((u) => {
                         const days = u.examDate ? daysUntil(u.examDate) : null;
                         return (
-                            <li key={u.id} className="min-w-0 rounded-xl border bg-card p-5 shadow-card sm:p-6">
+                            <li
+                                key={u.id}
+                                id={`unit-${u.code.toLowerCase()}`}
+                                className="min-w-0 scroll-mt-24 rounded-xl border bg-card p-5 shadow-card target:shadow-[inset_0_0_0_2px_var(--progress)] sm:p-6"
+                            >
                                 <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <UnitChip code={u.code} />
                                     <h2 className="min-w-0 flex-1 text-lg leading-tight">{u.name}</h2>
