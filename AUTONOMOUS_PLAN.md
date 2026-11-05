@@ -179,3 +179,15 @@ main route, signed in and out, light and dark, 1440 and 375, with every `<detail
   uncertainty, log graphs, capacitor discharge, specific heat capacity, and MCQs for WPH16 core practicals, which had
   none. MCQ answers spread two per letter. Every number re-derived in Python.
 - [x] Seeded as DRAFT (an admin checks them first); once published, WPH13 has 30 marks and WPH16 32
+
+### 21. Key equations and formulae beyond Physics — [x]
+- [x] Chemistry (WCH11, 12, 14, 15) and Maths (WMA11–14, WME01, WST01); Maths panels say "Key formulae"
+- [x] Same tests: every topic code exists, every formula renders
+
+### 22. Optional AI suggestions while self-marking a mock — [x]
+**Why:** self-marking every written answer on a full paper is slow; the AI can pre-tick the points it thinks an
+answer earns, and the student still checks and confirms.
+- [x] `suggestMockMarks` (assertUser, zod, ownership, MARKING only, consumes the `marking` quota via `markWithAi`,
+  never for Dhivehi, only stem + mark scheme + answer reach the model); pure `ticksFromAi` with tests
+- [x] Button only when AI is on and quota remains; with AI off the page is unchanged (checked). The live AI path is
+  **not verified** (no OpenRouter key here)

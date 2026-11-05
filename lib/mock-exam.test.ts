@@ -11,6 +11,7 @@ import {
     minutesPerMark,
     secondsLeft,
     SUBMIT_GRACE_SECONDS,
+    ticksFromAi,
     type PaperCandidate,
 } from "./mock-exam";
 
@@ -175,5 +176,15 @@ describe("clock", () => {
         expect(formatDuration(105)).toBe("1 h 45 min");
         expect(formatDuration(50)).toBe("50 min");
         expect(formatDuration(120)).toBe("2 h");
+    });
+});
+
+describe("ticksFromAi", () => {
+    it("ticks the points the AI awarded, in order", () => {
+        expect(ticksFromAi([{ awarded: true }, { awarded: false }, { awarded: true }], 3)).toEqual([0, 2]);
+    });
+    it("ignores verdicts past the mark scheme's points", () => {
+        expect(ticksFromAi([{ awarded: false }, { awarded: true }, { awarded: true }], 2)).toEqual([1]);
+        expect(ticksFromAi([{ awarded: true }], 0)).toEqual([]);
     });
 });

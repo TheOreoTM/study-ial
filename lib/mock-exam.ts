@@ -169,3 +169,11 @@ export function formatDuration(minutes: number) {
     if (h === 0) return `${m} min`;
     return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
+
+/**
+ * Turns an AI marker's per-point verdicts (in mark-scheme order) into suggested ticks for self-marking. Only the
+ * first `pointCount` verdicts count, so a reply with extra points can't tick boxes that don't exist.
+ */
+export function ticksFromAi(points: { awarded: boolean }[], pointCount: number): number[] {
+    return points.slice(0, Math.max(0, pointCount)).flatMap((p, i) => (p.awarded ? [i] : []));
+}

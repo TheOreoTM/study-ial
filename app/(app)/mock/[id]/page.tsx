@@ -11,6 +11,8 @@ import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
 import { UnitChip } from "@/components/plans/unit-chip";
 import { Button } from "@/components/ui/button";
+import { aiEnabled, remainingAiQuota } from "@/lib/ai";
+import { hasThaana } from "@/lib/dhivehi";
 import { parseMarkScheme } from "@/lib/marking";
 import { plainSnippet } from "@/lib/search";
 import { markLevel, masteryTone } from "@/lib/mastery";
@@ -67,6 +69,7 @@ export default async function MockPaperPage({ params }: { params: Params }) {
 
     if (mock.status === "MARKING") {
         const mcq = questions.filter((q) => q.type === "MCQ");
+        const aiLeft = aiEnabled ? await remainingAiQuota(user.id, "marking") : 0;
         const mcqMarks = paper.attempts.reduce((n, a) => n + a.marksAwarded, 0);
         return (
             <>
@@ -89,6 +92,7 @@ export default async function MockPaperPage({ params }: { params: Params }) {
                                 points,
                                 notes,
                                 translation: q.markSchemeEn ?? null,
+                                aiAllowed: aiLeft > 0 && !hasThaana(q.stem),
                             },
                         ];
                     })}

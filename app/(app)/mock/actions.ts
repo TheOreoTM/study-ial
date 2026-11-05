@@ -3,13 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { markMcq, parseMarkScheme, selfMarkScore } from "@/lib/marking";
+import { aiEnabled, AiQuotaError } from "@/lib/ai";
+import { hasThaana } from "@/lib/dhivehi";
+import { markMcq, markWithAi as aiMark, parseMarkScheme, selfMarkScore } from "@/lib/marking";
 import {
     assemblePaper,
     durationFor,
     isPastDeadline,
     lengthAvailable,
     MOCK_TARGET,
+    ticksFromAi,
     type MockLength,
 } from "@/lib/mock-exam";
 import { assertUser } from "@/lib/session";
@@ -302,4 +305,45 @@ export async function abandonMock(input: { id: string }): Promise<Result> {
     await db.mockExam.deleteMany({ where: { id: mock.id, userId: user.id, status: "IN_PROGRESS" } });
     revalidatePath("/mock");
     return { ok: true };
+}
+
+/**
+ * Optional AI help while self-marking a handed-in paper: suggests which mark-scheme points one written answer earns.
+ * The student still ticks and confirms; nothing is recorded here. Uses the daily "marking" AI quota. Never offered
+ * for Dhivehi questions. Only the question, mark scheme and the student's answer go to the model.
+ */
+export async function suggestMockMarks(input: {
+    id: string;
+    questionId: string;
+}): Promise<Result<{ ticks: number[]; comments: string[] }>> {
+    const user = await assertUser();
+    if (!aiEnabled) return { ok: false, error: "AI marking isn't available right now. Mark it yourself." };
+    const parsed = z.object({ id, questionId: id }).safeParse(input);
+    if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+
+    const mock = await db.mockExam.findFirst({ where: { id: parsed.data.id, userId: user.id, status: "MARKING" } });
+    if (!mock || !mock.questionIds.includes(parsed.data.questionId)) return { ok: false, error: "Question not found." };
+    const answer = readAnswers(mock.answers)[parsed.data.questionId]?.answer;
+    if (!answer) return { ok: false, error: "There's no answer to mark." };
+
+    const q = await db.question.findUnique({
+        where: { id: parsed.data.questionId },
+        select: { stem: true, markScheme: true, marks: true, type: true },
+    });
+    if (!q || q.type === "MCQ") return { ok: false, error: "Question not found." };
+    if (hasThaana(q.stem)) return { ok: false, error: "AI marking isn't available for this question." };
+
+    try {
+        const result = await aiMark(user.id, { stem: q.stem, markScheme: q.markScheme, maxMarks: q.marks, answer });
+        const { points } = parseMarkScheme(q.markScheme);
+        return {
+            ok: true,
+            ticks: ticksFromAi(result.points, points.length),
+            comments: result.points.slice(0, points.length).map((p) => p.comment),
+        };
+    } catch (err) {
+        if (err instanceof AiQuotaError) return { ok: false, error: err.message };
+        console.error("AI mock marking failed", err);
+        return { ok: false, error: "The AI marker couldn't help with this one. Mark it yourself." };
+    }
 }

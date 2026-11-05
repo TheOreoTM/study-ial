@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CircleCheck, Loader2 } from "lucide-react";
+import { CircleCheck, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { markMock } from "@/app/(app)/mock/actions";
+import { markMock, suggestMockMarks } from "@/app/(app)/mock/actions";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +20,8 @@ export type MarkingQuestion = {
     points: { text: string; marks: number }[];
     notes: string[];
     translation: string | null;
+    /** AI suggestions are allowed for this question (AI on, quota left, not Dhivehi) */
+    aiAllowed: boolean;
 };
 
 /** Self-marking every written answer on a handed-in paper, then finishing it. */
@@ -36,7 +38,19 @@ export function MockMarking({
 }) {
     const router = useRouter();
     const [ticks, setTicks] = useState<Record<string, number[]>>({});
+    const [comments, setComments] = useState<Record<string, string[]>>({});
+    const [suggesting, setSuggesting] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
+
+    async function suggest(questionId: string) {
+        setSuggesting(questionId);
+        const res = await suggestMockMarks({ id: mockId, questionId }).catch(() => null);
+        setSuggesting(null);
+        if (!res || !res.ok) return void toast.error(res?.error ?? "The AI marker couldn't help. Mark it yourself.");
+        setTicks((t) => ({ ...t, [questionId]: res.ticks }));
+        setComments((c) => ({ ...c, [questionId]: res.comments }));
+        toast("Suggested marks ticked. Check each one before you finish.");
+    }
 
     const marksFor = (q: MarkingQuestion) =>
         Math.min(
@@ -117,12 +131,23 @@ export function MockMarking({
                                                 onCheckedChange={(v) => toggle(q.id, i, v === true)}
                                                 className="mt-0.5"
                                             />
-                                            <Label
-                                                htmlFor={id}
-                                                className="block flex-1 cursor-pointer text-[0.9375rem] leading-normal font-semibold select-text"
-                                            >
-                                                <Markdown className="text-[0.9375rem] [&_p]:my-0">{p.text}</Markdown>
-                                            </Label>
+                                            <div className="min-w-0 flex-1">
+                                                <Label
+                                                    htmlFor={id}
+                                                    className="block cursor-pointer text-[0.9375rem] leading-normal font-semibold select-text"
+                                                >
+                                                    <Markdown className="text-[0.9375rem] [&_p]:my-0">{p.text}</Markdown>
+                                                </Label>
+                                                {comments[q.id]?.[i] && (
+                                                    <p className="mt-1 flex items-start gap-1.5 text-[0.8125rem] text-muted-foreground">
+                                                        <Sparkles className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                                                        <span>
+                                                            <span className="sr-only">AI comment: </span>
+                                                            {comments[q.id][i]}
+                                                        </span>
+                                                    </p>
+                                                )}
+                                            </div>
                                             <span className="num shrink-0 rounded-full bg-card px-2 py-1 text-xs leading-none text-muted-foreground">
                                                 {p.marks}
                                                 <span className="sr-only"> mark{p.marks === 1 ? "" : "s"}</span>
@@ -137,6 +162,19 @@ export function MockMarking({
                                 </Markdown>
                             )}
                         </fieldset>
+                        {q.aiAllowed && (
+                            <div className="mt-3 flex justify-end">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={suggesting !== null || pending}
+                                    onClick={() => suggest(q.id)}
+                                >
+                                    {suggesting === q.id ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                                    Suggest marks with AI
+                                </Button>
+                            </div>
+                        )}
                     </li>
                 ))}
             </ol>
