@@ -8,6 +8,7 @@ export type PracticeQuestion = {
     difficulty: Difficulty;
     marks: number;
     stem: string;
+    stemEn: string | null;
     topicId: string;
     options: { id: string; label: string; text: string }[];
 };
@@ -27,6 +28,7 @@ export type MarkSchemeView = {
     points: MarkPointView[];
     notes: string[];
     explanation: string | null;
+    translation: string | null;
 };
 
 export type TopicMasteryUpdate = { topicId: string; mastery: Mastery };

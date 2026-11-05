@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { aiEnabled, AiQuotaError, fastModelId, remainingAiQuota } from "@/lib/ai";
 import { db } from "@/lib/db";
+import { hasThaana } from "@/lib/dhivehi";
 import { assertUser } from "@/lib/session";
 import {
     buildQuestionPrompt,
@@ -88,7 +89,7 @@ export async function explainTopic(input: { topicId: string; point: number }): P
             name: true,
             summary: true,
             specPoints: true,
-            unit: { select: { code: true, name: true, subject: { select: { name: true } } } },
+            unit: { select: { code: true, name: true, subject: { select: { name: true, isLocal: true } } } },
             questions: {
                 where: { status: "PUBLISHED" },
                 orderBy: { createdAt: "asc" },
@@ -100,6 +101,8 @@ export async function explainTopic(input: { topicId: string; point: number }): P
     if (!topic) return { ok: false, error: "Topic not found." };
     const point = parsed.data.point;
     if (point >= topic.specPoints.length) return { ok: false, error: "Pick a specification point." };
+    // Local subjects are built from reviewed papers; the tutor doesn't generate religious teaching of its own.
+    if (topic.unit.subject.isLocal) return { ok: false, error: "The tutor isn't available for this subject." };
 
     const ctx = {
         subject: topic.unit.subject.name,
@@ -150,6 +153,7 @@ export async function explainQuestion(input: { questionId: string }): Promise<Tu
         },
     });
     if (!q) return { ok: false, error: "Question not found." };
+    if (hasThaana(q.stem)) return { ok: false, error: "The tutor isn't available for this question." };
     // The walkthrough gives the answer away, so it's only for questions the student has already answered.
     const answered = await db.attempt.findFirst({ where: { userId: user.id, questionId: q.id }, select: { id: true } });
     if (!answered) return { ok: false, error: "Answer the question first, then ask for an explanation." };

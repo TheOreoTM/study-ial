@@ -36,6 +36,18 @@ const contentShape = {
         .max(20_000)
         .nullish()
         .transform((v) => v || null),
+    stemEn: z
+        .string()
+        .trim()
+        .max(20_000)
+        .nullish()
+        .transform((v) => v || null),
+    markSchemeEn: z
+        .string()
+        .trim()
+        .max(20_000)
+        .nullish()
+        .transform((v) => v || null),
     source: z.enum(SOURCES).default("ORIGINAL"),
     sourceRef: z
         .string()
@@ -84,7 +96,7 @@ export function checkQuestion(q: ContentLike): { errors: string[]; warnings: str
                 // Extended responses are often levels-marked, so this is only advisory for them.
                 if (q.type === "LONG") warnings.push(msg);
                 else errors.push(msg);
-            } else if (points > q.marks) {
+            } else if (points > q.marks && !new RegExp(`\\bmax\\.?\\s*${q.marks}\\b`, "i").test(q.markScheme)) {
                 warnings.push(
                     `Mark scheme has ${points} points for ${q.marks} marks — state "max ${q.marks}" if intended`,
                 );

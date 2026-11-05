@@ -167,18 +167,20 @@ export default async function TopicPage({ params }: { params: Params }) {
                     )}
                 </section>
 
-                <section
-                    aria-labelledby="tutor"
-                    className="min-w-0 rounded-xl border bg-card p-5 shadow-card sm:p-8 lg:col-start-1"
-                >
-                    <h2 id="tutor" className="text-lg">
-                        Stuck on something?
-                    </h2>
-                    <p className="mt-1 mb-4 text-muted-foreground">
-                        Get a plain-language explanation, a worked example and the usual mistake.
-                    </p>
-                    <TopicTutor topicId={topic.id} specPoints={topic.specPoints} signedIn={!!user} />
-                </section>
+                {!unit.subject.isLocal && (
+                    <section
+                        aria-labelledby="tutor"
+                        className="min-w-0 rounded-xl border bg-card p-5 shadow-card sm:p-8 lg:col-start-1"
+                    >
+                        <h2 id="tutor" className="text-lg">
+                            Stuck on something?
+                        </h2>
+                        <p className="mt-1 mb-4 text-muted-foreground">
+                            Get a plain-language explanation, a worked example and the usual mistake.
+                        </p>
+                        <TopicTutor topicId={topic.id} specPoints={topic.specPoints} signedIn={!!user} />
+                    </section>
+                )}
 
                 {user && (
                     <section aria-labelledby="recent-attempts" className="mt-2 min-w-0 lg:col-start-1 lg:mt-0">

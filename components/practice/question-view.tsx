@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { hasThaana } from "@/lib/dhivehi";
 import type { Mastery } from "@/lib/mastery";
 import { cn } from "@/lib/utils";
 import type { AiState } from "./practice-session";
@@ -74,6 +75,7 @@ export function QuestionView(props: Props) {
                 <Markdown className="max-w-[62ch] text-[1.125rem] leading-normal font-semibold sm:text-[1.25rem]">
                     {question.stem}
                 </Markdown>
+                <Translation text={question.stemEn} />
             </div>
             {question.type === "MCQ" ? <McqBody {...props} /> : <WrittenBody {...props} />}
         </>
@@ -81,6 +83,17 @@ export function QuestionView(props: Props) {
 }
 
 // ─── Shared bits ─────────────────────────────────────────────────────────────
+
+/** A reviewed English translation, hidden until asked for: the exam itself is in the original language. */
+function Translation({ text }: { text: string | null }) {
+    if (!text) return null;
+    return (
+        <details className="max-w-[62ch] text-[0.9375rem]">
+            <summary className="w-fit cursor-pointer font-bold text-muted-foreground">Show English</summary>
+            <Markdown className="mt-1 [&_p]:my-1">{text}</Markdown>
+        </details>
+    );
+}
 
 function ScoreBanner({
     marks,
@@ -295,7 +308,7 @@ function McqBody(props: Props) {
                     <Explanation text={result.explanation} bare />
                 </ScoreBanner>
             )}
-            {result && props.ai.enabled && <QuestionTutor questionId={question.id} />}
+            {result && props.ai.enabled && !hasThaana(question.stem) && <QuestionTutor questionId={question.id} />}
             <ErrorNote error={error} />
             <Actions>
                 {result ? (
@@ -339,7 +352,9 @@ function WrittenBody(props: Props) {
 
     const hasAnswer = answer.trim().length > 0;
     const locked = phase.kind !== "answering";
-    const aiAvailable = ai.enabled && ai.remaining > 0;
+    // Dhivehi questions are self-marked: AI marking and the tutor aren't offered on them.
+    const dhivehi = hasThaana(question.stem);
+    const aiAvailable = !dhivehi && ai.enabled && ai.remaining > 0;
     const answerId = `answer-${question.id}`;
 
     const record = (marks: number, update: MasteryUpdate) =>
@@ -389,7 +404,12 @@ function WrittenBody(props: Props) {
             if (!res.ok) return setError(res.error);
             setPhase({
                 kind: "self",
-                scheme: { points: res.points, notes: res.notes, explanation: res.explanation },
+                scheme: {
+                    points: res.points,
+                    notes: res.notes,
+                    explanation: res.explanation,
+                    translation: res.translation,
+                },
                 ticked: [],
             });
         });
@@ -443,6 +463,7 @@ function WrittenBody(props: Props) {
                 </Label>
                 <Textarea
                     id={answerId}
+                    dir="auto"
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     readOnly={locked}
@@ -525,18 +546,20 @@ function WrittenBody(props: Props) {
                             </>
                         ) : (
                             <>
-                                {aiButton}
+                                {!dhivehi && aiButton}
                                 {selfButton}
                             </>
                         )}
                     </Actions>
-                    <p className="text-sm text-muted-foreground sm:text-right">
-                        {!ai.enabled
-                            ? "AI marking isn't available right now — mark it yourself against the mark scheme."
-                            : ai.remaining === 0
-                              ? "You've used today's AI marks (resets at midnight UTC). Mark it yourself for now."
-                              : `${ai.remaining} AI mark${ai.remaining === 1 ? "" : "s"} left today.`}
-                    </p>
+                    {!dhivehi && (
+                        <p className="text-sm text-muted-foreground sm:text-right">
+                            {!ai.enabled
+                                ? "AI marking isn't available right now — mark it yourself against the mark scheme."
+                                : ai.remaining === 0
+                                  ? "You've used today's AI marks (resets at midnight UTC). Mark it yourself for now."
+                                  : `${ai.remaining} AI mark${ai.remaining === 1 ? "" : "s"} left today.`}
+                        </p>
+                    )}
                 </div>
             )}
             {phase.kind === "self" && (
@@ -547,7 +570,7 @@ function WrittenBody(props: Props) {
                     </Button>
                 </Actions>
             )}
-            {(phase.kind === "selfDone" || phase.kind === "aiDone") && ai.enabled && (
+            {(phase.kind === "selfDone" || phase.kind === "aiDone") && ai.enabled && !dhivehi && (
                 <QuestionTutor questionId={question.id} />
             )}
             {(phase.kind === "selfDone" || phase.kind === "aiDone") && (
@@ -625,6 +648,7 @@ function SelfMarkList({
                     );
                 })}
             </ul>
+            <Translation text={scheme.translation} />
             <p className="text-right text-[0.9375rem] font-bold tabular-nums" aria-live="polite">
                 {marks}/{max} marks
             </p>
@@ -652,6 +676,7 @@ function MarkSchemeList({ scheme }: { scheme: MarkSchemeView }) {
                     </li>
                 ))}
             </ul>
+            <Translation text={scheme.translation} />
         </div>
     );
 }

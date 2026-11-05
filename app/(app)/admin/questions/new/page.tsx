@@ -39,6 +39,8 @@ export default async function NewQuestionPage({
                     stem: "",
                     markScheme: "",
                     explanation: "",
+                    stemEn: "",
+                    markSchemeEn: "",
                     options: qType === "MCQ" ? blankOptions() : [],
                 }}
             />

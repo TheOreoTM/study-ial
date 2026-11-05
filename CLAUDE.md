@@ -80,6 +80,9 @@ prisma/
 - Mastery levels/colours come from `lib/mastery.ts` (`masteryLabel`, `masteryTone`) — don't reinvent them.
 - **Dates**: calendar-day logic ("today", plan task dates, streaks, countdowns) uses `lib/time.ts`
   (`localDay`, `localDayKey`, Maldives time zone) — never raw UTC days or the server's local time.
+- **Dhivehi**: `Markdown` switches to right-to-left whenever text contains Thaana (`hasThaana` in `lib/dhivehi.ts`).
+  Dhivehi questions are self-marked with reviewed English in `stemEn`/`markSchemeEn`; AI marking and the tutor stay off
+  for them, on the server as well as in the UI.
 - **Redirect targets** from query params go through `safeRedirect` (`lib/safe-redirect.ts`).
 - **Admins**: `ADMIN_EMAILS` are promoted lazily in `getUser()` only when `emailVerified` is true. Never grant roles
   from unverified input.

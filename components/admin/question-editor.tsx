@@ -47,6 +47,8 @@ export type EditorValues = {
     stem: string;
     markScheme: string;
     explanation: string;
+    stemEn: string;
+    markSchemeEn: string;
     options: OptionInput[];
 };
 
@@ -98,6 +100,8 @@ export function QuestionEditor({
         stem: v.stem,
         markScheme: v.markScheme,
         explanation: v.explanation,
+        stemEn: v.stemEn,
+        markSchemeEn: v.markSchemeEn,
         options: isMcq ? v.options : [],
     };
     const parsed = questionInputSchema.safeParse(payload);
@@ -537,6 +541,24 @@ export function QuestionEditor({
                 rows={6}
             />
 
+            <MarkdownField
+                id="q-stem-en"
+                label="English translation of the stem"
+                description="Optional, for questions in another language. Students can reveal it under the question."
+                value={v.stemEn}
+                onChange={(s) => set("stemEn", s)}
+                rows={5}
+            />
+
+            <MarkdownField
+                id="q-mark-scheme-en"
+                label="English translation of the mark scheme"
+                description="Optional. Shown only once the student can see the mark scheme."
+                value={v.markSchemeEn}
+                onChange={(s) => set("markSchemeEn", s)}
+                rows={5}
+            />
+
             <div className="sticky bottom-3 z-10 rounded-xl border bg-card/95 px-4 py-3 shadow-card backdrop-blur sm:px-5">
                 {(attempted && errors.length > 0) || warnings.length > 0 ? (
                     <ul className="mb-3 max-h-32 space-y-1 overflow-y-auto text-sm" aria-live="polite">
@@ -695,6 +717,7 @@ function MarkdownField({
             <div className="grid gap-3 lg:grid-cols-2">
                 <Textarea
                     id={id}
+                    dir="auto"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     rows={rows}

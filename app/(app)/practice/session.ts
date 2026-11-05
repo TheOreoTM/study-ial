@@ -90,6 +90,7 @@ export async function buildSession(userId: string, mode: PracticeMode, count: nu
             difficulty: true,
             marks: true,
             stem: true,
+            stemEn: true,
             topicId: true,
             options: { select: { id: true, label: true, text: true }, orderBy: { label: "asc" } },
         },

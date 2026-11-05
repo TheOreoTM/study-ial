@@ -22,7 +22,7 @@ around their exam dates. Success: a student opens it, sees their weakest topic, 
 
 Practice and progress are organised the way the IAL specification is (unit → topic, with real paper codes such as
 WPH11), not by past paper, and the product always answers "what should I revise next?" from the student's own marks.
-It also carries local Maldivian subjects (Islam, Dhivehi) alongside IAL ones.
+It also carries Islam, a local Maldivian subject, alongside IAL ones.
 
 ## Operating Context
 

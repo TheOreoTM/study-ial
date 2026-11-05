@@ -70,6 +70,7 @@ Output ONLY a JSON array (no prose, no code fences). Each element must have:
 - "stem": the question in Markdown; use $...$ / $$...$$ LaTeX for maths and units (e.g. $9.81\\,\\text{m s}^{-2}$). Include any data the question gives. Split multi-part questions (a), (b)… into separate elements, repeating needed context in each stem.
 - "markScheme": Markdown list, ONE marking point per line, each line ending with "(1)". The number of lines should equal "marks" (extra lines for accepted alternatives are OK; say "max N").
 - "explanation": optional short worked solution
+- "stemEn", "markSchemeEn": optional English translations, for questions written in another language
 - "options": MCQ only — [{"label":"A","text":"...","isCorrect":false}, ...] with exactly one isCorrect true
 - "source": "PAST_PAPER" for official papers, otherwise "ORIGINAL"
 - "sourceRef": e.g. "${unit?.code ?? "WPH11"} Jan 2024 Q12" (or a link to the official paper on the Pearson website)

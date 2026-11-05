@@ -1063,14 +1063,4 @@ const islam: SeedSubject = {
     units: [{ code: "ISL01", number: 1, name: "Islam", description: "Topics coming soon.", topics: [] }],
 };
 
-const dhivehi: SeedSubject = {
-    slug: "dhivehi",
-    code: "LOCAL-DHI",
-    name: "Dhivehi",
-    description: "Dhivehi language as taught in Maldivian schools.",
-    color: "orange",
-    isLocal: true,
-    units: [{ code: "DHI01", number: 1, name: "Dhivehi Language", description: "Topics coming soon.", topics: [] }],
-};
-
-export const otherSubjects: SeedSubject[] = [chemistry, biology, mathematics, furtherMathematics, islam, dhivehi];
+export const otherSubjects: SeedSubject[] = [chemistry, biology, mathematics, furtherMathematics, islam];

@@ -36,7 +36,7 @@
 }
 
 @theme inline {
-    --font-sans: var(--font-figtree), system-ui, sans-serif;
+    --font-sans: var(--font-figtree), var(--font-thaana), var(--font-naskh), system-ui, sans-serif;
     --font-display: var(--font-baloo), var(--font-figtree), system-ui, sans-serif;
     --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
 
@@ -252,13 +252,21 @@
         @apply my-2;
     }
     .prose-study ul {
-        @apply my-2 list-disc pl-5;
+        @apply my-2 list-disc ps-5;
     }
     .prose-study ol {
-        @apply my-2 list-decimal pl-5;
+        @apply my-2 list-decimal ps-5;
     }
     .prose-study li {
         @apply my-0.5;
+    }
+    .prose-study u {
+        @apply underline-offset-[0.35em];
+    }
+    /* Thaana's vowel marks sit above and below the line, so it needs far more line height than Latin text. */
+    .prose-dhivehi p,
+    .prose-dhivehi li {
+        line-height: 2;
     }
     .prose-study strong {
         @apply font-bold;
@@ -271,7 +279,7 @@
     }
     .prose-study th,
     .prose-study td {
-        @apply border px-2 py-1 text-left;
+        @apply border px-2 py-1 text-start;
     }
     .prose-study .katex-display {
         @apply my-3 overflow-x-auto overflow-y-hidden;

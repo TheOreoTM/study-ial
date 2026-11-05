@@ -81,6 +81,13 @@ describe("questionInputSchema", () => {
         });
         expect(warnings).toHaveLength(1);
     });
+
+    it("warns about extra marking points unless the scheme states the maximum", () => {
+        const q = { type: "SHORT" as const, marks: 1, options: [], source: "ORIGINAL" as const, sourceRef: null };
+        expect(checkQuestion({ ...q, markScheme: "a (1)\nb (1)" }).warnings).toHaveLength(1);
+        expect(checkQuestion({ ...q, markScheme: "Any one (max 1)\na (1)\nb (1)" }).warnings).toHaveLength(0);
+        expect(checkQuestion({ ...q, markScheme: "max 2\na (1)\nb (1)" }).warnings).toHaveLength(1);
+    });
 });
 
 describe("parseImport", () => {

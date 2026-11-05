@@ -96,7 +96,7 @@ model Subject {
   description String?
   color       String  @default("blue") // accent token used in the UI
   order       Int     @default(0)
-  // Local (non-Pearson) subjects such as Dhivehi or Islam
+  // Local (non-Pearson) subjects such as Islam
   isLocal     Boolean @default(false)
 
   units Unit[]
@@ -181,6 +181,9 @@ model Question {
   // Markdown mark scheme: one marking point per line
   markScheme  String
   explanation String?
+  // Reviewed English translations of a question written in another language (Dhivehi Islam papers)
+  stemEn       String?
+  markSchemeEn String?
   source      QuestionSource @default(ORIGINAL)
   // e.g. "WPH11 Jan 2024 Q12" or a URL to the official paper
   sourceRef   String?

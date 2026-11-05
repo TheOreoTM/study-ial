@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { aiEnabled, AiQuotaError, remainingAiQuota } from "@/lib/ai";
+import { hasThaana } from "@/lib/dhivehi";
 import { formatAiFeedback, markMcq, markWithAi as aiMark, parseMarkScheme, selfMarkScore } from "@/lib/marking";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { assertUser } from "@/lib/session";
@@ -40,9 +41,13 @@ function publishedQuestion(questionId: string) {
     });
 }
 
-function markSchemeView(q: { markScheme: string; explanation: string | null }): MarkSchemeView {
+function markSchemeView(q: {
+    markScheme: string;
+    markSchemeEn: string | null;
+    explanation: string | null;
+}): MarkSchemeView {
     const { points, notes } = parseMarkScheme(q.markScheme);
-    return { points, notes, explanation: q.explanation };
+    return { points, notes, explanation: q.explanation, translation: q.markSchemeEn };
 }
 
 export async function submitMcq(input: { questionId: string; optionId: string }): Promise<McqResult> {
@@ -126,6 +131,7 @@ export async function markWithAi(input: { questionId: string; answer: string }):
 
     const q = await publishedQuestion(parsed.data.questionId);
     if (!q || q.type === "MCQ") return { ok: false, error: "Question not found." };
+    if (hasThaana(q.stem)) return { ok: false, error: "AI marking isn't available for this question. Mark it yourself." };
 
     let result;
     try {

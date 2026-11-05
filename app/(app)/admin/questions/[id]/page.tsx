@@ -55,6 +55,8 @@ export default async function EditQuestionPage({ params }: { params: Promise<{ i
                     stem: question.stem,
                     markScheme: question.markScheme,
                     explanation: question.explanation ?? "",
+                    stemEn: question.stemEn ?? "",
+                    markSchemeEn: question.markSchemeEn ?? "",
                     options: question.options.map((o) => ({
                         label: o.label as "A",
                         text: o.text,

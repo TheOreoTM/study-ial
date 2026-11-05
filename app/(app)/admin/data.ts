@@ -31,6 +31,8 @@ function contentData(q: Omit<QuestionInput, "id" | "topicId" | "status"> | Impor
         stem: q.stem,
         markScheme: q.markScheme,
         explanation: q.explanation,
+        stemEn: q.stemEn,
+        markSchemeEn: q.markSchemeEn,
         source: q.source,
         sourceRef: q.sourceRef,
     };
