@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlarmClock, Check, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
-import { abandonMock, saveMockAnswers, submitMock } from "@/app/(app)/mock/actions";
+import { abandonMock, getMockState, saveMockAnswers, submitMock } from "@/app/(app)/mock/actions";
 import type { MockAnswers } from "@/app/(app)/mock/answers";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
@@ -59,9 +59,17 @@ export function MockSitting({
     const [confirming, setConfirming] = useState(false);
     const [submitting, startSubmit] = useTransition();
     const [abandoning, startAbandon] = useTransition();
+    const [saveState, setSaveState] = useState<"saved" | "unsaved" | "failed">("saved");
+    const [handInError, setHandInError] = useState<string | null>(null);
     const dirty = useRef(false);
+    /** Changed anything since this screen mounted. Unlike `dirty`, never cleared by a save. */
+    const touched = useRef(false);
     const answersRef = useRef(answers);
     const handedIn = useRef(false);
+    /** A hand-in at zero failed: don't retry it every tick; the student can press "Hand in" again. */
+    const timedFailed = useRef(false);
+    const end = useRef(Date.parse(endsAt));
+    /** Server clock minus device clock, set on mount (no reading the clock during render) */
     const skew = useRef(0);
     const debounce = useRef<number | undefined>(undefined);
     const [abandonOpen, setAbandonOpen] = useState(false);
@@ -70,23 +78,18 @@ export function MockSitting({
         answersRef.current = answers;
     }, [answers]);
 
-    const save = useCallback(async () => {
-        if (!dirty.current || handedIn.current) return;
-        dirty.current = false;
-        const res = await saveMockAnswers({ id: mockId, answers: answersRef.current });
-        if (!res.ok) dirty.current = true;
-    }, [mockId]);
-
     const handIn = useCallback(
         (reason: "manual" | "time") => {
-            if (handedIn.current) return;
+            if (handedIn.current || (reason === "time" && timedFailed.current)) return;
             handedIn.current = true;
+            setHandInError(null);
             startSubmit(async () => {
                 // After the deadline the server ignores what we send and uses the last autosave.
-                const res = await submitMock({ id: mockId, answers: answersRef.current });
-                if (!res.ok) {
+                const res = await submitMock({ id: mockId, answers: answersRef.current }).catch(() => null);
+                if (!res || !res.ok) {
                     handedIn.current = false;
-                    toast.error(res.error);
+                    if (reason === "time") timedFailed.current = true;
+                    setHandInError(res?.error ?? "Couldn't hand in your paper. Check your connection and try again.");
                     return;
                 }
                 if (reason === "time") toast("Time's up. Your paper has been handed in.");
@@ -96,38 +99,75 @@ export function MockSitting({
         [mockId, router],
     );
 
+    const save = useCallback(async () => {
+        if (!dirty.current || handedIn.current) return;
+        dirty.current = false;
+        const res = await saveMockAnswers({ id: mockId, answers: answersRef.current }).catch(() => null);
+        if (res?.ok) {
+            if (!dirty.current) setSaveState("saved");
+            return;
+        }
+        dirty.current = true;
+        setSaveState("failed");
+        // The server says time is up: hand in what it has rather than keep typing into the void.
+        if (res && res.error === "Time's up.") handIn("time");
+    }, [mockId, handIn]);
+
+    // A page restored by Back/Forward has old props: pick up the latest autosave and the server's clock.
+    useEffect(() => {
+        let cancelled = false;
+        skew.current = Date.parse(serverNow) - Date.now();
+        getMockState({ id: mockId })
+            .then((res) => {
+                if (cancelled || !res.ok) return;
+                if (res.status !== "IN_PROGRESS") return router.refresh();
+                end.current = Date.parse(res.endsAt);
+                skew.current = Date.parse(res.serverNow) - Date.now();
+                // Never replace what the student has typed since the screen opened with an older snapshot.
+                if (!touched.current) setAnswers(res.answers);
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+    }, [mockId, router, serverNow]);
+
     // Clock: measured against the server's time, ticking once a second.
     useEffect(() => {
-        skew.current = Date.parse(serverNow) - Date.now();
-        const end = Date.parse(endsAt);
         const tick = () => {
-            const s = Math.max(0, Math.floor((end - (Date.now() + skew.current)) / 1000));
+            const s = Math.max(0, Math.floor((end.current - (Date.now() + skew.current)) / 1000));
             setLeft(s);
             if (s === 0) handIn("time");
         };
         tick();
         const t = window.setInterval(tick, 1000);
         return () => window.clearInterval(t);
-    }, [endsAt, serverNow, handIn]);
+    }, [handIn]);
 
     useEffect(() => {
         if (expired) handIn("time");
     }, [expired, handIn]);
 
-    // Autosave on a timer and whenever the tab is hidden (phone locked, app switched).
+    // Autosave on a timer, when the tab is hidden or closed (phone locked, app switched) and when leaving the page.
     useEffect(() => {
         const t = window.setInterval(save, AUTOSAVE_MS);
         const onHide = () => document.visibilityState === "hidden" && void save();
+        const onPageHide = () => void save();
         document.addEventListener("visibilitychange", onHide);
+        window.addEventListener("pagehide", onPageHide);
         return () => {
             window.clearInterval(t);
             window.clearTimeout(debounce.current);
             document.removeEventListener("visibilitychange", onHide);
+            window.removeEventListener("pagehide", onPageHide);
+            void save();
         };
     }, [save]);
 
     function update(questionId: string, patch: { optionId?: string; answer?: string }) {
         dirty.current = true;
+        touched.current = true;
+        setSaveState((st) => (st === "failed" ? st : "unsaved"));
         setAnswers((a) => ({ ...a, [questionId]: { ...a[questionId], ...patch } }));
         window.clearTimeout(debounce.current);
         debounce.current = window.setTimeout(() => void save(), DEBOUNCE_MS);
@@ -179,9 +219,20 @@ export function MockSitting({
                             {low && left > 0 ? "Five minutes or less left." : ""}
                         </p>
                     </div>
-                    <p className="text-sm font-bold text-muted-foreground lg:mt-3">
-                        <span className="num text-foreground">{answeredCount}</span> of {questions.length} answered
-                    </p>
+                    <div className="lg:mt-3">
+                        <p className="text-sm font-bold text-muted-foreground">
+                            <span className="num text-foreground">{answeredCount}</span> of {questions.length} answered
+                        </p>
+                        <p
+                            className={cn(
+                                "text-xs font-bold",
+                                saveState === "failed" ? "text-destructive" : "text-muted-foreground",
+                            )}
+                            aria-live="polite"
+                        >
+                            {saveState === "saved" ? "Saved" : saveState === "unsaved" ? "Saving…" : "Not saved: check your connection"}
+                        </p>
+                    </div>
                     <Button onClick={() => setConfirming(true)} disabled={submitting} className="lg:hidden" size="sm">
                         {submitting ? <Loader2 className="animate-spin" /> : <Send />}
                         Hand in
@@ -209,6 +260,11 @@ export function MockSitting({
                 </Button>
             </aside>
 
+            {handInError && (
+                <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/8 px-4 py-3 text-[0.9375rem] lg:order-1 lg:col-start-1">
+                    {handInError}
+                </p>
+            )}
             <ol className="grid min-w-0 gap-5 lg:order-1">
                 {questions.map((q, i) => (
                     <li

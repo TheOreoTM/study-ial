@@ -49,6 +49,11 @@ export function StartMock({
         });
     }
 
+    // The page's orange goes on the half paper when the bank can fill it, otherwise the first length it can.
+    const primaryLength = primary
+        ? (["half", "short", "full"] as MockLength[]).find((l) => lengthAvailable(l, availableMarks))
+        : undefined;
+
     return (
         <div className="grid gap-2 sm:grid-cols-3">
             {LENGTHS.map((length) => {
@@ -57,7 +62,7 @@ export function StartMock({
                 return (
                     <Button
                         key={length}
-                        variant={primary && length === "half" && ok ? "default" : "outline"}
+                        variant={length === primaryLength ? "default" : "outline"}
                         disabled={!ok || pending}
                         onClick={() => start(length)}
                         className={cn("h-auto min-h-14 flex-col gap-0.5 py-2 whitespace-normal")}

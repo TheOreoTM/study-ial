@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/page-header";
 import { UnitChip } from "@/components/plans/unit-chip";
 import { Button } from "@/components/ui/button";
 import { parseMarkScheme } from "@/lib/marking";
+import { plainSnippet } from "@/lib/search";
 import { markLevel, masteryTone } from "@/lib/mastery";
 import {
     formatDuration,
@@ -215,9 +216,10 @@ function MockResult({ paper, title, meta }: { paper: MockPaper; title: string; m
                                     <details className="group">
                                         <summary className="flex cursor-pointer list-none items-start gap-3 rounded-lg px-4 py-3.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-5 [&::-webkit-details-marker]:hidden">
                                             <span className="num w-6 shrink-0 pt-0.5 text-muted-foreground">{i + 1}</span>
-                                            <Markdown className="line-clamp-2 min-w-0 flex-1 text-[0.9375rem] group-open:line-clamp-none [&_.katex-display]:my-1 [&_p]:my-0">
-                                                {q.stem}
-                                            </Markdown>
+                                            {/* <summary> only takes phrasing content: plain text here, the full stem below. */}
+                                            <span className="line-clamp-2 min-w-0 flex-1 text-[0.9375rem]">
+                                                {plainSnippet(q.stem, 220)}
+                                            </span>
                                             <span
                                                 className={cn(
                                                     "num shrink-0 rounded-full px-2.5 py-1 text-sm leading-none",
@@ -229,6 +231,7 @@ function MockResult({ paper, title, meta }: { paper: MockPaper; title: string; m
                                             </span>
                                         </summary>
                                         <div className="grid gap-3 border-t px-4 pt-3 pb-4 text-[0.9375rem] sm:px-5">
+                                            <Markdown className="[&_.katex-display]:my-1 [&_p]:my-1">{q.stem}</Markdown>
                                             {q.type === "MCQ" ? (
                                                 <>
                                                     {chosen && chosen.id !== correct?.id && (

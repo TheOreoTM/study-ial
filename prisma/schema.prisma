@@ -242,6 +242,7 @@ model Attempt {
 
   @@index([userId, createdAt])
   @@index([userId, questionId])
+  @@index([mockExamId])
 }
 
 // ─── Mock papers ─────────────────────────────────────────────────────────────

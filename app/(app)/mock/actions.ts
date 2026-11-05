@@ -51,13 +51,13 @@ export async function startMock(input: {
     });
     if (!unit) return { ok: false, error: "Add this unit in Settings to sit a mock paper for it." };
 
+    // Close out papers that ran out of time, so they're marked rather than left running for ever.
+    await handInExpired(user.id);
     const running = await db.mockExam.findFirst({
         where: { userId: user.id, unitId, status: "IN_PROGRESS" },
         orderBy: { startedAt: "desc" },
     });
-    if (running && !isPastDeadline(running.startedAt, running.durationMinutes, new Date())) {
-        return { ok: true, id: running.id, resumed: true };
-    }
+    if (running) return { ok: true, id: running.id, resumed: true };
 
     const today = await db.mockExam.count({ where: { userId: user.id, startedAt: { gte: localDayStart() } } });
     if (today >= MAX_MOCKS_PER_DAY) return { ok: false, error: "That's a lot of papers for one day. Try again tomorrow." };
@@ -141,11 +141,20 @@ export async function submitMock(input: { id: string; answers?: MockAnswers }): 
     if (!mock) return { ok: false, error: "Paper not found." };
     if (mock.status !== "IN_PROGRESS") return { ok: true, status: mock.status };
 
+    const status = await handIn(user.id, mock, parsed.data.answers);
+    revalidateAfterMarking(mock.id);
+    return { ok: true, status };
+}
+
+type RunningMock = { id: string; questionIds: string[]; startedAt: Date; durationMinutes: number; answers: unknown };
+
+/**
+ * Hands a running paper in and marks its multiple choice. After the deadline only the last autosave counts, whatever
+ * is submitted. Returns the paper's new status.
+ */
+async function handIn(userId: string, mock: RunningMock, submitted?: MockAnswers): Promise<"MARKING" | "FINISHED"> {
     const late = isPastDeadline(mock.startedAt, mock.durationMinutes, new Date());
-    const answers = cleanAnswers(
-        late || !parsed.data.answers ? readAnswers(mock.answers) : parsed.data.answers,
-        mock.questionIds,
-    );
+    const answers = cleanAnswers(late || !submitted ? readAnswers(mock.answers) : submitted, mock.questionIds);
 
     const questions = await db.question.findMany({
         where: { id: { in: mock.questionIds } },
@@ -157,7 +166,7 @@ export async function submitMock(input: { id: string; answers?: MockAnswers }): 
     const result = await db.$transaction(async (tx) => {
         // Claim the paper first, so a double click or two tabs can't mark it twice.
         const claimed = await tx.mockExam.updateMany({
-            where: { id: mock.id, userId: user.id, status: "IN_PROGRESS" },
+            where: { id: mock.id, userId, status: "IN_PROGRESS" },
             data: {
                 status: writtenAnswered ? "MARKING" : "FINISHED",
                 answers,
@@ -176,7 +185,7 @@ export async function submitMock(input: { id: string; answers?: MockAnswers }): 
             mcqMarks += marked.marksAwarded;
             await tx.attempt.create({
                 data: {
-                    userId: user.id,
+                    userId,
                     questionId: q.id,
                     selectedOptionId: optionId,
                     marksAwarded: marked.marksAwarded,
@@ -188,11 +197,37 @@ export async function submitMock(input: { id: string; answers?: MockAnswers }): 
             });
         }
         if (!writtenAnswered) await tx.mockExam.update({ where: { id: mock.id }, data: { marksAwarded: mcqMarks } });
-        return writtenAnswered ? "MARKING" : "FINISHED";
+        return writtenAnswered ? ("MARKING" as const) : ("FINISHED" as const);
     });
+    return result ?? "FINISHED";
+}
 
-    revalidateAfterMarking(mock.id);
-    return { ok: true, status: result ?? "FINISHED" };
+/** Papers whose time ran out without being opened again are handed in from their last autosave. */
+async function handInExpired(userId: string) {
+    const running = await db.mockExam.findMany({ where: { userId, status: "IN_PROGRESS" } });
+    const now = new Date();
+    for (const m of running) if (isPastDeadline(m.startedAt, m.durationMinutes, now)) await handIn(userId, m);
+}
+
+/**
+ * Fresh state for a paper that's being sat: the latest autosave and the server's clock. The sitting screen calls
+ * this when it mounts, because a page restored by Back/Forward carries old props.
+ */
+export async function getMockState(input: { id: string }): Promise<
+    Result<{ status: string; answers: MockAnswers; serverNow: string; endsAt: string }>
+> {
+    const user = await assertUser();
+    const parsed = z.object({ id }).safeParse(input);
+    if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+    const mock = await db.mockExam.findFirst({ where: { id: parsed.data.id, userId: user.id } });
+    if (!mock) return { ok: false, error: "Paper not found." };
+    return {
+        ok: true,
+        status: mock.status,
+        answers: readAnswers(mock.answers),
+        serverNow: new Date().toISOString(),
+        endsAt: new Date(mock.startedAt.getTime() + mock.durationMinutes * 60_000).toISOString(),
+    };
 }
 
 /** Self-marking: `ticks` maps each answered written question to the mark-scheme points the student ticked. */
@@ -243,7 +278,10 @@ export async function markMock(input: { id: string; ticks: Record<string, number
                 },
             });
         }
-        const total = await tx.attempt.aggregate({ where: { mockExamId: mock.id }, _sum: { marksAwarded: true } });
+        const total = await tx.attempt.aggregate({
+            where: { mockExamId: mock.id, userId: user.id },
+            _sum: { marksAwarded: true },
+        });
         await tx.mockExam.update({ where: { id: mock.id }, data: { marksAwarded: total._sum.marksAwarded ?? 0 } });
     });
 
@@ -251,15 +289,17 @@ export async function markMock(input: { id: string; ticks: Record<string, number
     return { ok: true };
 }
 
-/** Throws away a paper that hasn't been handed in. Nothing was recorded for it yet. */
+/** Throws away a paper that hasn't been handed in, while its time is still running. Nothing was recorded for it yet. */
 export async function abandonMock(input: { id: string }): Promise<Result> {
     const user = await assertUser();
     const parsed = z.object({ id }).safeParse(input);
     if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
-    const { count } = await db.mockExam.deleteMany({
-        where: { id: parsed.data.id, userId: user.id, status: "IN_PROGRESS" },
-    });
-    if (count === 0) return { ok: false, error: "Only a paper you're still sitting can be abandoned." };
+    const mock = await db.mockExam.findFirst({ where: { id: parsed.data.id, userId: user.id, status: "IN_PROGRESS" } });
+    if (!mock) return { ok: false, error: "Only a paper you're still sitting can be abandoned." };
+    if (isPastDeadline(mock.startedAt, mock.durationMinutes, new Date())) {
+        return { ok: false, error: "Time's up on this paper, so it's being handed in instead." };
+    }
+    await db.mockExam.deleteMany({ where: { id: mock.id, userId: user.id, status: "IN_PROGRESS" } });
     revalidatePath("/mock");
     return { ok: true };
 }
