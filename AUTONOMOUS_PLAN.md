@@ -47,17 +47,17 @@ labelled as an estimate) and a per-topic breakdown. Attempts feed mastery like a
 - [x] UI: `/mock`, `/mock/[id]` (sit, mark, result), history
 - [x] Screenshots, review, fixes
 
-### 3. Spec checklist with confidence ratings — [ ]
+### 3. Spec checklist with confidence ratings — [x]
 **Why:** IAL students revise from the specification. Rating each "I can…" point red/amber/green and seeing where
 confidence and marks disagree ("you rated this green but score 35%") is a classic, effective method.
 **Scope:** on each topic page, every spec point gets a three-way confidence control. A unit-level checklist page
 (`/subjects/[s]/[u]/checklist`) shows all points with ratings, plus topic mastery, and flags mismatches. Ratings
 never change mastery (honest progress). Schema `SpecPointRating`. Pure mismatch logic in `lib/checklist.ts`.
-- [ ] `lib/checklist.ts` + tests
-- [ ] Schema + migration
-- [ ] Action (assertUser, zod, topic/point validation)
-- [ ] Topic page control + unit checklist page + print styles
-- [ ] Screenshots, review, fixes
+- [x] `lib/checklist.ts` + tests
+- [x] Schema + migration
+- [x] Action (assertUser, zod, topic/point validation)
+- [x] Topic page control + unit checklist page + print styles
+- [x] Screenshots, review, fixes
 
 ### 4. Search across the curriculum — [ ]
 **Why:** "Where is projectile motion?" should take one keystroke, not four clicks through units.
@@ -85,12 +85,12 @@ summary in `lib/readiness.ts`.
 - [ ] Page + dashboard link
 - [ ] Screenshots, review, fixes
 
-### 7. Printable unit revision sheet — [ ]
+### 7. Printable unit revision sheet — [x]
 **Why:** many students still revise on paper; a one-page sheet of the unit's spec points with their own mastery
 and confidence is handy to print or save as PDF.
 **Scope:** print stylesheet for the unit checklist page (no extra dependency), "Print" button, light-only print
 colours.
-- [ ] Print CSS + button, verified via Playwright `page.pdf()`
+- [x] Print CSS + button, verified via Playwright `page.pdf()`
 
 ### 8. SEO and crawl hygiene on public pages — [ ]
 **Why:** students find revision resources through search; the curriculum pages are the public face.
