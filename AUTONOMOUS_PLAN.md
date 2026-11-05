@@ -126,11 +126,11 @@ upcoming exams, no email, no answers, `noindex`. Schema `ProgressShare`.
 - [x] Settings control + public page
 - [x] Screenshots, review, fixes
 
-### 13. Key equations for Physics units — [ ]
+### 13. Key equations for Physics units — [x]
 **Why:** the formulae students must recall vs. those given; an original per-unit "key equations" list helps.
 **Scope:** original, short per-unit key-equation lists for WPH11/12/14/15 rendered with KaTeX on the unit page.
-- [ ] Content (original) + tests that every unit code exists
-- [ ] Unit page panel
+- [x] Content (original) + tests that every unit code exists
+- [x] Unit page panel
 
 ### 14. Offline fallback (PWA) — [ ]
 **Why:** phones on patchy island connections; an installable app with a friendly offline page is better than a

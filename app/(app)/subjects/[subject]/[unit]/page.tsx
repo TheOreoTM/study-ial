@@ -13,6 +13,8 @@ import { getTopicMastery } from "@/lib/queries/mastery";
 import { getSpecRatings } from "@/lib/queries/checklist";
 import { addSummaries, summarize } from "@/lib/checklist";
 import { Button } from "@/components/ui/button";
+import { KeyEquations } from "@/components/key-equations";
+import { keyEquations } from "@/lib/key-equations";
 import { masteryLabel, masteryTone } from "@/lib/mastery";
 import { getUser } from "@/lib/session";
 import { site } from "@/lib/site";
@@ -268,6 +270,15 @@ export default async function UnitPage({ params }: { params: Params }) {
                             )}
                         </aside>
                     )}
+                </div>
+            )}
+
+            {keyEquations[unit.code] && (
+                <div className="mt-8">
+                    <KeyEquations
+                        groups={keyEquations[unit.code]}
+                        topics={new Map(unit.topics.map((t) => [t.code, t.name]))}
+                    />
                 </div>
             )}
         </>

@@ -4,6 +4,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { CircleAlert, ListChecks } from "lucide-react";
 import { ConfidencePicker } from "@/components/checklist/confidence-picker";
 import { PrintButton } from "@/components/checklist/print-button";
+import { KeyEquations } from "@/components/key-equations";
+import { keyEquations } from "@/lib/key-equations";
 import { EmptyState } from "@/components/empty-state";
 import { MasteryTile } from "@/components/mastery";
 import { Markdown } from "@/components/markdown";
@@ -197,6 +199,12 @@ export default async function ChecklistPage({ params }: { params: Params }) {
                                 </ol>
                             </section>
                         ))}
+                        {keyEquations[unit.code] && (
+                            <KeyEquations
+                                groups={keyEquations[unit.code]}
+                                topics={new Map(unit.topics.map((t) => [t.code, t.name]))}
+                            />
+                        )}
                     </div>
                 </>
             )}
