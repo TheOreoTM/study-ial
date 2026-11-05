@@ -35,6 +35,7 @@ model User {
   flashcards    Flashcard[]
   cardReviews   FlashcardReview[]
   milestones    UserMilestone[]
+  mockExams     MockExam[]
 
   @@map("user")
 }
@@ -116,6 +117,7 @@ model Unit {
   questions Question[]
   students  UserUnit[]
   plans     StudyPlanUnit[]
+  mockExams MockExam[]
 
   @@unique([subjectId, number])
 }
@@ -230,10 +232,48 @@ model Attempt {
   maxMarks         Int
   method           MarkingMethod
   feedback         String?
+  // Set when the answer was given in a timed mock paper
+  mockExamId       String?
+  mockExam         MockExam?       @relation(fields: [mockExamId], references: [id], onDelete: SetNull)
   createdAt        DateTime        @default(now())
 
   @@index([userId, createdAt])
   @@index([userId, questionId])
+}
+
+// ─── Mock papers ─────────────────────────────────────────────────────────────
+
+enum MockStatus {
+  IN_PROGRESS // sitting the paper against the clock
+  MARKING // submitted; written answers are waiting to be self-marked
+  FINISHED
+}
+
+// A timed mock paper for one unit (rules in lib/mock-exam.ts). Its marked answers are ordinary Attempts, so they
+// feed mastery and the mistake notebook like any other practice.
+model MockExam {
+  id              String     @id @default(cuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId          String
+  unit            Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  length          String // "short" | "half" | "full"
+  // The paper, in order; frozen when it starts
+  questionIds     String[]
+  totalMarks      Int
+  durationMinutes Int
+  status          MockStatus @default(IN_PROGRESS)
+  // Answers saved while sitting: { [questionId]: { optionId?: string; answer?: string } }
+  answers         Json       @default("{}")
+  startedAt       DateTime   @default(now())
+  submittedAt     DateTime?
+  finishedAt      DateTime?
+  // Set at the end so history lists don't need to re-add the attempts
+  marksAwarded    Int?
+
+  attempts Attempt[]
+
+  @@index([userId, startedAt])
 }
 
 // Seed keys of seeded questions/flashcards an admin deleted, so re-running the seed doesn't bring them back.
