@@ -82,6 +82,11 @@ export const masteryTone: Record<MasteryLevel, { badge: string; bar: string; fil
     },
 };
 
+/** Colour one marked answer like the mastery it feeds: near-full marks teal, partial sun, low bubblegum. */
+export function markLevel(share: number): Exclude<MasteryLevel, "new"> {
+    return share >= 0.75 ? "strong" : share >= 0.4 ? "developing" : "weak";
+}
+
 /** Priority for revision: higher = study sooner. Unseen topics rank between weak and developing. */
 export function revisionPriority(m: Mastery, now = new Date()): number {
     const base = m.score === null ? 0.6 : 1 - m.score;

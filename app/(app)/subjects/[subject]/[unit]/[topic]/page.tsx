@@ -2,17 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, ChevronRight, History, Layers, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, Layers, Play, RotateCcw } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { TopicTutor } from "@/components/tutor/topic-tutor";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
 import { db } from "@/lib/db";
-import { masteryTone, type MasteryLevel } from "@/lib/mastery";
+import { markLevel, masteryTone } from "@/lib/mastery";
 import { getTopic, getTopicQuestionTypeCounts, getUnitByCode } from "@/lib/queries/curriculum";
 import { getDeckCounts } from "@/lib/queries/flashcards";
 import { getTopicMastery } from "@/lib/queries/mastery";
+import { countOpenMistakes } from "@/lib/queries/mistakes";
 import { getUser } from "@/lib/session";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -29,11 +30,6 @@ const typeLabels = [
     ["CALCULATION", "Calculation"],
     ["LONG", "Extended response"],
 ] as const;
-
-/** Colour a marked attempt like the mastery it feeds: full-ish marks teal, partial sun, low bubblegum. */
-function markLevel(ratio: number): MasteryLevel {
-    return ratio >= 0.75 ? "strong" : ratio >= 0.4 ? "developing" : "weak";
-}
 
 const methodLabel = { AUTO: "Auto-marked", SELF: "Self-marked", AI: "AI-marked" } as const;
 
@@ -76,7 +72,7 @@ export default async function TopicPage({ params }: { params: Params }) {
     if (subjectSlug !== unit.subject.slug || code !== unit.code.toLowerCase())
         permanentRedirect(`${unitHref}/${topic.slug}`);
 
-    const [typeCounts, deck, mastery, recent] = await Promise.all([
+    const [typeCounts, deck, mastery, recent, mistakes] = await Promise.all([
         getTopicQuestionTypeCounts(topic.id),
         user ? getDeckCounts(user.id, [topic.id]).then((d) => d.get(topic.id)!) : null,
         user ? getTopicMastery(user.id, [topic.id]).then((m) => m.get(topic.id)!) : null,
@@ -95,6 +91,7 @@ export default async function TopicPage({ params }: { params: Params }) {
                   },
               })
             : [],
+        user ? countOpenMistakes(user.id, { topicId: topic.id }) : 0,
     ]);
     const total = [...typeCounts.values()].reduce((a, b) => a + b, 0);
 
@@ -250,6 +247,19 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     {mastery.attempts} attempt{mastery.attempts === 1 ? "" : "s"} · last{" "}
                                     {formatDistanceToNow(mastery.lastPracticedAt!, { addSuffix: true })}
                                 </p>
+                            )}
+                            {mistakes > 0 && (
+                                <div className="mt-4 flex items-center justify-between gap-3 border-t border-border-strong/25 pt-4">
+                                    <p className="text-[0.9375rem]">
+                                        <span className="num">{mistakes}</span> open mistake{mistakes === 1 ? "" : "s"}
+                                    </p>
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/practice?mode=mistakes&topic=${topic.id}`}>
+                                            <RotateCcw />
+                                            Redo
+                                        </Link>
+                                    </Button>
+                                </div>
                             )}
                         </section>
                     )}
