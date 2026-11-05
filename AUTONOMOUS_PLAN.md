@@ -191,3 +191,7 @@ answer earns, and the student still checks and confirms.
   never for Dhivehi, only stem + mark scheme + answer reach the model); pure `ticksFromAi` with tests
 - [x] Button only when AI is on and quota remains; with AI off the page is unchanged (checked). The live AI path is
   **not verified** (no OpenRouter key here)
+
+### 23. Admin: which units can fill a mock paper — [x]
+- [x] A "Mock" column in the coverage table (Full / Half / Quick / –) from published marks, so admins can see
+  what publishing a unit's drafts would unlock

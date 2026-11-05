@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { lengthAvailable, MOCK_LENGTH_LABEL } from "@/lib/mock-exam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -16,16 +17,25 @@ export const metadata: Metadata = { title: "Admin" };
 type Counts = { published: number; draft: number };
 const empty = (): Counts => ({ published: 0, draft: 0 });
 
+/** The longest timed mock paper the published marks can fill, for the coverage table. */
+function mockReady(marks: number) {
+    const longest = (["full", "half", "short"] as const).find((l) => lengthAvailable(l, marks));
+    return longest ? MOCK_LENGTH_LABEL[longest].replace(" paper", "") : "–";
+}
+
 export default async function AdminOverviewPage() {
     await requireAdmin();
     const [tree, byUnit, byTopic] = await Promise.all([
         getCurriculumTree(),
-        db.question.groupBy({ by: ["unitId", "status"], _count: { _all: true } }),
+        db.question.groupBy({ by: ["unitId", "status"], _count: { _all: true }, _sum: { marks: true } }),
         db.question.groupBy({ by: ["topicId", "status"], _count: { _all: true } }),
     ]);
 
     const unitCounts = new Map<string, Counts>();
+    // Published marks per unit decide which timed mock papers students can sit (lib/mock-exam.ts).
+    const unitMarks = new Map<string, number>();
     for (const row of byUnit) {
+        if (row.status === "PUBLISHED") unitMarks.set(row.unitId, row._sum?.marks ?? 0);
         const c = unitCounts.get(row.unitId) ?? empty();
         c[row.status === "PUBLISHED" ? "published" : "draft"] += row._count._all;
         unitCounts.set(row.unitId, c);
@@ -114,6 +124,7 @@ export default async function AdminOverviewPage() {
                                                 <TableHead className="text-right">Published</TableHead>
                                                 <TableHead className="text-right">Draft</TableHead>
                                                 <TableHead className="text-right">Covered</TableHead>
+                                                <TableHead className="text-right">Mock</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -148,6 +159,12 @@ export default async function AdminOverviewPage() {
                                                             )}
                                                         >
                                                             {covered} / {u.topics.length}
+                                                        </TableCell>
+                                                        <TableCell
+                                                            className="text-right text-muted-foreground"
+                                                            title={`${unitMarks.get(u.id) ?? 0} published marks`}
+                                                        >
+                                                            {mockReady(unitMarks.get(u.id) ?? 0)}
                                                         </TableCell>
                                                     </TableRow>
                                                 );
