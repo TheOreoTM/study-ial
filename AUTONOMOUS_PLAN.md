@@ -59,14 +59,14 @@ never change mastery (honest progress). Schema `SpecPointRating`. Pure mismatch 
 - [x] Topic page control + unit checklist page + print styles
 - [x] Screenshots, review, fixes
 
-### 4. Search across the curriculum — [ ]
+### 4. Search across the curriculum — [x]
 **Why:** "Where is projectile motion?" should take one keystroke, not four clicks through units.
 **Scope:** public `/search?q=` over subjects, units, topics and spec points, ranked (name > code > summary > spec
 point), with highlighted matches. Search box in the app bar (desktop) and mobile sheet. No question stems (they'd
 leak practice content and DRAFTs). Pure ranking in `lib/search.ts`.
-- [ ] `lib/search.ts` + tests
-- [ ] `/search` page + header search field
-- [ ] Screenshots, review, fixes
+- [x] `lib/search.ts` + tests
+- [x] `/search` page + header search field
+- [x] Screenshots, review, fixes
 
 ### 5. Study calendar heatmap on /progress — [ ]
 **Why:** a long view of consistency is motivating and honest; the dashboard only shows a streak and 7 days.
