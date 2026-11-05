@@ -160,5 +160,5 @@ your own cards (stem on the front, right answer or mark-scheme points and the ex
 untried topic) using the same rules as /exams.
 - [x] A slim panel under the stats, from `nextStep`, for the nearest exam within 60 days (outline button: the dashboard keeps one orange)
 
-### 18. Docs: README, CLAUDE.md and the landing page know about the new features — [ ]
-- [ ] README features, CLAUDE.md layout, landing feature list
+### 18. Docs: README, CLAUDE.md and the landing page know about the new features — [x]
+- [x] README features, CLAUDE.md layout and conventions, PRODUCT.md capabilities, landing feature tile
