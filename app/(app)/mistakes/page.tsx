@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { parseMarkScheme } from "@/lib/marking";
 import { markLevel, masteryTone } from "@/lib/mastery";
 import { groupByTopic, missLabel } from "@/lib/mistakes";
+import { plainSnippet } from "@/lib/search";
 import { getMistakeNotebook, type MistakeEntry } from "@/lib/queries/mistakes";
 import { DEFAULT_COUNT } from "../practice/select";
 import { requireUser } from "@/lib/session";
@@ -26,10 +27,7 @@ export default async function MistakesPage({ searchParams }: { searchParams: Sea
     const sp = await searchParams;
     const unitParam = typeof sp.unit === "string" && sp.unit.length <= 64 ? sp.unit : undefined;
 
-    const notebook = await getMistakeNotebook(user.id, { unitId: unitParam });
-    // An unknown or stale unit filter falls back to everything rather than an empty page.
-    const unit = notebook.units.find((u) => u.id === unitParam);
-    const { total, entries, units } = unit || !unitParam ? notebook : await getMistakeNotebook(user.id);
+    const { total, entries, units, unit, held } = await getMistakeNotebook(user.id, { unitId: unitParam });
     const allCount = units.reduce((n, u) => n + u.count, 0);
     const redoHref = `/practice?mode=mistakes${unit ? `&unit=${unit.id}` : ""}`;
 
@@ -40,7 +38,11 @@ export default async function MistakesPage({ searchParams }: { searchParams: Sea
                 <EmptyState
                     icon={CircleCheck}
                     title="No open mistakes"
-                    description="When you lose marks on a question it lands here, so you can come back and get it right."
+                    description={
+                        held > 0
+                            ? "Your mistakes are on the mock paper you're sitting, so they're hidden until you hand it in."
+                            : "When you lose marks on a question it lands here, so you can come back and get it right."
+                    }
                     action={
                         <Button asChild>
                             <Link href="/practice?mode=weak">Practise weak topics</Link>
@@ -82,6 +84,13 @@ export default async function MistakesPage({ searchParams }: { searchParams: Sea
                         />
                     ))}
                 </nav>
+            )}
+
+            {held > 0 && (
+                <p className="mb-6 rounded-lg bg-muted px-4 py-3 text-[0.9375rem] text-muted-foreground">
+                    {held} mistake{held === 1 ? " is" : "s are"} on the mock paper you&apos;re sitting, so{" "}
+                    {held === 1 ? "it's" : "they're"} hidden until you hand it in.
+                </p>
             )}
 
             <div className="grid gap-8">
@@ -171,16 +180,18 @@ function MistakeItem({ entry: e }: { entry: MistakeEntry }) {
             <details className="group">
                 <summary className="flex cursor-pointer list-none items-start gap-3 rounded-lg px-4 py-3.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-5 [&::-webkit-details-marker]:hidden">
                     <div className="min-w-0 flex-1">
-                        <Markdown className="line-clamp-3 text-[0.9375rem] group-open:line-clamp-none [&_.katex-display]:my-1 [&_p]:my-0">
-                            {q.stem}
-                        </Markdown>
-                        <p className="mt-1.5 text-[0.8125rem] text-muted-foreground">
+                        {/* <summary> only takes phrasing content: a plain-text preview here, the full stem below. */}
+                        <span className="line-clamp-3 text-[0.9375rem] group-open:hidden">{plainSnippet(q.stem, 260)}</span>
+                        <span className="hidden text-[0.9375rem] font-bold group-open:inline">
+                            {q.type === "MCQ" ? "Question" : "Question and mark scheme"}
+                        </span>
+                        <span className="mt-1.5 block text-[0.8125rem] text-muted-foreground">
                             {typeLabel[q.type]} · {q.marks} mark{q.marks === 1 ? "" : "s"}
                             {repeat && <span className="font-bold text-foreground"> · {repeat}</span>} · last tried{" "}
                             <time dateTime={e.lastAt.toISOString()}>
                                 {formatDistanceToNow(e.lastAt, { addSuffix: true })}
                             </time>
-                        </p>
+                        </span>
                     </div>
                     <span
                         className={cn("num shrink-0 rounded-full px-2.5 py-1 text-sm leading-none", masteryTone[level].badge)}
@@ -196,6 +207,7 @@ function MistakeItem({ entry: e }: { entry: MistakeEntry }) {
                 </summary>
 
                 <div className="grid gap-4 border-t px-4 pt-4 pb-5 sm:px-5">
+                    <Markdown className="text-[0.9375rem] [&_.katex-display]:my-1 [&_p]:my-1">{q.stem}</Markdown>
                     {q.stemEn && (
                         <div className="rounded-lg bg-muted px-4 py-3">
                             <p className="mb-1 text-xs font-extrabold tracking-[0.05em] text-muted-foreground uppercase">

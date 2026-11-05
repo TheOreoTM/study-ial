@@ -88,3 +88,19 @@ export async function getMockPaper(userId: string, id: string) {
 }
 
 export type MockPaper = NonNullable<Awaited<ReturnType<typeof getMockPaper>>>;
+
+/**
+ * Questions on a paper the student is sitting right now. Until it's handed in they can't be answered, revealed or
+ * explained anywhere else (practice, the tutor, the mistake notebook), or the clock would mean nothing.
+ */
+export async function getLockedQuestionIds(userId: string, now = new Date()): Promise<Set<string>> {
+    const running = await db.mockExam.findMany({
+        where: { userId, status: "IN_PROGRESS" },
+        select: { questionIds: true, startedAt: true, durationMinutes: true },
+    });
+    return new Set(
+        running.filter((m) => !isPastDeadline(m.startedAt, m.durationMinutes, now)).flatMap((m) => m.questionIds),
+    );
+}
+
+export const LOCKED_MESSAGE = "This question is on the mock paper you're sitting. Hand the paper in first.";

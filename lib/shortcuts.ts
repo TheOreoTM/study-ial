@@ -25,11 +25,17 @@ export function ignoreKey(e: KeyLike, target: TargetLike) {
 }
 
 /**
- * Enter checks the answer unless focus is on a button or link, which Enter already activates. Option radios are
- * buttons too (role="radio"), and Enter doesn't do anything on them, so it checks there.
+ * Enter checks the answer unless focus is on something Enter already activates (a button, link, <summary>, field
+ * or a control with such a role). Option radios are buttons too (role="radio"), and Enter does nothing on them, so
+ * it checks there.
  */
 export function enterChecks(target: TargetLike) {
     if (target?.role === "radio") return true;
     const tag = target?.tagName ?? "";
-    return tag !== "BUTTON" && tag !== "A";
+    if (INTERACTIVE_TAGS.has(tag)) return false;
+    return !target?.role || !INTERACTIVE_ROLES.has(target.role);
 }
+
+// Elements where Enter already means something (open a <details>, follow a link, press a button, toggle a box).
+const INTERACTIVE_TAGS = new Set(["A", "BUTTON", "SUMMARY", "INPUT", "SELECT", "TEXTAREA"]);
+const INTERACTIVE_ROLES = new Set(["button", "link", "checkbox", "switch", "tab", "menuitem", "option", "combobox"]);

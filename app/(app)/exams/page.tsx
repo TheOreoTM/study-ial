@@ -87,6 +87,7 @@ export default async function ExamsPage() {
                     ? Math.floor((now.getTime() - lastMock.finishedAt.getTime()) / DAY)
                     : null,
                 mockAvailable: lengthAvailable("short", marksByUnit.get(unit.id) ?? 0),
+                fullMockAvailable: lengthAvailable("full", marksByUnit.get(unit.id) ?? 0),
             },
             now,
         );

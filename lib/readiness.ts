@@ -46,8 +46,10 @@ export type ReadinessInput = {
     openMistakes: number;
     /** Days since the last finished mock paper for this unit, or null if none */
     daysSinceMock: number | null;
-    /** Whether the bank can fill a mock paper for this unit */
+    /** Whether the bank can fill a (quick) mock paper for this unit */
     mockAvailable: boolean;
+    /** Whether it can fill a full paper; defaults to `mockAvailable` */
+    fullMockAvailable?: boolean;
 };
 
 export type NextStep = { kind: "start" | "mistakes" | "mock" | "practise" | "full-mock" | "none"; label: string; href: string };
@@ -90,8 +92,10 @@ export function nextStep(input: ReadinessInput, now = new Date()): NextStep {
     }
     const notStrong = practisable.filter((t) => t.mastery.level !== "strong");
     if (notStrong.length === 0) {
-        return mockAvailable
+        return (input.fullMockAvailable ?? mockAvailable)
             ? { kind: "full-mock", label: "Sit a full paper", href: "/mock" }
+            : mockAvailable
+              ? { kind: "mock", label: "Sit a timed paper", href: "/mock" }
             : { kind: "practise", label: "Keep it fresh", href: `/practice?unit=${unitId}` };
     }
     const weakest = [...notStrong].sort((a, b) => revisionPriority(b.mastery, now) - revisionPriority(a.mastery, now))[0];

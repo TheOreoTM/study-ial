@@ -45,4 +45,10 @@ describe("enterChecks", () => {
         expect(enterChecks(null)).toBe(true);
         expect(enterChecks({ tagName: "BUTTON", role: "radio" })).toBe(true);
     });
+    it("leaves <summary> (e.g. Show English) and other controls alone", () => {
+        expect(enterChecks({ tagName: "SUMMARY" })).toBe(false);
+        expect(enterChecks({ tagName: "DIV", role: "checkbox" })).toBe(false);
+        expect(enterChecks({ tagName: "SPAN", role: "link" })).toBe(false);
+        expect(enterChecks({ tagName: "DIV", role: "group" })).toBe(true);
+    });
 });

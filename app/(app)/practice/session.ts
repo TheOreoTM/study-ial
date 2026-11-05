@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { revisionPriority } from "@/lib/mastery";
 import { getStudentTopicIds, getTopicMastery } from "@/lib/queries/mastery";
 import { getRedoQuestionIds } from "@/lib/queries/mistakes";
+import { getLockedQuestionIds } from "@/lib/queries/mock-exams";
 import { selectQuestions } from "./select";
 import type { PracticeQuestion, SessionTopic } from "./types";
 
@@ -104,8 +105,14 @@ export async function buildSession(userId: string, mode: PracticeMode, count: nu
         topicIds = await weakestTopics(userId, scope, count);
     }
 
+    // Questions on a paper the student is sitting stay out of practice until it's handed in.
+    const locked = [...(await getLockedQuestionIds(userId))];
     const candidates = await db.question.findMany({
-        where: questionIds ? { id: { in: questionIds }, status: "PUBLISHED" } : { topicId: { in: topicIds }, status: "PUBLISHED" },
+        where: {
+            ...(questionIds ? { id: { in: questionIds } } : { topicId: { in: topicIds } }),
+            ...(locked.length ? { NOT: { id: { in: locked } } } : {}),
+            status: "PUBLISHED",
+        },
         select: {
             id: true,
             type: true,

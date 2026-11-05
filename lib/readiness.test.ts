@@ -94,6 +94,8 @@ describe("nextStep", () => {
         const topics = [topic("a", 0, m(0.9, "strong")), topic("b", 1, m(0.8, "strong"))];
         expect(nextStep(input({ topics }), now)).toMatchObject({ kind: "full-mock" });
         expect(nextStep(input({ topics, mockAvailable: false }), now)).toMatchObject({ kind: "practise" });
+        // Enough for a quick paper but not a full one: don't send them to a disabled button.
+        expect(nextStep(input({ topics, fullMockAvailable: false }), now)).toMatchObject({ kind: "mock" });
     });
 
     it("points to Settings after the exam", () => {
