@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbList, course } from "@/lib/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -83,6 +85,23 @@ export default async function UnitPage({ params }: { params: Params }) {
 
     return (
         <>
+            <JsonLd
+                data={[
+                    breadcrumbList(site.url, [
+                        { name: "Subjects", path: "/subjects" },
+                        { name: unit.subject.name, path: `/subjects/${unit.subject.slug}` },
+                        { name: unit.code, path: canonical },
+                    ]),
+                    course(site.url, {
+                        name: `${unit.code} ${unit.name}`,
+                        description: unit.description ?? `${unit.subject.name} unit ${unit.number}: ${unit.name}.`,
+                        path: canonical,
+                        code: unit.code,
+                        local: unit.subject.isLocal,
+                        siteName: site.name,
+                    }),
+                ]}
+            />
             <Breadcrumbs
                 items={[
                     { href: "/subjects", label: "Subjects" },

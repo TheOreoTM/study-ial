@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbList } from "@/lib/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -104,6 +106,14 @@ export default async function TopicPage({ params }: { params: Params }) {
 
     return (
         <>
+            <JsonLd
+                data={breadcrumbList(site.url, [
+                    { name: "Subjects", path: "/subjects" },
+                    { name: unit.subject.name, path: `/subjects/${unit.subject.slug}` },
+                    { name: unit.code, path: unitHref },
+                    { name: topic.name, path: `${unitHref}/${topic.slug}` },
+                ])}
+            />
             <Breadcrumbs
                 items={[
                     { href: "/subjects", label: "Subjects" },

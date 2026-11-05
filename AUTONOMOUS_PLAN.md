@@ -92,12 +92,12 @@ and confidence is handy to print or save as PDF.
 colours.
 - [x] Print CSS + button, verified via Playwright `page.pdf()`
 
-### 8. SEO and crawl hygiene on public pages — [ ]
+### 8. SEO and crawl hygiene on public pages — [x]
 **Why:** students find revision resources through search; the curriculum pages are the public face.
 **Scope:** JSON-LD `BreadcrumbList` (+ `Course` on subject pages), robots disallows for the private routes added
 since, `/search` noindex for empty queries.
-- [ ] JSON-LD helper + tests
-- [ ] Robots update
+- [x] JSON-LD helper + tests
+- [x] Robots update
 
 ### 9. Practice keyboard shortcuts — [ ]
 **Why:** answering 30 MCQs with a mouse is slow; A–D and Enter are how people drill.

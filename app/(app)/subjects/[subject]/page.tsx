@@ -1,3 +1,5 @@
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbList, course } from "@/lib/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -45,6 +47,26 @@ export default async function SubjectPage({ params }: { params: Params }) {
 
     return (
         <>
+            <JsonLd
+                data={[
+                    breadcrumbList(site.url, [
+                        { name: "Subjects", path: "/subjects" },
+                        { name: subject.name, path: `/subjects/${subject.slug}` },
+                    ]),
+                    course(site.url, {
+                        name: subject.isLocal ? subject.name : `IAL ${subject.name}`,
+                        description: subject.description ?? `${subject.name} practice by unit and topic.`,
+                        path: `/subjects/${subject.slug}`,
+                        code: subject.code,
+                        local: subject.isLocal,
+                        siteName: site.name,
+                        parts: subject.units.map((u) => ({
+                            name: `${u.code} ${u.name}`,
+                            path: `/subjects/${subject.slug}/${u.code.toLowerCase()}`,
+                        })),
+                    }),
+                ]}
+            />
             <Breadcrumbs items={[{ href: "/subjects", label: "Subjects" }, { label: subject.name }]} />
             <PageHeader
                 title={subject.name}
