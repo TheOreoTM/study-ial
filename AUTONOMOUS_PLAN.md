@@ -170,3 +170,12 @@ main route, signed in and out, light and dark, 1440 and 375, with every `<detail
   plan study-day buttons had aria-labels that didn't contain their visible text
 - [x] Heading order: `EmptyState` takes `headingLevel={2}` where it sits straight under the page's h1
 - [x] No contrast, name, role or nesting violations remain
+
+## Round 4
+
+### 20. Question bank: the thin Physics practical papers — [x]
+**Why:** WPH13 and WPH16 had six questions each (13 and 16 marks), too few to practise or to fill a timed paper.
+- [x] 17 original questions (9 WPH13, 8 WPH16): uncertainties, significant figures, parallax, anomalies, gradient
+  uncertainty, log graphs, capacitor discharge, specific heat capacity, and MCQs for WPH16 core practicals, which had
+  none. MCQ answers spread two per letter. Every number re-derived in Python.
+- [x] Seeded as DRAFT (an admin checks them first); once published, WPH13 has 30 marks and WPH16 32
