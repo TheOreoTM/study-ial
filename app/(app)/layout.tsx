@@ -3,6 +3,7 @@ import { Logo } from "@/components/logo";
 import { NavLinks } from "@/components/shell/nav-links";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { UserMenu } from "@/components/shell/user-menu";
+import { SearchButton } from "@/components/search/search-button";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/session";
 
@@ -32,7 +33,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                             <NavLinks isAdmin={isAdmin} orientation="horizontal" exclude={["/settings"]} />
                         </div>
                     )}
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                        <SearchButton />
                         {user ? (
                             <UserMenu name={user.name} email={user.email} image={user.image} compact />
                         ) : (
