@@ -104,10 +104,10 @@ since, `/search` noindex for empty queries.
 **Scope:** A–D/1–4 to pick an option, Enter to check/continue, with a visible hint (hidden on touch devices).
 - [ ] Pure key mapping + tests, wired into the question view
 
-### 10. Dev tooling: demo activity — [ ]
+### 10. Dev tooling: demo activity — [x]
 **Why:** lets anyone see populated dashboards locally.
 **Scope:** `pnpm demo:activity [--reset]`, local DB only, refuses production.
-- [ ] Script
+- [x] Script
 
 ### 11. Polish from the walkthrough — [ ]
 - [ ] Dashboard "Revise next" code tile stretching on phones
