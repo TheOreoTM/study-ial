@@ -138,3 +138,27 @@ browser error.
 **Scope:** minimal service worker that caches the offline page and static assets only (never authenticated HTML),
 registered in production only.
 - [x] `public/sw.js` + offline page + registration
+
+## Round 3
+
+Added after an independent review of rounds 1–2 (all eleven findings fixed in `fix(mock)` and
+`fix(mistakes,practice)`) and another pass through the plan, practice and mistakes flows.
+
+### 15. Past-paper plan tasks open a timed mock — [x]
+**Why:** the planner schedules "WPH11 past paper" sessions in the last weeks, but those tasks had no action button.
+Now they go straight to that unit's mock papers.
+- [x] `taskHref` handles PAST_PAPER (unit code from the title), with tests; the mock page highlights the unit
+
+### 16. Make a flashcard from a mistake — [x]
+**Why:** the things you keep getting wrong are exactly what flashcards are for; one tap turns a mistake into one of
+your own cards (stem on the front, right answer or mark-scheme points and the explanation on the back).
+- [x] Pure `cardFromQuestion` with formula-safe clipping, tests
+- [x] Action (only for questions you've attempted; not during a running paper; no duplicates) and button
+
+### 17. Dashboard nudge for the next exam — [ ]
+**Why:** the dashboard should say what this paper needs now (a timed paper in the final stretch, mistakes, an
+untried topic) using the same rules as /exams.
+- [ ] Rail line on the dashboard from `nextStep` for the nearest exam
+
+### 18. Docs: README, CLAUDE.md and the landing page know about the new features — [ ]
+- [ ] README features, CLAUDE.md layout, landing feature list

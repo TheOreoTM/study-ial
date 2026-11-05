@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Check, ChevronDown, CircleCheck, RotateCcw, X } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { CardFromMistakeButton } from "@/components/mistakes/card-button";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
 import { UnitChip } from "@/components/plans/unit-chip";
@@ -302,6 +303,10 @@ function MistakeItem({ entry: e }: { entry: MistakeEntry }) {
                             <Markdown className="text-[0.9375rem] [&_p]:my-1">{q.explanation}</Markdown>
                         </div>
                     )}
+
+                    <div className="flex flex-wrap gap-2">
+                        <CardFromMistakeButton questionId={q.id} />
+                    </div>
                 </div>
             </details>
         </li>
