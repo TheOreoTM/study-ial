@@ -6,18 +6,23 @@ export const CARD_FRONT_MAX = 300;
 export const CARD_BACK_MAX = 600;
 
 /**
- * Shortens Markdown to at most `max` characters at a word break, without cutting through a $…$ formula (which would
- * leave an unclosed dollar sign and break the rendering).
+ * Shortens Markdown to at most `max` characters at a word break, without cutting through a $…$ or $$…$$ formula
+ * (which would leave an unclosed delimiter and break the rendering): a cut inside one moves to before it opens.
  */
 export function clipMarkdown(text: string, max: number): string {
     const t = text.trim();
     if (t.length <= max) return t;
     let cut = t.lastIndexOf(" ", max - 1);
     if (cut <= 0) cut = max - 1;
-    let head = t.slice(0, cut);
-    // Inside a formula? Back up to before it opened.
-    if ((head.match(/\$/g)?.length ?? 0) % 2 === 1) head = head.slice(0, head.lastIndexOf("$")).trimEnd();
-    return `${head.trimEnd()}…`;
+    for (const m of t.matchAll(/\$\$[\s\S]*?\$\$|\$[^$\n]*?\$/g)) {
+        const start = m.index;
+        const end = start + m[0].length;
+        if (start < cut && cut < end) {
+            cut = start;
+            break;
+        }
+    }
+    return `${t.slice(0, cut).trimEnd()}…`;
 }
 
 export type QuestionForCard = {

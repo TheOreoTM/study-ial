@@ -183,8 +183,8 @@ describe("ticksFromAi", () => {
     it("ticks the points the AI awarded, in order", () => {
         expect(ticksFromAi([{ awarded: true }, { awarded: false }, { awarded: true }], 3)).toEqual([0, 2]);
     });
-    it("ignores verdicts past the mark scheme's points", () => {
-        expect(ticksFromAi([{ awarded: false }, { awarded: true }, { awarded: true }], 2)).toEqual([1]);
-        expect(ticksFromAi([{ awarded: true }], 0)).toEqual([]);
+    it("ticks nothing when the points don't line up with the mark scheme", () => {
+        expect(ticksFromAi([{ awarded: false }, { awarded: true }, { awarded: true }], 2)).toBeNull();
+        expect(ticksFromAi([{ awarded: true }], 3)).toBeNull();
     });
 });

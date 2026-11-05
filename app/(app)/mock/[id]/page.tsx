@@ -24,7 +24,7 @@ import {
     MOCK_LENGTH_LABEL,
     type MockLength,
 } from "@/lib/mock-exam";
-import { getMockPaper, type MockPaper } from "@/lib/queries/mock-exams";
+import { getLockedQuestionIds, getMockPaper, type MockPaper } from "@/lib/queries/mock-exams";
 import { requireUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -101,10 +101,22 @@ export default async function MockPaperPage({ params }: { params: Params }) {
         );
     }
 
-    return <MockResult paper={paper} title={title} meta={meta} />;
+    // A later paper being sat now may repeat some of these questions; keep their answers hidden until it's handed in.
+    const locked = await getLockedQuestionIds(user.id);
+    return <MockResult paper={paper} title={title} meta={meta} locked={locked} />;
 }
 
-function MockResult({ paper, title, meta }: { paper: MockPaper; title: string; meta: string }) {
+function MockResult({
+    paper,
+    title,
+    meta,
+    locked,
+}: {
+    paper: MockPaper;
+    title: string;
+    meta: string;
+    locked: Set<string>;
+}) {
     const { mock, questions, attempts } = paper;
     const answers = readAnswers(mock.answers);
     const byQuestion = new Map(attempts.map((a) => [a.questionId, a]));
@@ -236,7 +248,12 @@ function MockResult({ paper, title, meta }: { paper: MockPaper; title: string; m
                                         </summary>
                                         <div className="grid gap-3 border-t px-4 pt-3 pb-4 text-[0.9375rem] sm:px-5">
                                             <Markdown className="[&_.katex-display]:my-1 [&_p]:my-1">{q.stem}</Markdown>
-                                            {q.type === "MCQ" ? (
+                                            {locked.has(q.id) ? (
+                                                <p className="rounded-lg bg-muted px-4 py-3 text-muted-foreground">
+                                                    This question is also on the paper you&apos;re sitting now, so its
+                                                    answer is hidden until you hand that one in.
+                                                </p>
+                                            ) : q.type === "MCQ" ? (
                                                 <>
                                                     {chosen && chosen.id !== correct?.id && (
                                                         <p className="flex items-start gap-2">
@@ -275,7 +292,7 @@ function MockResult({ paper, title, meta }: { paper: MockPaper; title: string; m
                                                     </ul>
                                                 </>
                                             )}
-                                            {q.explanation && (
+                                            {q.explanation && !locked.has(q.id) && (
                                                 <Markdown className="rounded-lg bg-muted px-4 py-3 [&_p]:my-1">
                                                     {q.explanation}
                                                 </Markdown>

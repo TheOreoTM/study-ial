@@ -171,9 +171,11 @@ export function formatDuration(minutes: number) {
 }
 
 /**
- * Turns an AI marker's per-point verdicts (in mark-scheme order) into suggested ticks for self-marking. Only the
- * first `pointCount` verdicts count, so a reply with extra points can't tick boxes that don't exist.
+ * Turns an AI marker's per-point verdicts (in mark-scheme order) into suggested ticks for self-marking. Verdicts are
+ * matched by position, so if the reply has a different number of points than the mark scheme (merged, skipped or
+ * extra points) nothing is ticked: a shifted tick on the wrong point is worse than none. Returns null then.
  */
-export function ticksFromAi(points: { awarded: boolean }[], pointCount: number): number[] {
-    return points.slice(0, Math.max(0, pointCount)).flatMap((p, i) => (p.awarded ? [i] : []));
+export function ticksFromAi(points: { awarded: boolean }[], pointCount: number): number[] | null {
+    if (points.length !== pointCount) return null;
+    return points.flatMap((p, i) => (p.awarded ? [i] : []));
 }

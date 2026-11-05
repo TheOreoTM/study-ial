@@ -17,6 +17,14 @@ describe("clipMarkdown", () => {
         expect((out.match(/\$/g) ?? []).length % 2).toBe(0);
         expect(out).toBe("Use the formula…");
     });
+    it("never leaves display maths open either", () => {
+        const stem = "Solve the simultaneous equations\n\n$$x + 2y = 5$$\n$$x^2 + y^2 = 10$$";
+        for (const max of [40, 45, 60, 70]) {
+            const out = clipMarkdown(stem, max);
+            expect((out.match(/\$\$/g) ?? []).length % 2, `max ${max}: ${out}`).toBe(0);
+            expect(out.replace(/\$\$[\s\S]*?\$\$/g, "").includes("$"), `max ${max}: ${out}`).toBe(false);
+        }
+    });
 });
 
 describe("cardFromQuestion", () => {

@@ -43,7 +43,11 @@ export default async function SharedProgressPage({ params }: { params: Params })
 
     // "Last opened" for the student, at most once an hour, after the page is sent.
     if (!share.lastViewed || now.getTime() - share.lastViewed.getTime() > HOUR) {
-        after(() => db.progressShare.updateMany({ where: { userId }, data: { lastViewed: new Date() } }).catch(() => {}));
+        // Keyed to this token, so a link replaced meanwhile isn't marked as opened.
+        const tokenHash = hashShareToken(token);
+        after(() =>
+            db.progressShare.updateMany({ where: { userId, tokenHash }, data: { lastViewed: new Date() } }).catch(() => {}),
+        );
     }
 
     const userUnits = await db.userUnit.findMany({

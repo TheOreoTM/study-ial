@@ -45,12 +45,15 @@ export async function getQuestionHistory(userId: string, scope: MistakeScope = {
 
 /** How many open mistakes the student has (dashboard, topic page), counted in the database. */
 export async function countOpenMistakes(userId: string, scope: MistakeScope = {}) {
+    // Mistakes on a paper being sat are hidden from the notebook, so they don't count here either.
+    const locked = [...(await getLockedQuestionIds(userId))];
+    const notLocked = locked.length ? Prisma.sql`AND NOT (a."questionId" = ANY(${locked}))` : Prisma.empty;
     const [row] = await db.$queryRaw<{ n: bigint }[]>`
         SELECT COUNT(*) AS n FROM (
             SELECT DISTINCT ON (a."questionId") a."marksAwarded", a."maxMarks"
               FROM "Attempt" a
               JOIN "Question" q ON q.id = a."questionId"
-             WHERE a."userId" = ${userId} AND q.status = 'PUBLISHED' ${scopeSql(scope)}
+             WHERE a."userId" = ${userId} AND q.status = 'PUBLISHED' ${scopeSql(scope)} ${notLocked}
              ORDER BY a."questionId", a."createdAt" DESC
         ) latest
         WHERE "maxMarks" > 0 AND "marksAwarded" < "maxMarks"`;

@@ -336,11 +336,9 @@ export async function suggestMockMarks(input: {
     try {
         const result = await aiMark(user.id, { stem: q.stem, markScheme: q.markScheme, maxMarks: q.marks, answer });
         const { points } = parseMarkScheme(q.markScheme);
-        return {
-            ok: true,
-            ticks: ticksFromAi(result.points, points.length),
-            comments: result.points.slice(0, points.length).map((p) => p.comment),
-        };
+        const ticks = ticksFromAi(result.points, points.length);
+        if (!ticks) return { ok: false, error: "The AI's marking didn't line up with the mark scheme. Mark this one yourself." };
+        return { ok: true, ticks, comments: result.points.map((p) => p.comment) };
     } catch (err) {
         if (err instanceof AiQuotaError) return { ok: false, error: err.message };
         console.error("AI mock marking failed", err);
