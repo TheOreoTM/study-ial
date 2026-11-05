@@ -2,11 +2,15 @@ import "server-only";
 import { db } from "@/lib/db";
 import { revisionPriority } from "@/lib/mastery";
 import { getStudentTopicIds, getTopicMastery } from "@/lib/queries/mastery";
+import { getRedoQuestionIds } from "@/lib/queries/mistakes";
 import { selectQuestions } from "./select";
 import type { PracticeQuestion, SessionTopic } from "./types";
 
 export type PracticeMode =
-    { kind: "topic"; topicId: string } | { kind: "unit"; unitId: string } | { kind: "weak"; unitId?: string };
+    | { kind: "topic"; topicId: string }
+    | { kind: "unit"; unitId: string }
+    | { kind: "weak"; unitId?: string }
+    | { kind: "mistakes"; unitId?: string; topicId?: string };
 
 export type PracticeSession = {
     title: string;
@@ -24,6 +28,7 @@ export function parseMode(sp: SearchParams): PracticeMode | null {
     const topic = first(sp.topic);
     const unit = first(sp.unit);
     if (first(sp.mode) === "weak") return { kind: "weak", unitId: unit };
+    if (first(sp.mode) === "mistakes") return { kind: "mistakes", unitId: unit, topicId: topic };
     if (topic) return { kind: "topic", topicId: topic };
     if (unit) return { kind: "unit", unitId: unit };
     return null;
@@ -34,7 +39,9 @@ const WEAK_TOPIC_COUNT = 5;
 
 /** Resolves the mode to topics, then picks questions. Returns null when the topic/unit doesn't exist. */
 export async function buildSession(userId: string, mode: PracticeMode, count: number): Promise<PracticeSession | null> {
-    let topicIds: string[];
+    let topicIds: string[] = [];
+    // Mistakes mode picks exact questions (oldest mistakes first) instead of choosing from topics.
+    let questionIds: string[] | null = null;
     let title: string;
     let description: string;
     let back: PracticeSession["back"];
@@ -62,6 +69,21 @@ export async function buildSession(userId: string, mode: PracticeMode, count: nu
         title = unit.name;
         description = `${unit.subject.name} · ${unit.code} — mixed topics`;
         back = { href: `/subjects/${unit.subject.slug}/${unit.code.toLowerCase()}`, label: "Back to unit" };
+    } else if (mode.kind === "mistakes") {
+        title = "Redo your mistakes";
+        back = { href: "/mistakes", label: "Back to mistakes" };
+        description = "Questions you lost marks on last time, oldest first";
+        if (mode.topicId) {
+            const topic = await db.topic.findUnique({ where: { id: mode.topicId }, include: { unit: true } });
+            if (!topic) return null;
+            description = `${topic.unit.code} · ${topic.name} · questions you lost marks on`;
+        } else if (mode.unitId) {
+            const unit = await db.unit.findUnique({ where: { id: mode.unitId } });
+            if (!unit) return null;
+            description = `${unit.code} · questions you lost marks on, oldest first`;
+            back = { href: `/mistakes?unit=${unit.id}`, label: "Back to mistakes" };
+        }
+        questionIds = await getRedoQuestionIds(userId, count, { unitId: mode.unitId, topicId: mode.topicId });
     } else {
         let scope: string[];
         if (mode.unitId) {
@@ -83,7 +105,7 @@ export async function buildSession(userId: string, mode: PracticeMode, count: nu
     }
 
     const candidates = await db.question.findMany({
-        where: { topicId: { in: topicIds }, status: "PUBLISHED" },
+        where: questionIds ? { id: { in: questionIds }, status: "PUBLISHED" } : { topicId: { in: topicIds }, status: "PUBLISHED" },
         select: {
             id: true,
             type: true,
@@ -106,7 +128,9 @@ export async function buildSession(userId: string, mode: PracticeMode, count: nu
         if (!history.has(a.questionId)) history.set(a.questionId, a.maxMarks > 0 ? a.marksAwarded / a.maxMarks : 0);
     }
 
-    const questions = selectQuestions(candidates, history, count);
+    const questions = questionIds
+        ? questionIds.flatMap((id) => candidates.filter((q) => q.id === id))
+        : selectQuestions(candidates, history, count);
     const usedTopicIds = [...new Set(questions.map((q) => q.topicId))];
 
     const [topicRows, mastery] = await Promise.all([

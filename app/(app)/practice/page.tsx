@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, SearchX } from "lucide-react";
+import { BookOpen, CircleCheck, SearchX } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { PracticeSession } from "@/components/practice/practice-session";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,21 @@ export default async function PracticePage({ searchParams }: { searchParams: Sea
                 action={
                     <Button asChild variant="outline">
                         <Link href="/subjects">Browse subjects</Link>
+                    </Button>
+                }
+            />
+        );
+    }
+
+    if (session.questions.length === 0 && mode.kind === "mistakes") {
+        return (
+            <EmptyState
+                icon={CircleCheck}
+                title="No mistakes to redo"
+                description="Every question you've answered here got full marks last time. Practise something new and come back."
+                action={
+                    <Button asChild variant="outline">
+                        <Link href="/practice?mode=weak">Practise weak topics</Link>
                     </Button>
                 }
             />
