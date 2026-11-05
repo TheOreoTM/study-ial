@@ -117,14 +117,14 @@ since, `/search` noindex for empty queries.
 
 Added after walking the app again once round 1 was done.
 
-### 12. Parent/teacher read-only progress link — [ ]
+### 12. Parent/teacher read-only progress link — [x]
 **Why:** families and teachers in the Maldives often follow a student's revision; a revocable read-only link means
 no extra account and no password sharing.
 **Scope:** settings toggle to create/revoke a secret link; `/share/[token]` shows mastery per unit, the heatmap and
 upcoming exams, no email, no answers, `noindex`. Schema `ProgressShare`.
-- [ ] Schema + migration, token logic tested
-- [ ] Settings control + public page
-- [ ] Screenshots, review, fixes
+- [x] Schema + migration, token logic tested
+- [x] Settings control + public page
+- [x] Screenshots, review, fixes
 
 ### 13. Key equations for Physics units — [ ]
 **Why:** the formulae students must recall vs. those given; an original per-unit "key equations" list helps.
