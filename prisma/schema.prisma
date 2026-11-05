@@ -36,6 +36,7 @@ model User {
   cardReviews   FlashcardReview[]
   milestones    UserMilestone[]
   mockExams     MockExam[]
+  specRatings   SpecPointRating[]
 
   @@map("user")
 }
@@ -138,6 +139,7 @@ model Topic {
   planTasks  StudyPlanTask[]
   focusTimes FocusSession[]
   flashcards Flashcard[]
+  specRatings SpecPointRating[]
 
   @@unique([unitId, slug])
 }
@@ -327,6 +329,27 @@ model FlashcardReview {
 }
 
 // ─── Student data ────────────────────────────────────────────────────────────
+
+enum Confidence {
+  RED // not yet
+  AMBER // shaky
+  GREEN // got it
+}
+
+// A student's confidence on one specification point (rules in lib/checklist.ts). Keyed by the point's position, with
+// its text kept so a rating doesn't land on the wrong point if the specification is edited. Never affects mastery.
+model SpecPointRating {
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId   String
+  topic     Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  point     Int
+  text      String
+  rating    Confidence
+  updatedAt DateTime   @updatedAt
+
+  @@id([userId, topicId, point])
+}
 
 model UserUnit {
   userId   String
