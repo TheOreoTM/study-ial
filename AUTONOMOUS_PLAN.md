@@ -19,18 +19,18 @@ user (1440px and 375px, light and dark) with a few weeks of generated history (`
 
 ## Ranked work
 
-### 1. Mistake notebook and "redo my mistakes" — [ ]
+### 1. Mistake notebook and "redo my mistakes" — [x]
 **Why:** going back over what you got wrong is the most effective revision there is, and right now wrong answers
 disappear once a session ends.
 **Scope:** `/mistakes` lists every question whose *latest* attempt lost marks, grouped by subject → topic, with
 the last score and how often it's been missed. A question leaves the notebook once you get full marks on it. A
 `mode=mistakes` practice session (optionally per unit or topic) redoes them, oldest mistakes first. Entry points:
 dashboard line, practice summary ("Redo the ones you missed"), topic page, nav. Pure logic in `lib/mistakes.ts`.
-- [ ] `lib/mistakes.ts` + tests (latest attempt per question, ordering, grouping)
-- [ ] Query + `/mistakes` page with empty/loading states
-- [ ] `mode=mistakes` practice mode (with unit/topic scope)
-- [ ] Entry points: nav, dashboard, practice summary, topic page
-- [ ] Screenshots, review, fixes
+- [x] `lib/mistakes.ts` + tests (latest attempt per question, ordering, grouping)
+- [x] Query + `/mistakes` page with empty/loading states
+- [x] `mode=mistakes` practice mode (with unit/topic scope)
+- [x] Entry points: nav, dashboard, practice summary, topic page
+- [x] Screenshots, review, fixes
 
 ### 2. Timed mock papers with indicative grades — [ ]
 **Why:** IAL papers are sat against a clock with no feedback until the end. Rehearsing that, and seeing an
@@ -110,7 +110,7 @@ since, `/search` noindex for empty queries.
 - [x] Script
 
 ### 11. Polish from the walkthrough — [ ]
-- [ ] Dashboard "Revise next" code tile stretching on phones
+- [x] Dashboard "Revise next" code tile stretching on phones
 - [ ] Loading states for new routes
 
 ## Round 2

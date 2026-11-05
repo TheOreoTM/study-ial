@@ -11,6 +11,7 @@ import { parseMarkScheme } from "@/lib/marking";
 import { markLevel, masteryTone } from "@/lib/mastery";
 import { groupByTopic, missLabel } from "@/lib/mistakes";
 import { getMistakeNotebook, type MistakeEntry } from "@/lib/queries/mistakes";
+import { DEFAULT_COUNT } from "../practice/select";
 import { requireUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,6 @@ export const metadata: Metadata = { title: "Mistakes", robots: { index: false } 
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const REDO_COUNT = 10;
 const typeLabel = { MCQ: "Multiple choice", SHORT: "Short answer", CALCULATION: "Calculation", LONG: "Extended" } as const;
 
 export default async function MistakesPage({ searchParams }: { searchParams: SearchParams }) {
@@ -62,7 +62,7 @@ export default async function MistakesPage({ searchParams }: { searchParams: Sea
                     <Button asChild>
                         <Link href={redoHref}>
                             <RotateCcw className="size-4" />
-                            {redoLabel(Math.min(REDO_COUNT, total), unit?.code)}
+                            {redoLabel(Math.min(DEFAULT_COUNT, total), unit?.code)}
                         </Link>
                     </Button>
                 }
