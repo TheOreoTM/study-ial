@@ -68,13 +68,13 @@ leak practice content and DRAFTs). Pure ranking in `lib/search.ts`.
 - [x] `/search` page + header search field
 - [x] Screenshots, review, fixes
 
-### 5. Study calendar heatmap on /progress — [ ]
+### 5. Study calendar heatmap on /progress — [x]
 **Why:** a long view of consistency is motivating and honest; the dashboard only shows a streak and 7 days.
-**Scope:** last 26 weeks of activity (questions answered + focus minutes) by Maldives day, as a GitHub-style grid
+**Scope:** the last year of activity (26 weeks on phones) (questions answered + focus minutes) by Maldives day, as a GitHub-style grid
 with an accessible table fallback. Pure grid builder in `lib/heatmap.ts`.
-- [ ] `lib/heatmap.ts` + tests
-- [ ] Query + component on /progress
-- [ ] Screenshots, review, fixes
+- [x] `lib/heatmap.ts` + tests
+- [x] Query + component on /progress
+- [x] Screenshots, review, fixes
 
 ### 6. Exam countdown page — [ ]
 **Why:** before an exam session, the question is "how ready am I for each paper, and how many days are left?"
