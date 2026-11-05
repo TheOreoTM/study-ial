@@ -54,6 +54,13 @@ describe("seed questions", () => {
         expect(published.map((q) => q.seedKey)).toEqual([]);
     });
 
+    it("give every Islam question a source paper and an English translation", () => {
+        const incomplete = questions
+            .filter((q) => q.unitCode.startsWith("ISL") && !(q.sourceRef && q.stemEn && q.markSchemeEn))
+            .map((q) => q.seedKey);
+        expect(incomplete).toEqual([]);
+    });
+
     it("give every draft-bank topic at least one MCQ and one written question", () => {
         const thin: string[] = [];
         // Physics is the older hand-written bank and is checked by hand (WPH16 core practicals is written-only).

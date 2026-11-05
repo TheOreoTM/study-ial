@@ -98,7 +98,10 @@ async function seedQuestions() {
             stem: q.stem,
             markScheme: q.markScheme,
             explanation: q.explanation,
-            source: "ORIGINAL" as const,
+            stemEn: q.stemEn,
+            markSchemeEn: q.markSchemeEn,
+            source: q.sourceRef ? ("PAST_PAPER" as const) : ("ORIGINAL" as const),
+            sourceRef: q.sourceRef,
         };
         const options = q.type === "MCQ" ? (q.options ?? []) : [];
         const existing = await db.question.findUnique({

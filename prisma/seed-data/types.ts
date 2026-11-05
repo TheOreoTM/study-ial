@@ -37,6 +37,9 @@ export type SeedQuestion = {
     stem: string; // markdown + $LaTeX$
     markScheme: string; // markdown, one marking point per line, each ending with "(1)"
     explanation?: string;
+    stemEn?: string; // reviewed English translation, for questions in another language
+    markSchemeEn?: string;
+    sourceRef?: string; // the official paper a past-paper question comes from; marks it as PAST_PAPER
     options?: { label: "A" | "B" | "C" | "D"; text: string; isCorrect: boolean }[]; // MCQ only, exactly one correct
     // DRAFT questions wait for an admin to review and publish them; the seed never publishes them and stops
     // overwriting them once published. Defaults to PUBLISHED (the hand-checked Physics bank).

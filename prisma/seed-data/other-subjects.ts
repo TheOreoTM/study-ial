@@ -1,3 +1,4 @@
+import { islam } from "./islam";
 import type { SeedSubject } from "./types";
 
 // Pearson Edexcel International AS/A Level subjects other than Physics, plus local Maldivian subjects.
@@ -1051,16 +1052,6 @@ const furtherMathematics: SeedSubject = {
             ],
         },
     ],
-};
-
-const islam: SeedSubject = {
-    slug: "islam",
-    code: "LOCAL-ISL",
-    name: "Islam",
-    description: "Islamic studies as taught in Maldivian schools.",
-    color: "rose",
-    isLocal: true,
-    units: [{ code: "ISL01", number: 1, name: "Islam", description: "Topics coming soon.", topics: [] }],
 };
 
 export const otherSubjects: SeedSubject[] = [chemistry, biology, mathematics, furtherMathematics, islam];

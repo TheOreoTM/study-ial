@@ -7,6 +7,7 @@ import { biologyQuestions } from "./questions/biology";
 import { mathematicsPureQuestions } from "./questions/mathematics-pure";
 import { mathematicsAppliedQuestions } from "./questions/mathematics-applied";
 import { furtherMathematicsQuestions } from "./questions/further-mathematics";
+import { islamQuestions } from "./questions/islam";
 import { physicsFlashcards } from "./flashcards/physics";
 import { chemistryFlashcards } from "./flashcards/chemistry";
 import { biologyFlashcards } from "./flashcards/biology";
@@ -24,6 +25,7 @@ export const questions: SeedQuestion[] = [
     ...mathematicsPureQuestions,
     ...mathematicsAppliedQuestions,
     ...furtherMathematicsQuestions,
+    ...islamQuestions,
 ];
 
 // Flashcards are seeded as DRAFT too (see prisma/seed.ts); admins publish them per topic.
