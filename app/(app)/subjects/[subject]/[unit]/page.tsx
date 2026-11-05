@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { ListTree, Target } from "lucide-react";
+import { ListChecks, ListTree, Target } from "lucide-react";
 import { MasteryBreakdown, summarizeMastery } from "@/components/mastery";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
 import { getQuestionCounts, getUnitByCode } from "@/lib/queries/curriculum";
 import { getTopicMastery } from "@/lib/queries/mastery";
+import { getSpecRatings } from "@/lib/queries/checklist";
+import { addSummaries, summarize } from "@/lib/checklist";
+import { Button } from "@/components/ui/button";
 import { masteryLabel, masteryTone } from "@/lib/mastery";
 import { getUser } from "@/lib/session";
 import { site } from "@/lib/site";
@@ -44,10 +47,18 @@ export default async function UnitPage({ params }: { params: Params }) {
     if (subjectSlug !== unit.subject.slug || code !== unit.code.toLowerCase()) permanentRedirect(canonical);
 
     const topicIds = unit.topics.map((t) => t.id);
-    const [counts, mastery] = await Promise.all([
+    const specTopics = unit.topics.filter((t) => t.specPoints.length > 0);
+    const [counts, mastery, ratings] = await Promise.all([
         getQuestionCounts(topicIds),
         user ? getTopicMastery(user.id, topicIds) : null,
+        user ? getSpecRatings(user.id, specTopics) : null,
     ]);
+    const checklist = ratings
+        ? specTopics.reduce(
+              (acc, t) => addSummaries(acc, summarize(t.specPoints.length, ratings.get(t.id)!.values())),
+              summarize(0, []),
+          )
+        : null;
     const totalQuestions = [...counts.values()].reduce((a, b) => a + b, 0);
     const summary = mastery ? summarizeMastery(topicIds.map((id) => mastery.get(id)!)) : null;
 
@@ -67,7 +78,8 @@ export default async function UnitPage({ params }: { params: Params }) {
 
     const showSummary = !!summary && summary.started > 0;
     const showSignUp = !user && totalQuestions > 0;
-    const hasRail = showSummary || showSignUp;
+    const showChecklist = !!checklist && checklist.total > 0;
+    const hasRail = showSummary || showSignUp || showChecklist;
 
     return (
         <>
@@ -188,6 +200,40 @@ export default async function UnitPage({ params }: { params: Params }) {
                                         </span>
                                     </div>
                                     <MasteryBreakdown counts={summary.counts} />
+                                </section>
+                            )}
+                            {showChecklist && checklist && (
+                                <section aria-labelledby="unit-checklist" className="rounded-xl bg-muted p-5 sm:p-6">
+                                    <h2 id="unit-checklist" className="text-lg">
+                                        Spec checklist
+                                    </h2>
+                                    <p className="mt-1 text-muted-foreground">
+                                        {checklist.unrated === checklist.total ? (
+                                            <>
+                                                Rate how confident you feel on each of the{" "}
+                                                <span className="num text-foreground">{checklist.total}</span>{" "}
+                                                specification points.
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="num text-foreground">{checklist.green}</span> of{" "}
+                                                {checklist.total} points marked &ldquo;Got it&rdquo;
+                                                {checklist.red > 0 && (
+                                                    <>
+                                                        , <span className="num text-foreground">{checklist.red}</span>{" "}
+                                                        &ldquo;Not yet&rdquo;
+                                                    </>
+                                                )}
+                                                .
+                                            </>
+                                        )}
+                                    </p>
+                                    <Button asChild variant="outline" size="sm" className="mt-4">
+                                        <Link href={`${canonical}/checklist`}>
+                                            <ListChecks />
+                                            Open checklist
+                                        </Link>
+                                    </Button>
                                 </section>
                             )}
                             {showSignUp && (

@@ -14,6 +14,8 @@ import { getTopic, getTopicQuestionTypeCounts, getUnitByCode } from "@/lib/queri
 import { getDeckCounts } from "@/lib/queries/flashcards";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { countOpenMistakes } from "@/lib/queries/mistakes";
+import { getSpecRatings } from "@/lib/queries/checklist";
+import { ConfidencePicker } from "@/components/checklist/confidence-picker";
 import { getUser } from "@/lib/session";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -72,7 +74,7 @@ export default async function TopicPage({ params }: { params: Params }) {
     if (subjectSlug !== unit.subject.slug || code !== unit.code.toLowerCase())
         permanentRedirect(`${unitHref}/${topic.slug}`);
 
-    const [typeCounts, deck, mastery, recent, mistakes] = await Promise.all([
+    const [typeCounts, deck, mastery, recent, mistakes, ratings] = await Promise.all([
         getTopicQuestionTypeCounts(topic.id),
         user ? getDeckCounts(user.id, [topic.id]).then((d) => d.get(topic.id)!) : null,
         user ? getTopicMastery(user.id, [topic.id]).then((m) => m.get(topic.id)!) : null,
@@ -92,6 +94,7 @@ export default async function TopicPage({ params }: { params: Params }) {
               })
             : [],
         user ? countOpenMistakes(user.id, { topicId: topic.id }) : 0,
+        user ? getSpecRatings(user.id, [topic]).then((r) => r.get(topic.id)!) : null,
     ]);
     const total = [...typeCounts.values()].reduce((a, b) => a + b, 0);
 
@@ -140,9 +143,24 @@ export default async function TopicPage({ params }: { params: Params }) {
                             {topic.summary}
                         </Markdown>
                     )}
-                    <h2 id="spec-points" className="text-lg">
-                        Specification points
-                    </h2>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <h2 id="spec-points" className="text-lg">
+                            Specification points
+                        </h2>
+                        {user && topic.specPoints.length > 0 && (
+                            <Link
+                                href={`${unitHref}/checklist`}
+                                className="inline-flex min-h-6 items-center text-sm font-bold text-selected-foreground underline decoration-2 underline-offset-4"
+                            >
+                                {unit.code} checklist
+                            </Link>
+                        )}
+                    </div>
+                    {ratings && topic.specPoints.length > 0 && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Rate how you feel about each point. It&apos;s just for you, and it never changes your mastery.
+                        </p>
+                    )}
                     {topic.specPoints.length === 0 ? (
                         <p className="mt-3 text-muted-foreground">
                             Specification points for this topic are coming soon.
@@ -157,7 +175,18 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     >
                                         {i + 1}
                                     </span>
-                                    <Markdown className="min-w-0 flex-1 pt-0.5 text-base [&_p]:my-0">{point}</Markdown>
+                                    <div className="min-w-0 flex-1">
+                                        <Markdown className="pt-0.5 text-base [&_p]:my-0">{point}</Markdown>
+                                        {ratings && (
+                                            <ConfidencePicker
+                                                topicId={topic.id}
+                                                point={i}
+                                                initial={ratings.get(i) ?? null}
+                                                label={`How confident are you with point ${i + 1}?`}
+                                                className="mt-2.5"
+                                            />
+                                        )}
+                                    </div>
                                 </li>
                             ))}
                         </ol>
