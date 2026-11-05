@@ -24,8 +24,8 @@ export function NavLinks({
         <nav aria-label="Main" className={cn("flex gap-1", horizontal ? "items-center" : "flex-col")}>
             {appNav
                 .filter((item) => (!item.adminOnly || isAdmin) && !exclude.includes(item.href))
-                .map(({ href, label, icon: Icon }) => {
-                    const active = pathname === href || pathname.startsWith(`${href}/`);
+                .map(({ href, label, icon: Icon, also = [] }) => {
+                    const active = [href, ...also].some((p) => pathname === p || pathname.startsWith(`${p}/`));
                     return (
                         <Link
                             key={href}
