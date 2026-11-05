@@ -32,7 +32,7 @@ dashboard line, practice summary ("Redo the ones you missed"), topic page, nav. 
 - [x] Entry points: nav, dashboard, practice summary, topic page
 - [x] Screenshots, review, fixes
 
-### 2. Timed mock papers with indicative grades — [ ]
+### 2. Timed mock papers with indicative grades — [x]
 **Why:** IAL papers are sat against a clock with no feedback until the end. Rehearsing that, and seeing an
 indicative grade, is what students do in the last weeks before an exam.
 **Scope:** `/mock` lists your units; start a mock of a chosen length (short ~20 marks, half ~40, full ~80 where the
@@ -41,11 +41,11 @@ paper), no feedback while sitting. At the end: MCQs auto-marked, written answers
 scheme, then a result page with score, an *indicative* grade (UMS-style 80/70/60/50/40 thresholds, clearly
 labelled as an estimate) and a per-topic breakdown. Attempts feed mastery like any other attempt. Schema:
 `MockExam` (+ `Attempt.mockExamId`). Pure logic in `lib/mock-exam.ts`.
-- [ ] `lib/mock-exam.ts` + tests (paper assembly, timing, grade estimate)
-- [ ] Schema + migration
-- [ ] Actions: start, submit answers, self-mark, finish (assertUser, zod, ownership)
-- [ ] UI: `/mock`, `/mock/[id]` (sit, mark, result), history
-- [ ] Screenshots, review, fixes
+- [x] `lib/mock-exam.ts` + tests (paper assembly, timing, grade estimate)
+- [x] Schema + migration
+- [x] Actions: start, submit answers, self-mark, finish (assertUser, zod, ownership)
+- [x] UI: `/mock`, `/mock/[id]` (sit, mark, result), history
+- [x] Screenshots, review, fixes
 
 ### 3. Spec checklist with confidence ratings — [ ]
 **Why:** IAL students revise from the specification. Rating each "I can…" point red/amber/green and seeing where

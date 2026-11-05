@@ -31,6 +31,8 @@ export type SittingQuestion = {
 };
 
 const AUTOSAVE_MS = 10_000;
+/** Save this long after the last change, so closing the tab soon after typing loses little. */
+const DEBOUNCE_MS = 2_000;
 const WARN_SECONDS = 5 * 60;
 
 export function MockSitting({
@@ -61,6 +63,8 @@ export function MockSitting({
     const answersRef = useRef(answers);
     const handedIn = useRef(false);
     const skew = useRef(0);
+    const debounce = useRef<number | undefined>(undefined);
+    const [abandonOpen, setAbandonOpen] = useState(false);
 
     useEffect(() => {
         answersRef.current = answers;
@@ -117,6 +121,7 @@ export function MockSitting({
         document.addEventListener("visibilitychange", onHide);
         return () => {
             window.clearInterval(t);
+            window.clearTimeout(debounce.current);
             document.removeEventListener("visibilitychange", onHide);
         };
     }, [save]);
@@ -124,6 +129,22 @@ export function MockSitting({
     function update(questionId: string, patch: { optionId?: string; answer?: string }) {
         dirty.current = true;
         setAnswers((a) => ({ ...a, [questionId]: { ...a[questionId], ...patch } }));
+        window.clearTimeout(debounce.current);
+        debounce.current = window.setTimeout(() => void save(), DEBOUNCE_MS);
+    }
+
+    function abandon() {
+        setAbandonOpen(false);
+        handedIn.current = true;
+        startAbandon(async () => {
+            const res = await abandonMock({ id: mockId });
+            if (!res.ok) {
+                handedIn.current = false;
+                toast.error(res.error);
+                return;
+            }
+            router.push("/mock");
+        });
     }
 
     const isAnswered = (q: SittingQuestion) =>
@@ -273,23 +294,8 @@ export function MockSitting({
             </ol>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between lg:order-3 lg:col-span-1">
-                <Button
-                    variant="ghost"
-                    disabled={abandoning || submitting}
-                    onClick={() => {
-                        if (!window.confirm("Abandon this paper? Nothing from it will be saved.")) return;
-                        handedIn.current = true;
-                        startAbandon(async () => {
-                            const res = await abandonMock({ id: mockId });
-                            if (!res.ok) {
-                                handedIn.current = false;
-                                toast.error(res.error);
-                                return;
-                            }
-                            router.push("/mock");
-                        });
-                    }}
-                >
+                <Button variant="ghost" disabled={abandoning || submitting} onClick={() => setAbandonOpen(true)}>
+                    {abandoning && <Loader2 className="animate-spin" />}
                     Abandon paper
                 </Button>
                 <Button onClick={() => setConfirming(true)} disabled={submitting} variant="outline">
@@ -297,6 +303,25 @@ export function MockSitting({
                     Hand in paper
                 </Button>
             </div>
+
+            <Dialog open={abandonOpen} onOpenChange={setAbandonOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Abandon this paper?</DialogTitle>
+                        <DialogDescription>
+                            Nothing from it will be saved or marked, and it won&apos;t appear in your papers.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Keep going</Button>
+                        </DialogClose>
+                        <Button variant="destructive" onClick={abandon}>
+                            Abandon paper
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={confirming} onOpenChange={setConfirming}>
                 <DialogContent>

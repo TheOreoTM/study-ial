@@ -36,7 +36,10 @@ function revalidateAfterMarking(mockId: string) {
 }
 
 /** Starts a paper for one of the student's units, or resumes the one already running for it. */
-export async function startMock(input: { unitId: string; length: MockLength }): Promise<Result<{ id: string }>> {
+export async function startMock(input: {
+    unitId: string;
+    length: MockLength;
+}): Promise<Result<{ id: string; resumed: boolean }>> {
     const user = await assertUser();
     const parsed = z.object({ unitId: id, length: z.enum(["short", "half", "full"]) }).safeParse(input);
     if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
@@ -53,7 +56,7 @@ export async function startMock(input: { unitId: string; length: MockLength }): 
         orderBy: { startedAt: "desc" },
     });
     if (running && !isPastDeadline(running.startedAt, running.durationMinutes, new Date())) {
-        return { ok: true, id: running.id };
+        return { ok: true, id: running.id, resumed: true };
     }
 
     const today = await db.mockExam.count({ where: { userId: user.id, startedAt: { gte: localDayStart() } } });
@@ -103,7 +106,7 @@ export async function startMock(input: { unitId: string; length: MockLength }): 
         },
     });
     revalidatePath("/mock");
-    return { ok: true, id: mock.id };
+    return { ok: true, id: mock.id, resumed: false };
 }
 
 /** Autosave while sitting. Ignored once time is up, so the clock means something. */

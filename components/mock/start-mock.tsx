@@ -44,6 +44,7 @@ export function StartMock({
                 setWhich(null);
                 return;
             }
+            if (res.resumed) toast("You already have a paper running for this unit, so we've opened it.");
             router.push(`/mock/${res.id}`);
         });
     }
