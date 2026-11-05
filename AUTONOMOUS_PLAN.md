@@ -109,9 +109,9 @@ since, `/search` noindex for empty queries.
 **Scope:** `pnpm demo:activity [--reset]`, local DB only, refuses production.
 - [x] Script
 
-### 11. Polish from the walkthrough — [ ]
+### 11. Polish from the walkthrough — [x]
 - [x] Dashboard "Revise next" code tile stretching on phones
-- [ ] Loading states for new routes
+- [x] Loading states for new routes
 
 ## Round 2
 
