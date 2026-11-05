@@ -278,6 +278,7 @@ export default async function UnitPage({ params }: { params: Params }) {
                     <KeyEquations
                         groups={keyEquations[unit.code]}
                         topics={new Map(unit.topics.map((t) => [t.code, t.name]))}
+                        title={unit.subject.slug.includes("mathematics") ? "Key formulae" : "Key equations"}
                     />
                 </div>
             )}

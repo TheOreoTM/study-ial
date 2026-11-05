@@ -6,10 +6,13 @@ export function KeyEquations({
     groups,
     topics,
     id = "key-equations",
+    title = "Key equations",
 }: {
     groups: KeyEquationGroup[];
     topics: Map<string, string>;
     id?: string;
+    /** "Key formulae" reads better for Mathematics */
+    title?: string;
 }) {
     return (
         <section
@@ -17,10 +20,10 @@ export function KeyEquations({
             className="rounded-xl border bg-card p-5 shadow-card sm:p-7 print:break-before-page print:shadow-none"
         >
             <h2 id={id} className="text-lg">
-                Key equations
+                {title}
             </h2>
             <p className="mt-1 mb-5 text-sm text-muted-foreground">
-                The relationships this unit leans on most. Check your data and formulae booklet for which ones the exam
+                The relationships this unit leans on most. Check your formulae or data booklet for which ones the exam
                 gives you.
             </p>
             <div className="grid gap-6 md:grid-cols-2 print:grid-cols-2 print:gap-4">
