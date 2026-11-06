@@ -5,6 +5,7 @@ import { z } from "zod";
 import { aiEnabled, AiQuotaError, remainingAiQuota } from "@/lib/ai";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
+import { feedbackWithExplanation, savedExplanation, type MarkResult, type SavedExplanation } from "@/lib/papers/attempt-view";
 import { contextImages, markContextFor, loadPaperParts } from "@/lib/papers/context";
 import { explainFallback, explainPaperQuestion, gradeFromScore, markPaperAnswer, selfMarkPoints, type ExplainMode } from "@/lib/papers/mark";
 import { isOwnAttemptKey } from "@/lib/papers/keys";
@@ -13,20 +14,7 @@ import { scheduleCard } from "@/lib/srs";
 import { localDayKey } from "@/lib/time";
 import { storage } from "@/lib/storage";
 
-export type PointView = { code: string; point: string; awarded: boolean; comment: string };
-export type MarkView =
-    | {
-          ok: true;
-          attemptId: string;
-          marksAwarded: number;
-          maxMarks: number;
-          method: "SELF" | "AI" | "AI_ESTIMATED";
-          points: PointView[];
-          justification: string;
-          feedback: string;
-          remaining: number | null;
-      }
-    | { ok: false; error: string };
+export type MarkView = MarkResult | { ok: false; error: string };
 
 const id = z.string().min(1).max(64);
 const answer = z.string().trim().max(6000, "That answer is too long (6,000 characters max).");
@@ -186,20 +174,39 @@ export async function explainPart(input: { questionId: string; mode: ExplainMode
     const part = await partFor(user.id, user.role, d.questionId);
     if (!part) return { ok: false, error: "Question not found." };
     const attempt = d.attemptId
-        ? await db.paperAttempt.findFirst({ where: { id: d.attemptId, userId: user.id, questionId: d.questionId }, select: { answer: true } })
+        ? await db.paperAttempt.findFirst({ where: { id: d.attemptId, userId: user.id, questionId: d.questionId }, select: { id: true, answer: true, feedback: true } })
         : null;
+
+    // The step by step stays with the attempt. An AI one is reused without spending quota; a mark-scheme one can be upgraded.
+    const saved = d.mode === "explain" && attempt ? savedExplanation(attempt.feedback) : null;
+    if (saved && (saved.ai || !aiEnabled)) return { ok: true, ...saved };
+    const finish = async (explanation: SavedExplanation): Promise<ExplainView> => {
+        if (d.mode === "explain" && attempt) {
+            try {
+                await db.paperAttempt.update({
+                    where: { id: attempt.id, userId: user.id },
+                    data: { feedback: feedbackWithExplanation(attempt.feedback, explanation) as Prisma.InputJsonValue },
+                });
+                revalidatePath(`/papers/${part.sitting.id}/attempt`);
+            } catch (err) {
+                // Saving is a convenience: the student still gets the explanation they asked for
+                console.error("saving paper explanation failed", err);
+            }
+        }
+        return { ok: true, ...explanation };
+    };
 
     if (!aiEnabled) {
         if (d.mode === "similar") return { ok: false, error: "Similar questions need AI, which isn't available right now." };
-        return { ok: true, markdown: explainFallback(d.mode, part.ctx, part.ctx.examinerNotes), ai: false };
+        return finish({ markdown: explainFallback(d.mode, part.ctx, part.ctx.examinerNotes), ai: false });
     }
     try {
         const images = await contextImages(part.qp.id, part.rows, part.leaf, part.ctx.msPaperId, part.ctx.entries);
         const markdown = await explainPaperQuestion(user.id, d.mode, part.ctx, attempt?.answer ?? null, images);
-        return { ok: true, markdown, ai: true };
+        return await finish({ markdown, ai: true });
     } catch (err) {
         if (err instanceof AiQuotaError) return { ok: false, error: err.message };
         console.error("paper explain failed", err);
-        return { ok: true, markdown: explainFallback(d.mode, part.ctx, part.ctx.examinerNotes), ai: false };
+        return finish({ markdown: explainFallback(d.mode, part.ctx, part.ctx.examinerNotes), ai: false });
     }
 }

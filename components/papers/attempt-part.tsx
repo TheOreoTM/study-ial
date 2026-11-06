@@ -9,9 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { aiMarkPart, explainPart, selfMarkPart, type MarkView } from "@/app/(app)/papers/attempt-actions";
+import type { MarkResult, SavedExplanation } from "@/lib/papers/attempt-view";
 import { cn } from "@/lib/utils";
 
 type Point = { code: string; marks: number };
+
+const photoFor = (key: string) => ({ key, url: `/api/papers/attempt-images?key=${encodeURIComponent(key)}` });
 
 export function AttemptPart({
     questionId,
@@ -25,6 +28,9 @@ export function AttemptPart({
     sessionId = null,
     examMode = false,
     initialAnswer = "",
+    initialPhotoKeys = [],
+    initialResult = null,
+    initialExplanation = null,
     backHref = null,
 }: {
     questionId: string;
@@ -39,20 +45,26 @@ export function AttemptPart({
     sessionId?: string | null;
     /** Timed exam: marking happens at the end */
     examMode?: boolean;
-    /** The answer handed in during a timed exam */
+    /** The answer from the last marked attempt, or the one handed in during a timed exam */
     initialAnswer?: string;
+    initialPhotoKeys?: string[];
+    /** The last marked attempt and its step by step, shown again when the student comes back */
+    initialResult?: MarkResult | null;
+    initialExplanation?: SavedExplanation | null;
     /** Where "Next" goes instead when marking an exam */
     backHref?: string | null;
 }) {
     const router = useRouter();
     const [answer, setAnswer] = useState(initialAnswer);
-    const [photos, setPhotos] = useState<{ key: string; url: string }[]>([]);
+    const [photos, setPhotos] = useState(() => initialPhotoKeys.map(photoFor));
     const [uploading, setUploading] = useState(false);
     const [selfMarking, setSelfMarking] = useState(false);
     const [ticked, setTicked] = useState<number[]>([]);
     const [manual, setManual] = useState(0);
-    const [result, setResult] = useState<Extract<MarkView, { ok: true }> | null>(null);
-    const [explain, setExplain] = useState<{ mode: string; markdown: string; ai: boolean } | null>(null);
+    const [result, setResult] = useState<MarkResult | null>(initialResult);
+    const [explain, setExplain] = useState<{ mode: string; markdown: string; ai: boolean } | null>(
+        initialExplanation && { mode: "explain", ...initialExplanation },
+    );
     const [pending, start] = useTransition();
     const [explaining, startExplain] = useTransition();
     const fileRef = useRef<HTMLInputElement>(null);
@@ -67,7 +79,7 @@ export function AttemptPart({
             const res = await fetch("/api/papers/attempt-images", { method: "POST", body: form });
             const json = (await res.json().catch(() => ({}))) as { key?: string; error?: string };
             if (!res.ok || !json.key) return toast.error(json.error ?? "That photo didn't upload.");
-            setPhotos((p) => [...p, { key: json.key!, url: `/api/papers/attempt-images?key=${encodeURIComponent(json.key!)}` }]);
+            setPhotos((p) => [...p, photoFor(json.key!)]);
         } finally {
             setUploading(false);
         }

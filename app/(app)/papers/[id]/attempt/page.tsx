@@ -7,6 +7,7 @@ import { QuestionCrops, SchemeBlock } from "@/components/papers/question-blocks"
 import { Button } from "@/components/ui/button";
 import { aiEnabled } from "@/lib/ai";
 import { db } from "@/lib/db";
+import { restoreAttempt } from "@/lib/papers/attempt-view";
 import { paperLabel, SERIES_LABEL } from "@/lib/papers/filename";
 import { loadPaperParts, markContextFor } from "@/lib/papers/context";
 import { ancestors } from "@/lib/papers/tree";
@@ -50,6 +51,13 @@ export default async function AttemptPage({
     const handedIn = examSession
         ? await db.paperAttempt.findFirst({ where: { sessionId: examSession.id, questionId: leaf.id, userId: user.id }, orderBy: { createdAt: "asc" }, select: { answer: true } })
         : null;
+    // Coming back to a part shows its latest marks and explanation; while marking an exam, only that exam's
+    const lastMarked = await db.paperAttempt.findFirst({
+        where: { userId: user.id, questionId: leaf.id, marksAwarded: { not: null }, ...(examSession ? { sessionId: examSession.id } : {}) },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, answer: true, imageKeys: true, marksAwarded: true, maxMarks: true, method: true, feedback: true },
+    });
+    const restored = lastMarked ? restoreAttempt(lastMarked) : null;
     const chain = ancestors(rows, leaf.id);
     const href = (i: number) => `/papers/${id}/attempt?part=${parts[i].id}`;
     const sk = seriesKey(sitting.series);
@@ -83,7 +91,10 @@ export default async function AttemptPage({
                         aiEnabled={aiEnabled}
                         nextHref={index + 1 < parts.length ? href(index + 1) : null}
                         sessionId={examSession?.id ?? null}
-                        initialAnswer={handedIn?.answer ?? ""}
+                        initialAnswer={lastMarked?.answer ?? handedIn?.answer ?? ""}
+                        initialPhotoKeys={lastMarked?.imageKeys ?? []}
+                        initialResult={restored?.result ?? null}
+                        initialExplanation={restored?.explanation ?? null}
                         backHref={examSession ? `/papers/${id}/exam/${examSession.id}` : null}
                         scheme={<SchemeBlock msPaperId={ctx.msPaperId} entries={ctx.entries} guidance={ctx.guidance} examinerNotes={ctx.examinerNotes} />}
                     />
