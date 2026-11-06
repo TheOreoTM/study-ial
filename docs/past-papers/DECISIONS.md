@@ -74,3 +74,36 @@ Decisions made while building without stopping to ask. Newest at the bottom of e
 - **R2 needs a CORS rule** allowing `GET` from the site's origin, because the viewer fetches the 5-minute signed URL
   from the browser. Documented in PROGRESS.md.
 - **Someone else's private upload returns 404, not 403**, so ids can't be probed.
+
+## Parsing
+
+- **Two engines, one schema.** Pearson's PDFs are born-digital, so a deterministic **layout engine** reads the text
+  layer: question numbers at the left margin in sequence, part labels nested by indentation (so `4(i)(a)` and
+  `5(a)(i)` both come out right), marks `(n)` at the right margin, printed totals, "Figure n" captions and each
+  part's page region. It costs nothing, needs no API key and is exact on structure: all 23 WMA11 papers parse to
+  75 marks matching every printed question total. Typeset maths comes out jumbled in any PDF text layer, so its stems
+  are plain text; the **vision engine** (OpenRouter, `AI_MODEL_VISION`, default Gemini 2.5 Flash) produces LaTeX
+  stems and figure boxes from page images, using the layout result as a hint and keeping the layout's exact page
+  regions and totals. Photos and scans (no text layer) need the vision engine.
+- **The real paper is always shown.** Every part keeps its page region, and attempt/review screens show that crop of
+  the rendered page beside the extracted text. A garbled stem never stands alone, and diagrams are never redrawn.
+  Figures are cropped server-side from our page images and stored under `derived/{sha256}/figures/…`.
+- **Marks printed once for a group** ("(i) … (ii) … (iii) … (3)") belong to the parent part, not the last sub-part.
+- **Mark schemes are parsed into per-part entries** (mark codes `M1 A1 dM1 B1ft…`, printed part marks, scheme text,
+  page regions) plus the examiner guidance under each table. Matching uses the question paper as the truth: exact
+  numbers first, then deeper scheme rows folded into the paper's part, then parts borrowing their nearest ancestor's
+  entry. AI marking gets crops of the scheme rows, not just their jumbled text.
+- **Examiner reports** are split by "Question n" headings and attached to the whole question.
+- **Parse cache by file hash** (`PaperParse`, keyed by `sha256 + docType`): each unique file is parsed once; a
+  student uploading a copy of an indexed paper gets the indexed sitting itself.
+- **Status.** Indexed papers whose parse validates cleanly are `READY`; anything with validation issues, and every
+  student upload, is `NEEDS_REVIEW` until someone checks it on the review screen.
+- **Background jobs without new infrastructure.** A `PaperJob` table claimed with `FOR UPDATE SKIP LOCKED`, retried
+  with backoff (3 attempts), stale locks reclaimed after 10 minutes. Runners: `after()` right after an upload, the
+  paper page's status poll, a daily Vercel Cron sweep (Hobby plans only allow daily crons), and
+  `pnpm papers:parse` locally. Each run has a 45–50 s budget so it fits the 60 s function limit.
+- **Uploads go through a route handler, capped at 4 MB** (Vercel's request body limit is 4.5 MB). Phone photos are
+  shrunk to 2,000 px JPEGs in the browser first, so a whole paper of photos fits. Server-side they're re-encoded,
+  which also strips EXIF (location) data. HEIC is rejected with instructions. Direct-to-R2 presigned uploads would
+  lift the cap and are listed as a next step.
+- **Limits** (env-configurable): 4 MB per upload, 60 PDF pages, 30 photos, 10 uploads per student per Maldives day.

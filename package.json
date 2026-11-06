@@ -18,7 +18,8 @@
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "papers:ingest": "tsx scripts/ingest-papers.ts",
-    "papers:check-links": "tsx scripts/check-paper-links.ts"
+    "papers:check-links": "tsx scripts/check-paper-links.ts",
+    "papers:parse": "tsx --conditions react-server scripts/run-paper-jobs.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

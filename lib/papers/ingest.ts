@@ -1,9 +1,9 @@
 // Ingestion: discover → filter → download → hash → store → upsert. Idempotent and resumable: a file whose source URL
 // is already in the database is never requested again, and identical content (same SHA-256) is stored once.
-import { createHash } from "node:crypto";
 import { checkPdfResponse, isInRestrictedWindow, isRestrictedPath } from "@/lib/papers/access";
 import { enabledPaperSubjects, restrictedMonths, type PaperSubjectConfig } from "@/lib/papers/config";
 import { findSittingInText, type DocType, type Series } from "@/lib/papers/filename";
+import { sha256Hex } from "@/lib/papers/hash";
 import { PoliteFetcher, RobotsDisallowedError } from "@/lib/papers/http";
 import { paperKey } from "@/lib/papers/keys";
 import { openPdf, pageTexts, pageToPlainText } from "@/lib/papers/pdf";
@@ -13,7 +13,7 @@ import type { PaperCandidate, Skipped } from "@/lib/papers/sources/types";
 import type { StorageAdapter } from "@/lib/storage/types";
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 
-export const sha256Hex = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+export { sha256Hex } from "@/lib/papers/hash";
 
 const SERIES_ENUM = { jan: "JAN", jun: "JUN", oct: "OCT" } as const;
 

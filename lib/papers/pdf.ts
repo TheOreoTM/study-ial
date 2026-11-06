@@ -29,7 +29,6 @@ export async function openPdf(bytes: Uint8Array) {
         data: new Uint8Array(bytes),
         verbosity: 0,
         standardFontDataUrl: standardFontDataUrl(),
-        disableFontFace: true,
     });
     const doc = await task.promise;
     return Object.assign(doc, { close: () => task.destroy() });
@@ -64,9 +63,12 @@ export async function pageTexts(doc: PdfDoc, pages?: number[]): Promise<PageText
         const items: TextItem[] = [];
         for (const it of content.items) {
             if (!("str" in it) || !it.str) continue;
+            // Symbol fonts map maths glyphs to control and private-use code points; Postgres also rejects NUL in JSON
+            const str = it.str.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ue000-\uf8ff]/g, "");
+            if (!str) continue;
             const [, , , d, e, f] = it.transform as number[];
             const h = Math.abs(d) || it.height || 0;
-            items.push({ str: it.str, x: e, y: vp.height - f - h, width: it.width, height: h });
+            items.push({ str, x: e, y: vp.height - f - h, width: it.width, height: h });
         }
         out.push({ page: n, width: vp.width, height: vp.height, items });
         page.cleanup();

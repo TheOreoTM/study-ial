@@ -5,6 +5,10 @@ import { unitDisplayName } from "@/lib/papers/config";
 import { AddPaperButton } from "@/components/papers/add-paper-button";
 import { PaperCopyrightNote } from "@/components/papers/copyright-note";
 import { PaperViewer, type ViewerDoc } from "@/components/papers/paper-viewer";
+import { QuestionsPanel } from "@/components/papers/questions-panel";
+import { DeleteUploadButton } from "@/components/papers/delete-upload-button";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { DOC_TYPE_LABEL, paperLabel, SERIES_LABEL } from "@/lib/papers/filename";
 import { canViewSittingContent } from "@/lib/papers/permissions";
 import { getSavedSittingIds, getSitting, seriesKey } from "@/lib/queries/papers";
@@ -57,10 +61,26 @@ export default async function PaperPage({ params }: { params: Params }) {
                 }
                 description={sitting.ownerId ? "Your upload. Only you can see it." : unitDisplayName(sitting.unitCode, sitting.unit?.name)}
                 actions={
-                    sitting.ownerId ? null : (
+                    sitting.ownerId ? (
+                        <>
+                            {!sitting.papers.some((p) => p.type === "MS") && (
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/papers/upload?to=${sitting.id}`}>Add mark scheme</Link>
+                                </Button>
+                            )}
+                            <DeleteUploadButton sittingId={sitting.id} />
+                        </>
+                    ) : (
                         <AddPaperButton sittingId={sitting.id} saved={saved.has(sitting.id)} signedIn showOpen={false} next={`/papers/${sitting.id}`} />
                     )
                 }
+            />
+            <QuestionsPanel
+                sittingId={sitting.id}
+                qp={sitting.papers.find((p) => p.type === "QP")}
+                hasMarkScheme={sitting.papers.some((p) => p.type === "MS")}
+                viewer={user}
+                ownerId={sitting.ownerId}
             />
             <PaperViewer docs={docs} />
             <PaperCopyrightNote className="mt-10 max-w-3xl" />
