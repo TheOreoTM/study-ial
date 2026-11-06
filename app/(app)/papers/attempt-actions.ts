@@ -48,7 +48,8 @@ async function partFor(userId: string, role: "STUDENT" | "ADMIN", questionId: st
 
 async function sessionFor(userId: string, sessionId: string | null | undefined, sittingId: string) {
     if (!sessionId) return null;
-    const s = await db.paperExamSession.findFirst({ where: { id: sessionId, userId, sittingId, submittedAt: null }, select: { id: true } });
+    // Exams are marked after they're submitted, so any of the student's sessions for this paper will do
+    const s = await db.paperExamSession.findFirst({ where: { id: sessionId, userId, sittingId }, select: { id: true } });
     return s?.id ?? null;
 }
 

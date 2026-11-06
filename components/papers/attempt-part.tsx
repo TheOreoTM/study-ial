@@ -24,6 +24,8 @@ export function AttemptPart({
     nextHref,
     sessionId = null,
     examMode = false,
+    initialAnswer = "",
+    backHref = null,
 }: {
     questionId: string;
     number: string;
@@ -37,9 +39,13 @@ export function AttemptPart({
     sessionId?: string | null;
     /** Timed exam: marking happens at the end */
     examMode?: boolean;
+    /** The answer handed in during a timed exam */
+    initialAnswer?: string;
+    /** Where "Next" goes instead when marking an exam */
+    backHref?: string | null;
 }) {
     const router = useRouter();
-    const [answer, setAnswer] = useState("");
+    const [answer, setAnswer] = useState(initialAnswer);
     const [photos, setPhotos] = useState<{ key: string; url: string }[]>([]);
     const [uploading, setUploading] = useState(false);
     const [selfMarking, setSelfMarking] = useState(false);
@@ -278,8 +284,10 @@ export function AttemptPart({
                         </details>
                     )}
                     <div className="flex flex-wrap gap-2">
-                        {nextHref && (
-                            <Button onClick={() => router.push(nextHref)}>Next part</Button>
+                        {backHref ? (
+                            <Button onClick={() => router.push(backHref)}>Back to exam results</Button>
+                        ) : (
+                            nextHref && <Button onClick={() => router.push(nextHref)}>Next part</Button>
                         )}
                         <Button variant="outline" disabled={explaining} onClick={() => runExplain("explain")}>
                             <MessageCircleQuestion aria-hidden />

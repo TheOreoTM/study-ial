@@ -18,8 +18,14 @@ import { UnitChip } from "../../../subjects/_components/chips";
 
 export const metadata: Metadata = { title: "Attempt", robots: { index: false, follow: false } };
 
-export default async function AttemptPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ part?: string }> }) {
-    const [{ id }, { part: partId }] = await Promise.all([params, searchParams]);
+export default async function AttemptPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ part?: string; session?: string }>;
+}) {
+    const [{ id }, { part: partId, session: sessionParam }] = await Promise.all([params, searchParams]);
     const user = await requireUser();
     const loaded = await loadPaperParts(id, user);
     if (!loaded) notFound();
@@ -37,6 +43,13 @@ export default async function AttemptPage({ params, searchParams }: { params: Pr
     const index = Math.max(0, partId ? parts.findIndex((p) => p.id === partId) : parts.findIndex((p) => !latest.has(p.id)));
     const leaf = parts[index] ?? parts[0];
     const ctx = markContextFor(rows, leaf);
+    // Marking a timed exam: start from the answer handed in, and record marks against that exam
+    const examSession = sessionParam
+        ? await db.paperExamSession.findFirst({ where: { id: sessionParam, userId: user.id, sittingId: id }, select: { id: true } })
+        : null;
+    const handedIn = examSession
+        ? await db.paperAttempt.findFirst({ where: { sessionId: examSession.id, questionId: leaf.id, userId: user.id }, orderBy: { createdAt: "asc" }, select: { answer: true } })
+        : null;
     const chain = ancestors(rows, leaf.id);
     const href = (i: number) => `/papers/${id}/attempt?part=${parts[i].id}`;
     const sk = seriesKey(sitting.series);
@@ -69,6 +82,9 @@ export default async function AttemptPage({ params, searchParams }: { params: Pr
                         hasMarkScheme={ctx.hasMarkScheme}
                         aiEnabled={aiEnabled}
                         nextHref={index + 1 < parts.length ? href(index + 1) : null}
+                        sessionId={examSession?.id ?? null}
+                        initialAnswer={handedIn?.answer ?? ""}
+                        backHref={examSession ? `/papers/${id}/exam/${examSession.id}` : null}
                         scheme={<SchemeBlock msPaperId={ctx.msPaperId} entries={ctx.entries} guidance={ctx.guidance} examinerNotes={ctx.examinerNotes} />}
                     />
                     <div className="flex justify-between gap-2">
