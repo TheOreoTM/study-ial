@@ -50,3 +50,4 @@ next-env.d.ts
 /screenshots/*
 # …except the autonomous run's per-feature screenshots, which are committed
 !/screenshots/autonomous/
+!/screenshots/billing/

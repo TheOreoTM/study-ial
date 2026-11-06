@@ -67,6 +67,9 @@ app/
   (app)/tutor/actions.ts   AI "explain this" for topic and practice pages (no route; cached, with bank fallback)
   (app)/focus              pomodoro timer, logs FocusSession
   (app)/settings           profile, units, read-only progress link, account deletion
+  (app)/billing            Pro plan: free week, subscribe, cancel/resume, payments, GST tax invoices
+                           (/billing/invoices/[id]); /billing/return settles a checkout; fake-checkout/ is the test
+                           provider's page; api/cron/billing is the daily job (CRON_SECRET, vercel.json crons)
   share/[token]            read-only progress for a parent/teacher (token hashed in ProgressShare; noindex)
   (app)/admin              question bank management (ADMIN only)
 lib/
@@ -75,6 +78,9 @@ lib/
   srs.ts analytics.ts milestones.ts tutor.ts community-plans.ts   pure feature logic (tested)
   mistakes.ts mock-exam.ts checklist.ts search.ts heatmap.ts readiness.ts share.ts shortcuts.ts
   key-equations.ts card-from-question.ts structured-data.ts         pure feature logic (tested)
+  billing.ts               pure Pro plan rules: price + GST in laari, entitlement, renewals, grace (tested)
+  payments/                provider interface (types.ts), fake provider, service.ts (trial, checkout, settle,
+                           invoices, daily job); BML Connect adapter not built yet
   queries/*.ts             server-only read helpers
 prisma/
   schema.prisma  seed.ts  seed-data/   (curriculum, original questions + flashcards as TS data; non-Physics content
@@ -117,6 +123,11 @@ The product should feel instant and calm. Decisions and budgets are in `docs/dec
 - UI: use `PageHeader`, `EmptyState`, shadcn `Card`, etc. Colour tokens only (`bg-primary`, `text-muted-foreground`,
   `text-success`, `text-warning`, `text-destructive`) — no raw hex. Must look right in dark mode and at 375px wide.
 - AI quotas per feature live in `lib/ai.ts` (`marking`, `plan`, `tutor`); add new features there.
+- **Pro plan** (`docs/decisions/2026-11-payments.md`): AI marking, mock AI suggestions and the tutor need Pro. Check
+  `getProAccess(userId)` (`lib/queries/billing.ts`) on the server before spending tokens, and show `ProPrompt` instead
+  of the AI action when it isn't `"pro"`. With `BILLING_PROVIDER` unset billing is off and everyone counts as Pro.
+  Money is integer laari; settle payments only through `settlePayment` (idempotent, issues the tax invoice); the
+  outcome of a checkout always comes from asking the provider, never from return-URL or webhook parameters.
 - Mastery levels/colours come from `lib/mastery.ts` (`masteryLabel`, `masteryTone`) — don't reinvent them.
 - **Dates**: calendar-day logic ("today", plan task dates, streaks, countdowns) uses `lib/time.ts`
   (`localDay`, `localDayKey`, Maldives time zone) — never raw UTC days or the server's local time.
