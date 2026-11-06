@@ -198,7 +198,7 @@ export function MockSitting({
             {/* Clock and question map: a sticky bar on phones, a sticky rail from 1024px. */}
             <aside
                 aria-label="Paper status"
-                className="sticky top-16 z-20 -mx-4 border-b bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:top-24 lg:order-2 lg:mx-0 lg:rounded-xl lg:border-0 lg:bg-muted lg:p-5"
+                className="sticky top-16 z-20 -mx-4 border-b bg-background px-4 py-3 sm:-mx-6 sm:px-6 lg:top-24 lg:order-2 lg:mx-0 lg:rounded-xl lg:border-0 lg:bg-muted lg:p-5"
             >
                 <div className="flex items-center justify-between gap-3 lg:block">
                     <div>

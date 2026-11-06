@@ -13,7 +13,7 @@ chose, why, and what it means for the code. Status: **Decided** = agreed and bin
   away).
 - No view transitions; 2 font families, 8 weights.
 
-## 1. Live search — Building
+## 1. Live search — Done
 
 - **Command palette + live /search page.** ⌘K / Ctrl+K or `/` opens a search overlay anywhere in the app; results
   update on every keystroke; ↑↓ + Enter to open; ⌘/Ctrl+Enter for a topic's quick action (Practise). `/search` is
@@ -27,6 +27,11 @@ chose, why, and what it means for the code. Status: **Decided** = agreed and bin
 - **Signed-in results carry your data:** topic rows show your mastery tile/score and a "Practise" quick action.
 - **Empty state:** your recent picks (stored on this device only) and "jump back in" (topics you practised most
   recently).
+- **Measured (production build, headless Chromium, no GPU):** the list updates 5–13 ms after a keystroke and the
+  frame paints on the next animation frame. The search itself takes ~0.6 ms. The palette's code is loaded on idle,
+  hover or focus, so it adds nothing to a page's first load.
+- **Found on the way:** the dialog overlay's `backdrop-blur` made every keystroke repaint take ~95 ms. Blur is gone
+  from overlays and sticky bars (rule added to CLAUDE.md).
 - **Past papers:** not in this round — the owner has a separate idea for past papers. The design leaves room for a
   `paper` result kind.
 

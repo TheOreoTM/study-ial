@@ -34,6 +34,8 @@ Local setup gotchas (all hit in practice):
   TCP port; the shadow is usually the next one up). Never point the shadow at the main DB (Prisma refuses: P3025), and
   never at production — migrate dev resets its shadow.
 - After `pnpm db:migrate`, run `npx prisma generate` (Prisma 7's migrate doesn't regenerate) and restart `pnpm dev`.
+- If a page keeps reloading itself in dev (endless "[Fast Refresh] rebuilding"), stop `pnpm dev`, delete `.next/dev`
+  and start it again: stale dev state from an earlier run (or a different branch) causes the loop.
 - Open the app on exactly `BETTER_AUTH_URL` (default `http://localhost:3000`). Another host or port makes Better Auth
   reject sign-in with 403 "Invalid origin".
 - Production migrations run in Vercel's build via `prisma migrate deploy`. Never run `migrate dev`/`db:seed` against a
@@ -90,6 +92,8 @@ The product should feel instant and calm. Decisions and budgets are in `docs/dec
   `lib/search.ts`; prepare an index once (`prepareDocs`) and search the prepared form.
 - **No request per keystroke, no spinner for local work**, optimistic UI for writes the user expects to succeed.
 - **Motion:** state changes and page transitions only, ≤ ~200 ms, off for reduced motion. Nothing loops.
+- **No `backdrop-filter` on overlays or sticky bars.** Measured: the palette's blurred overlay made every keystroke
+  repaint take ~95 ms instead of one frame. Use solid or translucent fills instead.
 - **Client JS stays lean:** Markdown/KaTeX render on the server; add a client dependency only when a server-rendered
   alternative can't do the job, and justify it in the commit.
 - Personal data never goes into CDN-cached responses (search index, public pages); send it with `Cache-Control:
