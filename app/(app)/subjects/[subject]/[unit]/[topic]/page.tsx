@@ -1,8 +1,10 @@
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbList } from "@/lib/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, ChevronRight, History, Layers, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, Layers, Play, RotateCcw } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { TopicTutor } from "@/components/tutor/topic-tutor";
 import { Button } from "@/components/ui/button";
@@ -10,10 +12,13 @@ import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
 import { SampleQuestions } from "@/components/papers/sample-questions";
 import { db } from "@/lib/db";
-import { masteryTone, type MasteryLevel } from "@/lib/mastery";
+import { markLevel, masteryTone } from "@/lib/mastery";
 import { getTopic, getTopicQuestionTypeCounts, getUnitByCode } from "@/lib/queries/curriculum";
 import { getDeckCounts } from "@/lib/queries/flashcards";
 import { getTopicMastery } from "@/lib/queries/mastery";
+import { countOpenMistakes } from "@/lib/queries/mistakes";
+import { getSpecRatings } from "@/lib/queries/checklist";
+import { ConfidencePicker } from "@/components/checklist/confidence-picker";
 import { getUser } from "@/lib/session";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -30,11 +35,6 @@ const typeLabels = [
     ["CALCULATION", "Calculation"],
     ["LONG", "Extended response"],
 ] as const;
-
-/** Colour a marked attempt like the mastery it feeds: full-ish marks teal, partial sun, low bubblegum. */
-function markLevel(ratio: number): MasteryLevel {
-    return ratio >= 0.75 ? "strong" : ratio >= 0.4 ? "developing" : "weak";
-}
 
 const methodLabel = { AUTO: "Auto-marked", SELF: "Self-marked", AI: "AI-marked" } as const;
 
@@ -77,7 +77,7 @@ export default async function TopicPage({ params }: { params: Params }) {
     if (subjectSlug !== unit.subject.slug || code !== unit.code.toLowerCase())
         permanentRedirect(`${unitHref}/${topic.slug}`);
 
-    const [typeCounts, deck, mastery, recent, paperParts] = await Promise.all([
+    const [typeCounts, deck, mastery, recent, mistakes, ratings, paperParts] = await Promise.all([
         getTopicQuestionTypeCounts(topic.id),
         user ? getDeckCounts(user.id, [topic.id]).then((d) => d.get(topic.id)!) : null,
         user ? getTopicMastery(user.id, [topic.id]).then((m) => m.get(topic.id)!) : null,
@@ -96,6 +96,8 @@ export default async function TopicPage({ params }: { params: Params }) {
                   },
               })
             : [],
+        user ? countOpenMistakes(user.id, { topicId: topic.id }) : 0,
+        user ? getSpecRatings(user.id, [topic]).then((r) => r.get(topic.id)!) : null,
         // Past-paper parts on this topic: only counted for signed-in students (nothing from papers on public pages)
         user ? db.paperQuestion.count({ where: { topicId: topic.id, children: { none: {} }, paper: { type: "QP", sitting: { ownerId: null } } } }) : 0,
     ]);
@@ -107,6 +109,14 @@ export default async function TopicPage({ params }: { params: Params }) {
 
     return (
         <>
+            <JsonLd
+                data={breadcrumbList(site.url, [
+                    { name: "Subjects", path: "/subjects" },
+                    { name: unit.subject.name, path: `/subjects/${unit.subject.slug}` },
+                    { name: unit.code, path: unitHref },
+                    { name: topic.name, path: `${unitHref}/${topic.slug}` },
+                ])}
+            />
             <Breadcrumbs
                 items={[
                     { href: "/subjects", label: "Subjects" },
@@ -146,9 +156,24 @@ export default async function TopicPage({ params }: { params: Params }) {
                             {topic.summary}
                         </Markdown>
                     )}
-                    <h2 id="spec-points" className="text-lg">
-                        Specification points
-                    </h2>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <h2 id="spec-points" className="text-lg">
+                            Specification points
+                        </h2>
+                        {user && topic.specPoints.length > 0 && (
+                            <Link
+                                href={`${unitHref}/checklist`}
+                                className="inline-flex min-h-6 items-center text-sm font-bold text-selected-foreground underline decoration-2 underline-offset-4"
+                            >
+                                {unit.code} checklist
+                            </Link>
+                        )}
+                    </div>
+                    {ratings && topic.specPoints.length > 0 && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Rate how you feel about each point. It&apos;s just for you, and it never changes your mastery.
+                        </p>
+                    )}
                     {topic.specPoints.length === 0 ? (
                         <p className="mt-3 text-muted-foreground">
                             Specification points for this topic are coming soon.
@@ -163,7 +188,18 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     >
                                         {i + 1}
                                     </span>
-                                    <Markdown className="min-w-0 flex-1 pt-0.5 text-base [&_p]:my-0">{point}</Markdown>
+                                    <div className="min-w-0 flex-1">
+                                        <Markdown className="pt-0.5 text-base [&_p]:my-0">{point}</Markdown>
+                                        {ratings && (
+                                            <ConfidencePicker
+                                                topicId={topic.id}
+                                                point={i}
+                                                initial={ratings.get(i) ?? null}
+                                                label={`How confident are you with point ${i + 1}?`}
+                                                className="mt-2.5"
+                                            />
+                                        )}
+                                    </div>
                                 </li>
                             ))}
                         </ol>
@@ -253,6 +289,19 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     {mastery.attempts} attempt{mastery.attempts === 1 ? "" : "s"} · last{" "}
                                     {formatDistanceToNow(mastery.lastPracticedAt!, { addSuffix: true })}
                                 </p>
+                            )}
+                            {mistakes > 0 && (
+                                <div className="mt-4 flex items-center justify-between gap-3 border-t border-border-strong/25 pt-4">
+                                    <p className="text-[0.9375rem]">
+                                        <span className="num">{mistakes}</span> open mistake{mistakes === 1 ? "" : "s"}
+                                    </p>
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/practice?mode=mistakes&topic=${topic.id}`}>
+                                            <RotateCcw />
+                                            Redo
+                                        </Link>
+                                    </Button>
+                                </div>
                             )}
                         </section>
                     )}

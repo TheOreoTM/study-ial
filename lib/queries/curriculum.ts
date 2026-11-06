@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { db } from "@/lib/db";
+import type { SearchDoc } from "@/lib/search";
 
 export const getSubjects = cache(() =>
     db.subject.findMany({
@@ -79,3 +80,67 @@ export const getCurriculumPaths = cache(() =>
         },
     }),
 );
+
+/** Every subject, unit and topic as search documents (see lib/search.ts). About 300 rows, read per request. */
+export const getSearchDocs = cache(async (): Promise<SearchDoc[]> => {
+    const subjects = await db.subject.findMany({
+        orderBy: [{ isLocal: "asc" }, { order: "asc" }],
+        select: {
+            id: true,
+            slug: true,
+            code: true,
+            name: true,
+            description: true,
+            units: {
+                orderBy: { order: "asc" },
+                select: {
+                    id: true,
+                    code: true,
+                    name: true,
+                    description: true,
+                    topics: {
+                        orderBy: { order: "asc" },
+                        select: { id: true, slug: true, code: true, name: true, summary: true, specPoints: true },
+                    },
+                },
+            },
+        },
+    });
+    const docs: SearchDoc[] = [];
+    for (const s of subjects) {
+        docs.push({
+            kind: "subject",
+            id: s.id,
+            href: `/subjects/${s.slug}`,
+            name: s.name,
+            code: s.code,
+            context: `${s.units.length} units`,
+            summary: s.description,
+        });
+        for (const u of s.units) {
+            const unitHref = `/subjects/${s.slug}/${u.code.toLowerCase()}`;
+            docs.push({
+                kind: "unit",
+                id: u.id,
+                href: unitHref,
+                name: u.name,
+                code: u.code,
+                context: s.name,
+                summary: u.description,
+            });
+            for (const t of u.topics) {
+                docs.push({
+                    kind: "topic",
+                    id: t.id,
+                    href: `${unitHref}/${t.slug}`,
+                    name: t.name,
+                    code: t.code,
+                    context: `${s.name} · ${u.code}`,
+                    summary: t.summary,
+                    specPoints: t.specPoints,
+                });
+            }
+        }
+    }
+    return docs;
+});

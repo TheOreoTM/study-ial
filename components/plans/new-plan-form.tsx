@@ -253,7 +253,7 @@ export function NewPlanForm({
                                         key={d.value}
                                         type="button"
                                         aria-pressed={on}
-                                        aria-label={d.long}
+                                        title={d.long}
                                         onClick={() => toggleDay(d.value)}
                                         className={cn(
                                             "h-11 min-w-[3.25rem] rounded-full px-3 font-display text-[0.9375rem] font-extrabold transition-[background-color,box-shadow,color] duration-200 ease-out-soft outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",

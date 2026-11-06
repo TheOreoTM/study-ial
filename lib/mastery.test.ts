@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeMastery, levelFor, MASTERY_WINDOW, masteryLabel, masteryTone, revisionPriority } from "@/lib/mastery";
+import { computeMastery, levelFor, markLevel, MASTERY_WINDOW, masteryLabel, masteryTone, revisionPriority } from "@/lib/mastery";
 
 const day = 86_400_000;
 const now = new Date("2026-06-01T12:00:00Z");
@@ -105,5 +105,16 @@ describe("revisionPriority", () => {
         expect(revisionPriority(m(0.8, 15), now) - revisionPriority(m(0.8, 0), now)).toBeCloseTo(0.125);
         expect(revisionPriority(m(0.8, 60), now)).toBeCloseTo(revisionPriority(m(0.8, 30), now));
         expect(revisionPriority(m(null, null), now)).toBeCloseTo(0.85);
+    });
+});
+
+describe("markLevel", () => {
+    it("colours one answer by its share of marks", () => {
+        expect(markLevel(1)).toBe("strong");
+        expect(markLevel(0.75)).toBe("strong");
+        expect(markLevel(0.5)).toBe("developing");
+        expect(markLevel(0.4)).toBe("developing");
+        expect(markLevel(0.39)).toBe("weak");
+        expect(markLevel(0)).toBe("weak");
     });
 });

@@ -14,6 +14,8 @@ import { db } from "@/lib/db";
 import { masteryLabel, masteryTone, revisionPriority } from "@/lib/mastery";
 import { cn } from "@/lib/utils";
 import { getProgressAnalytics } from "@/lib/queries/analytics";
+import { getStudyHeatmap } from "@/lib/queries/heatmap";
+import { StudyHeatmap } from "@/components/analytics/study-heatmap";
 import { syncMilestones } from "@/lib/queries/milestones";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getTopicMastery } from "@/lib/queries/mastery";
@@ -82,6 +84,7 @@ export default async function ProgressPage() {
     ]);
     // Sequential: the local dev Postgres drops connections beyond ~5 concurrent ones.
     const { milestones } = await syncMilestones(user.id, now);
+    const heatmap = await getStudyHeatmap(user.id, { now, weeks: 52 });
 
     const attempted = totals._count._all;
     const pct =
@@ -184,6 +187,8 @@ export default async function ProgressPage() {
                             </div>
                         </div>
                     </section>
+
+                    <StudyHeatmap map={heatmap} />
 
                     <ProgressAnalyticsPanels data={analytics} />
 

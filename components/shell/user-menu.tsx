@@ -42,13 +42,15 @@ export function UserMenu({
         <DropdownMenu>
             {compact ? (
                 <DropdownMenuTrigger
-                    aria-label={`Account menu for ${name}`}
                     className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full transition-colors hover:bg-accent focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
-                    <Avatar className="size-9">
+                    {/* Initials are decoration; the name comes from the hidden text (and contains no visible text
+                        it could contradict, WCAG 2.5.3). */}
+                    <Avatar className="size-9" aria-hidden>
                         {image && <AvatarImage src={image} alt="" />}
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
+                    <span className="sr-only">Account menu for {name}</span>
                 </DropdownMenuTrigger>
             ) : (
                 <DropdownMenuTrigger className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-lg bg-muted p-2.5 text-left transition-colors hover:bg-accent focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring">

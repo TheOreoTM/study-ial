@@ -16,6 +16,16 @@ their exam dates.
 - **Study plans** — deterministic scheduler covers every topic before the exam, adds spaced review and past-paper
   practice near the exam, and reschedules missed work in one click. AI adds an optional personalised summary.
 - **Focus timer** — Pomodoro linked to plan tasks; logs focus time and powers the study streak.
+- **Mistake notebook** — every question whose latest attempt lost marks, with your answer, the mark scheme and a
+  "redo my mistakes" session; one tap turns a mistake into a flashcard.
+- **Mock papers** — timed papers per unit (quick, half or full) at the real papers' minutes per mark, self-marked at the
+  end, with an indicative grade and a per-topic breakdown.
+- **Spec checklist** — rate every specification point "Not yet / Shaky / Got it"; a printable unit checklist flags
+  where confidence and marks disagree. Physics units also list their key equations.
+- **Exams** — a countdown per paper with plain readiness facts and one suggested next step.
+- **Search, study calendar, sharing** — curriculum search (press `/`), a year-long study heatmap on Progress, and a
+  revocable read-only progress link for a parent or teacher.
+- **Offline page** — a minimal service worker shows a friendly page instead of a browser error with no connection.
 - **Admin** — question bank editor with live Markdown/LaTeX preview, bulk JSON import, content-gap overview.
 - **Past papers** — an index of open-access Edexcel IAL papers (Maths, Further Maths, Physics, Chemistry, Biology),
   "Add to my papers", question paper beside mark scheme, uploads (PDF or phone photos), parsing into questions, attempts
@@ -44,6 +54,8 @@ pnpm dev                                   # http://localhost:3000
 ```
 
 Demo account (created by the seed outside production, has admin rights): `demo@study-ial.test` / `demo-password`.
+To see populated dashboards locally, `pnpm demo:activity` gives it a few weeks of practice and focus history
+(`--reset` to start over; local database only).
 
 Without `RESEND_API_KEY`, emails (verification, password reset) are printed to the server console and email
 verification is not required. Without `OPENROUTER_API_KEY`, AI features hide themselves and everything else works.

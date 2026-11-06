@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Layers, Target, Timer } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarCheck, CalendarDays, Flame, Layers, NotebookPen, Target, Timer } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { formatDueDay } from "@/components/flashcards/format";
@@ -12,12 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { masteryTone, revisionPriority } from "@/lib/mastery";
+import { masteryTone, revisionPriority, type Mastery } from "@/lib/mastery";
+import { lengthAvailable } from "@/lib/mock-exam";
+import { nextStep, phaseFor, phaseHint, phaseLabel } from "@/lib/readiness";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getFlashcardSummary } from "@/lib/queries/flashcards";
 import { getFocusStats } from "@/lib/queries/focus";
 import { syncMilestones } from "@/lib/queries/milestones";
 import { getTopicMastery } from "@/lib/queries/mastery";
+import { countOpenMistakes } from "@/lib/queries/mistakes";
 import { daysUntil, getActivePlanSummary, getTodayTasks } from "@/lib/queries/plans";
 import { requireUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -49,6 +52,8 @@ export default async function DashboardPage() {
 
     // After the parallel reads: the local dev Postgres drops connections beyond ~5 concurrent ones.
     const { unseen } = await syncMilestones(user.id);
+    const mistakes = await countOpenMistakes(user.id);
+    const examNudge = await nextExamStep(user.id, userUnits, mastery, questionCounts);
     const now = new Date();
     const practisable = topics.filter((t) => (questionCounts.get(t.id) ?? 0) > 0);
     const weakTopics = practisable
@@ -116,8 +121,33 @@ export default async function DashboardPage() {
                     label="Next exam"
                     value={nextExam ? daysUntil(nextExam.examDate!, now) : "–"}
                     suffix={nextExam ? `days · ${nextExam.unit.code}` : undefined}
+                    href="/exams"
                 />
             </div>
+
+            {examNudge && (
+                <section
+                    aria-label="Next exam"
+                    className="-mt-4 mb-8 flex flex-col gap-3 rounded-xl bg-muted p-4 sm:flex-row sm:items-center sm:px-5"
+                >
+                    <p className="min-w-0 flex-1 leading-snug">
+                        <span className="font-bold">
+                            {examNudge.code} in {examNudge.days} day{examNudge.days === 1 ? "" : "s"}
+                        </span>{" "}
+                        <span className="text-muted-foreground">
+                            · {phaseLabel[examNudge.phase]}. {phaseHint[examNudge.phase]}
+                        </span>
+                    </p>
+                    <div className="flex shrink-0 gap-2">
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={examNudge.step.href}>{examNudge.step.label}</Link>
+                        </Button>
+                        <Button asChild variant="ghost" size="sm">
+                            <Link href="/exams">All exams</Link>
+                        </Button>
+                    </div>
+                </section>
+            )}
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
                 {/* Today's plan */}
@@ -202,6 +232,15 @@ export default async function DashboardPage() {
                                 />
                             ))}
                         </ul>
+                    )}
+                    {mistakes > 0 && (
+                        <RailLine
+                            icon={NotebookPen}
+                            title="Mistakes"
+                            detail={`${mistakes} question${mistakes === 1 ? "" : "s"} to get right`}
+                            href="/mistakes"
+                            action="Review"
+                        />
                     )}
                     {(cards.due + cards.newToday > 0 || cards.nextDue) && (
                         <div className="mt-5 flex items-center gap-3 border-t border-border-strong/25 pt-5">
@@ -307,6 +346,87 @@ export default async function DashboardPage() {
                 </Card>
             </div>
         </>
+    );
+}
+
+/**
+ * The nearest exam within 60 days and one next step for it (the same rules as /exams), or null. A few small reads
+ * for that one unit only.
+ */
+async function nextExamStep(
+    userId: string,
+    userUnits: { unitId: string; examDate: Date | null; unit: { code: string; subject: { slug: string }; topics: { id: string; name: string; order: number; slug: string }[] } }[],
+    mastery: Map<string, Mastery>,
+    counts: Map<string, number>,
+) {
+    const now = new Date();
+    const next = userUnits.find((uu) => uu.examDate && daysUntil(uu.examDate, now) >= 0);
+    if (!next?.examDate) return null;
+    const days = daysUntil(next.examDate, now);
+    if (days > 60) return null;
+    const [openMistakes, lastMock, marks] = await Promise.all([
+        countOpenMistakes(userId, { unitId: next.unitId }),
+        db.mockExam.findFirst({
+            where: { userId, unitId: next.unitId, status: "FINISHED" },
+            orderBy: { finishedAt: "desc" },
+            select: { finishedAt: true },
+        }),
+        db.question.aggregate({ where: { unitId: next.unitId, status: "PUBLISHED" }, _sum: { marks: true } }),
+    ]);
+    const available = marks._sum.marks ?? 0;
+    const unitHref = `/subjects/${next.unit.subject.slug}/${next.unit.code.toLowerCase()}`;
+    const step = nextStep(
+        {
+            unitId: next.unitId,
+            daysLeft: days,
+            topics: next.unit.topics.map((t) => ({
+                id: t.id,
+                name: t.name,
+                order: t.order,
+                href: `${unitHref}/${t.slug}`,
+                hasQuestions: (counts.get(t.id) ?? 0) > 0,
+                mastery: mastery.get(t.id)!,
+            })),
+            openMistakes,
+            daysSinceMock: lastMock?.finishedAt
+                ? Math.floor((now.getTime() - lastMock.finishedAt.getTime()) / 86_400_000)
+                : null,
+            mockAvailable: lengthAvailable("short", available),
+            fullMockAvailable: lengthAvailable("full", available),
+        },
+        now,
+    );
+    if (step.kind === "none") return null;
+    return { code: next.unit.code, days, phase: phaseFor(days), step };
+}
+
+/** A secondary line at the foot of the "Revise next" rail: icon tile, two lines of text and an outline button. */
+function RailLine({
+    icon: Icon,
+    title,
+    detail,
+    href,
+    action,
+}: {
+    icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+    title: string;
+    detail: string;
+    href: string;
+    action: string;
+}) {
+    return (
+        <div className="mt-5 flex items-center gap-3 border-t border-border-strong/25 pt-5">
+            <span className="grid size-11 shrink-0 place-items-center rounded-[12px] bg-card text-selected-foreground shadow-card">
+                <Icon className="size-5" aria-hidden />
+            </span>
+            <p className="min-w-0 flex-1 leading-snug">
+                <span className="block font-bold">{title}</span>
+                <span className="block text-[0.8125rem] text-muted-foreground">{detail}</span>
+            </p>
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link href={href}>{action}</Link>
+            </Button>
+        </div>
     );
 }
 

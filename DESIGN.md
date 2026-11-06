@@ -290,7 +290,7 @@ Headings (h1–h3) are Baloo 800 with balanced wrapping by default; paragraphs w
 
 ## Layout
 
-- **App:** a 1180px column with 16px gutters (24px from 640px) and 24px top padding (40px from 1024px). A sticky white app bar (64px, hairline below, slight blur) holds the logo, the pill nav and the avatar menu from 1024px; below that the nav moves into a left slide-in sheet opened from a menu button.
+- **App:** a 1180px column with 16px gutters (24px from 640px) and 24px top padding (40px from 1024px). A sticky white app bar (64px, solid, hairline below; no backdrop blur, which repaints on every scroll frame) holds the logo, the pill nav and the avatar menu from 1024px; below that the nav moves into a left slide-in sheet opened from a menu button.
 - **Practice:** two columns from 960px (question card, plus a sticky 380px rail for topic mastery), one column below with the rail after the question. The finished summary narrows to 768px.
 - **Grids:** subject cards are one column, two from 640px, three from 1280px. Grid children may shrink below content width so nothing widens the page at 375px.
 - **Auth:** a centred 1040px split from 1024px: a tangerine panel (headline, rising bars) beside a 440px form card; phones get the logo above the card.

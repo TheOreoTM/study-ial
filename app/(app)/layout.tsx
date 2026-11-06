@@ -3,6 +3,7 @@ import { Logo } from "@/components/logo";
 import { NavLinks } from "@/components/shell/nav-links";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { UserMenu } from "@/components/shell/user-menu";
+import { SearchPalette } from "@/components/search/search-palette";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/session";
 
@@ -15,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="min-h-dvh">
-            <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+            <header className="sticky top-0 z-30 border-b bg-card print:hidden">
                 <div className="mx-auto flex h-16 w-full max-w-[1180px] items-center gap-2 px-4 sm:px-6 lg:gap-6">
                     {user && (
                         <div className="lg:hidden">
@@ -32,7 +33,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                             <NavLinks isAdmin={isAdmin} orientation="horizontal" exclude={["/settings"]} />
                         </div>
                     )}
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                        <SearchPalette signedIn={!!user} isAdmin={isAdmin} />
                         {user ? (
                             <UserMenu name={user.name} email={user.email} image={user.image} compact />
                         ) : (

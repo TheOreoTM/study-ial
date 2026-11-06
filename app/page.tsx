@@ -54,7 +54,7 @@ const features: { title: string; body: string; icon: LucideIcon | null }[] = [
     },
     {
         title: "Plans that adapt",
-        body: "A day-by-day plan that covers every topic before your exam, adds spaced review, and reshuffles when you fall behind.",
+        body: "A day-by-day plan that covers every topic before your exam, adds spaced review, reshuffles when you fall behind, and comes with a focus timer.",
         icon: CalendarRange,
     },
     {
@@ -63,8 +63,8 @@ const features: { title: string; body: string; icon: LucideIcon | null }[] = [
         icon: Zap,
     },
     {
-        title: "Focus timer",
-        body: "A built-in Pomodoro timer linked to your plan, so starting is the easy part.",
+        title: "Mocks and mistakes",
+        body: "Sit a timed paper with an indicative grade, then redo every question you lost marks on until it sticks.",
         icon: Timer,
     },
     {

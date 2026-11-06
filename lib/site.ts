@@ -2,9 +2,11 @@ import {
     BarChart3,
     BookOpen,
     CalendarCheck,
+    ClipboardList,
     FileText,
     Layers,
     LayoutDashboard,
+    NotebookPen,
     Settings,
     Shield,
     Timer,
@@ -19,15 +21,24 @@ export const site = {
     url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
 };
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean };
+export type NavItem = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+    adminOnly?: boolean;
+    /** Other path prefixes that count as this section (e.g. /mock under Exams) */
+    also?: string[];
+};
 
 export const appNav: NavItem[] = [
     { href: "/dashboard", label: "Today", icon: LayoutDashboard },
     { href: "/subjects", label: "Subjects", icon: BookOpen },
     { href: "/papers", label: "Papers", icon: FileText },
     { href: "/progress", label: "Progress", icon: BarChart3 },
+    { href: "/mistakes", label: "Mistakes", icon: NotebookPen },
     { href: "/flashcards", label: "Flashcards", icon: Layers },
-    { href: "/plans", label: "Study plans", icon: CalendarCheck },
+    { href: "/plans", label: "Plans", icon: CalendarCheck },
+    { href: "/exams", label: "Exams", icon: ClipboardList, also: ["/mock"] },
     { href: "/focus", label: "Focus", icon: Timer },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/admin", label: "Admin", icon: Shield, adminOnly: true },

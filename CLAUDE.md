@@ -22,11 +22,24 @@ per-topic **mastery** score → the dashboard and study plans push you toward yo
 pnpm db:dev -n study-ial-dev --detach   # local Postgres (Prisma dev server); URLs are in .env
 pnpm db:migrate                          # prisma migrate dev
 pnpm db:seed                             # idempotent: curriculum, questions, demo user
+pnpm demo:activity                       # local only: weeks of practice/focus history for the demo user
 pnpm dev                                 # http://localhost:3000
 pnpm typecheck && pnpm lint && pnpm test
 ```
 
 Demo login (seeded, non-production only, has ADMIN role): `demo@study-ial.test` / `demo-password`.
+
+Local setup gotchas (all hit in practice):
+- `.env` needs `DATABASE_URL` **and** `SHADOW_DATABASE_URL` on two *different* local ports (prisma dev prints the main
+  TCP port; the shadow is usually the next one up). Never point the shadow at the main DB (Prisma refuses: P3025), and
+  never at production — migrate dev resets its shadow.
+- After `pnpm db:migrate`, run `npx prisma generate` (Prisma 7's migrate doesn't regenerate) and restart `pnpm dev`.
+- If a page keeps reloading itself in dev (endless "[Fast Refresh] rebuilding"), stop `pnpm dev`, delete `.next/dev`
+  and start it again: stale dev state from an earlier run (or a different branch) causes the loop.
+- Open the app on exactly `BETTER_AUTH_URL` (default `http://localhost:3000`). Another host or port makes Better Auth
+  reject sign-in with 403 "Invalid origin".
+- Production migrations run in Vercel's build via `prisma migrate deploy`. Never run `migrate dev`/`db:seed` against a
+  remote database; `PROD_*` variables in a local `.env` aren't read by any tooling.
 
 ## Layout
 
@@ -41,7 +54,14 @@ app/
   (app)/dashboard          today: plan tasks, weak topics, streak
   (app)/subjects/...       curriculum browser — PUBLIC (SEO); practice CTAs need sign-in
   (app)/practice           practice session (topic / unit / weak-topics modes)
-  (app)/progress           mastery breakdown, analytics (focus time, accuracy trends, plan pace), milestones
+  (app)/progress           mastery breakdown, study calendar heatmap, analytics (focus time, accuracy trends, plan
+                           pace), milestones
+  (app)/mistakes           mistake notebook (latest attempt lost marks); practice ?mode=mistakes redoes them
+  (app)/mock               timed mock papers: sit (autosave, clock), self-mark, result with indicative grade.
+                           Questions on a running paper are locked everywhere else (getLockedQuestionIds)
+  (app)/exams              countdown per unit with readiness facts and one next step (lib/readiness.ts)
+  (app)/search             public curriculum search (subjects, units, topics, spec points; never question stems)
+  (app)/subjects/[s]/[u]/checklist   spec-point confidence ratings + printable unit checklist and key equations
   (app)/flashcards         topic decks with spaced repetition (review, own cards); admin review at (app)/admin/flashcards
   (app)/plans              study plans (generator + task list); /plans/community shares plans as templates
   (app)/tutor/actions.ts   AI "explain this" for topic and practice pages (no route; cached, with bank fallback)
@@ -49,13 +69,16 @@ app/
   (app)/papers             private workspace: my papers, upload, viewer, review, attempt, timed exam, review queue,
                            practice by topic (docs/past-papers/)
   (app)/focus              pomodoro timer, logs FocusSession
-  (app)/settings           profile, units, account deletion
+  (app)/settings           profile, units, read-only progress link, account deletion
+  share/[token]            read-only progress for a parent/teacher (token hashed in ProgressShare; noindex)
   (app)/admin              question bank management (ADMIN only); generate (original questions), papers, AI spend
   api/papers/**            the ONLY routes that return paper files, page images, figure crops or attempt photos
 lib/
   db.ts  auth.ts  auth-client.ts  session.ts  ai.ts  email.ts  site.ts  utils.ts
   mastery.ts               pure mastery maths (tested)
   srs.ts analytics.ts milestones.ts tutor.ts community-plans.ts   pure feature logic (tested)
+  mistakes.ts mock-exam.ts checklist.ts search.ts heatmap.ts readiness.ts share.ts shortcuts.ts
+  key-equations.ts card-from-question.ts structured-data.ts         pure feature logic (tested)
   queries/*.ts             server-only read helpers
   papers/                  past papers: config (subject allowlist, serve mode), filename/keys/access (tested),
                            sources/ (Pearson Algolia, PMT manifest), ingest, parse/ (layout + vision engines,
@@ -77,6 +100,23 @@ prisma/
   respects robots.txt, waits ≥2 s per host, and only indexes subjects in `lib/papers/config.ts`.
 - PDFs are stored byte-for-byte; keys follow `ial/{subject}/{unit}/{year}-{series}/{unit}-{paper}-{qp|ms|er}.pdf`.
 - Commands: `pnpm papers:ingest`, `papers:parse`, `papers:tag`, `papers:check-links`, `papers:grade-boundaries`.
+
+## Speed and feel
+
+The product should feel instant and calm. Decisions and budgets are in `docs/decisions/2026-11-premium-feel.md`.
+- **Budgets (laptops first, 375 px must still work):** interactions < 100 ms, navigation shows content or a skeleton
+  < 200 ms, search < 16 ms per keystroke. Every route has a `loading.tsx`.
+- **Search is client-side.** The curriculum index comes from `/api/search/index` (CDN-cached, ~25 KB gzipped) and the
+  signed-in extras from `/api/search/personal` (private). Keystrokes never hit the network. Ranking lives in
+  `lib/search.ts`; prepare an index once (`prepareDocs`) and search the prepared form.
+- **No request per keystroke, no spinner for local work**, optimistic UI for writes the user expects to succeed.
+- **Motion:** state changes and page transitions only, ≤ ~200 ms, off for reduced motion. Nothing loops.
+- **No `backdrop-filter` on overlays or sticky bars.** Measured: the palette's blurred overlay made every keystroke
+  repaint take ~95 ms instead of one frame. Use solid or translucent fills instead.
+- **Client JS stays lean:** Markdown/KaTeX render on the server; add a client dependency only when a server-rendered
+  alternative can't do the job, and justify it in the commit.
+- Personal data never goes into CDN-cached responses (search index, public pages); send it with `Cache-Control:
+  private, no-store`.
 
 ## Conventions
 
@@ -105,5 +145,7 @@ prisma/
 - **Redirect targets** from query params go through `safeRedirect` (`lib/safe-redirect.ts`).
 - **Admins**: `ADMIN_EMAILS` are promoted lazily in `getUser()` only when `emailVerified` is true. Never grant roles
   from unverified input.
+- Printing: dark tokens apply on screen only, so pages print light; use `print:` variants for print layout.
+- `public/sw.js` only serves the offline page; never make it cache app HTML or responses (they're personal).
 - After a schema change, restart `pnpm dev` — the Prisma client is cached on `globalThis` across hot reloads.
 - Formatting: 4-space indent, double quotes, 120 cols (see `.prettierrc`).

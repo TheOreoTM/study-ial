@@ -31,8 +31,10 @@ self-marking against a mark scheme.
 
 ## Capabilities and Constraints
 
-Curriculum browser (subject → unit → topic), practice sessions (MCQ auto-marked; written answers self-marked or
-AI-marked), mastery per topic, adaptive study plans with rescheduling, focus timer with streaks, admin question bank.
+Curriculum browser (subject → unit → topic) with search, practice sessions (MCQ auto-marked; written answers
+self-marked or AI-marked), mastery per topic, a mistake notebook, timed mock papers with indicative grades, spec-point
+confidence checklists, an exam countdown, adaptive study plans with rescheduling, focus timer with streaks, flashcards,
+a read-only progress link for parents and teachers, admin question bank.
 Free to use. Not affiliated with Pearson Edexcel; past papers are linked, not re-hosted.
 
 ## Brand Commitments

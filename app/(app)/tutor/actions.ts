@@ -4,6 +4,7 @@ import { z } from "zod";
 import { aiEnabled, AiQuotaError, fastModelId, remainingAiQuota } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { hasThaana } from "@/lib/dhivehi";
+import { getLockedQuestionIds, LOCKED_MESSAGE } from "@/lib/queries/mock-exams";
 import { assertUser } from "@/lib/session";
 import {
     buildQuestionPrompt,
@@ -157,6 +158,7 @@ export async function explainQuestion(input: { questionId: string }): Promise<Tu
     // The walkthrough gives the answer away, so it's only for questions the student has already answered.
     const answered = await db.attempt.findFirst({ where: { userId: user.id, questionId: q.id }, select: { id: true } });
     if (!answered) return { ok: false, error: "Answer the question first, then ask for an explanation." };
+    if ((await getLockedQuestionIds(user.id)).has(q.id)) return { ok: false, error: LOCKED_MESSAGE };
 
     const ctx = {
         subject: q.topic.unit.subject.name,

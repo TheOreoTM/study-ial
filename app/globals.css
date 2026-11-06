@@ -147,55 +147,58 @@
 }
 
 /* Dark: the same plum, lit from below. Ink becomes the room; cream becomes the text. */
-.dark {
-    --background: #1b1026;
-    --foreground: #fbf4ec;
-    --card: #261835;
-    --card-foreground: var(--foreground);
-    --popover: #2c1d3d;
-    --popover-foreground: var(--foreground);
+/* Paper is always light: printing from dark mode keeps the light tokens. */
+@media not print {
+    .dark {
+        --background: #1b1026;
+        --foreground: #fbf4ec;
+        --card: #261835;
+        --card-foreground: var(--foreground);
+        --popover: #2c1d3d;
+        --popover-foreground: var(--foreground);
 
-    --primary: #ff7a3d;
-    --primary-hover: #ff8c57;
-    --primary-press: #f2672b;
-    --primary-foreground: #2b1240;
-    --primary-soft: #6f2a00; /* warm tangerine glow on plum (oklch 0.38 0.11 45): cream 9.6:1, mastery text ≥4.8:1 */
+        --primary: #ff7a3d;
+        --primary-hover: #ff8c57;
+        --primary-press: #f2672b;
+        --primary-foreground: #2b1240;
+        --primary-soft: #6f2a00; /* warm tangerine glow on plum (oklch 0.38 0.11 45): cream 9.6:1, mastery text ≥4.8:1 */
 
-    --secondary: #2f2041;
-    --secondary-foreground: var(--foreground);
-    --muted: #2f2041;
-    --muted-foreground: #c2b2d0; /* ≥7:1 on card */
-    --accent: #36264a;
-    --accent-foreground: var(--foreground);
-    --selected: #352a5e;
-    --selected-foreground: #d4c7ff;
-    --progress: #a58bff;
-    --track: #3b2b4f;
+        --secondary: #2f2041;
+        --secondary-foreground: var(--foreground);
+        --muted: #2f2041;
+        --muted-foreground: #c2b2d0; /* ≥7:1 on card */
+        --accent: #36264a;
+        --accent-foreground: var(--foreground);
+        --selected: #352a5e;
+        --selected-foreground: #d4c7ff;
+        --progress: #a58bff;
+        --track: #3b2b4f;
 
-    --destructive: #ff7373; /* distinct from mastery bubblegum; ink on it ≈6:1 */
-    --destructive-foreground: #2b1240;
-    --success: #2ec4b6;
-    --warning: #ffd23f;
+        --destructive: #ff7373; /* distinct from mastery bubblegum; ink on it ≈6:1 */
+        --destructive-foreground: #2b1240;
+        --success: #2ec4b6;
+        --warning: #ffd23f;
 
-    --border: #3b2b4f;
-    --border-strong: #8a76a3;
-    --input: #8a76a3;
-    --ring: #a58bff;
+        --border: #3b2b4f;
+        --border-strong: #8a76a3;
+        --input: #8a76a3;
+        --ring: #a58bff;
 
-    --mastery-strong: #2ec4b6;
-    --mastery-developing: #ffd23f;
-    --mastery-weak: #ff8fb8;
-    --mastery-strong-text: #2ec4b6;
-    --mastery-developing-text: #ffd23f;
-    --mastery-weak-text: #ff8fb8;
-    --mastery-strong-pale: #173a3e;
-    --mastery-developing-pale: #3a3226;
-    --mastery-weak-pale: #42213a;
-    --on-mastery: #2b1240;
+        --mastery-strong: #2ec4b6;
+        --mastery-developing: #ffd23f;
+        --mastery-weak: #ff8fb8;
+        --mastery-strong-text: #2ec4b6;
+        --mastery-developing-text: #ffd23f;
+        --mastery-weak-text: #ff8fb8;
+        --mastery-strong-pale: #173a3e;
+        --mastery-developing-pale: #3a3226;
+        --mastery-weak-pale: #42213a;
+        --on-mastery: #2b1240;
 
-    --shadow-card-value: 0 1px 2px rgb(0 0 0 / 0.2), 0 12px 32px -20px rgb(0 0 0 / 0.6);
-    --shadow-raised-value: 0 12px 22px -14px rgb(0 0 0 / 0.7);
-    --shadow-action-value: 0 6px 14px -8px rgb(0 0 0 / 0.6);
+        --shadow-card-value: 0 1px 2px rgb(0 0 0 / 0.2), 0 12px 32px -20px rgb(0 0 0 / 0.6);
+        --shadow-raised-value: 0 12px 22px -14px rgb(0 0 0 / 0.7);
+        --shadow-action-value: 0 6px 14px -8px rgb(0 0 0 / 0.6);
+    }
 }
 
 @layer base {
@@ -283,5 +286,19 @@
     }
     .prose-study .katex-display {
         @apply my-3 overflow-x-auto overflow-y-hidden;
+    }
+}
+
+/* Printing: drop the app chrome and shadows; the page content prints on white. */
+@media print {
+    nextjs-portal {
+        display: none !important;
+    }
+    body {
+        background: white;
+    }
+    main {
+        padding-top: 0 !important;
+        max-width: none !important;
     }
 }

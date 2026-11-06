@@ -24,8 +24,8 @@ export function NavLinks({
         <nav aria-label="Main" className={cn("flex gap-1", horizontal ? "items-center" : "flex-col")}>
             {appNav
                 .filter((item) => (!item.adminOnly || isAdmin) && !exclude.includes(item.href))
-                .map(({ href, label, icon: Icon }) => {
-                    const active = pathname === href || pathname.startsWith(`${href}/`);
+                .map(({ href, label, icon: Icon, also = [] }) => {
+                    const active = [href, ...also].some((p) => pathname === p || pathname.startsWith(`${p}/`));
                     return (
                         <Link
                             key={href}
@@ -34,7 +34,7 @@ export function NavLinks({
                             aria-current={active ? "page" : undefined}
                             className={cn(
                                 "flex min-h-11 items-center gap-3 rounded-full font-display font-bold whitespace-nowrap transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                                horizontal ? "px-4 text-[0.975rem]" : "px-4 text-[1.05rem]",
+                                horizontal ? "px-3 text-[0.975rem] xl:px-4" : "px-4 text-[1.05rem]",
                                 active
                                     ? "bg-selected text-selected-foreground"
                                     : "text-muted-foreground hover:bg-accent hover:text-foreground",

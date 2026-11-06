@@ -1,5 +1,6 @@
 import { BookOpen, FileText, PencilLine, RotateCcw, type LucideIcon } from "lucide-react";
 import type { TaskStatus, TaskType } from "@/lib/generated/prisma/enums";
+import { unitCodeFromTitle } from "./unit-code";
 
 /** The task shape the plan UI needs (matches `PlanTaskView` from lib/queries/plans.ts). */
 export type TaskLike = {
@@ -26,8 +27,15 @@ export const taskTypeMeta: Record<TaskType, { label: string; icon: LucideIcon; t
     PAST_PAPER: { label: "Past paper", icon: FileText, tone: "bg-muted text-foreground" },
 };
 
-/** Where a task's main action goes: the topic page for LEARN, a practice session for PRACTICE/REVIEW. */
-export function taskHref(task: Pick<TaskLike, "type" | "topic">): { href: string; label: string } | null {
+/**
+ * Where a task's main action goes: the topic page for LEARN, a practice session for PRACTICE/REVIEW, and a timed
+ * mock paper for PAST_PAPER (those tasks have no topic; the unit code leads the title, e.g. "WPH11 past paper #1").
+ */
+export function taskHref(task: Pick<TaskLike, "type" | "topic"> & { title?: string }): { href: string; label: string } | null {
+    if (task.type === "PAST_PAPER") {
+        const code = unitCodeFromTitle(task.title ?? "");
+        return { href: code ? `/mock#unit-${code.toLowerCase()}` : "/mock", label: "Sit a timed paper" };
+    }
     const t = task.topic;
     if (!t) return null;
     if (task.type === "LEARN")

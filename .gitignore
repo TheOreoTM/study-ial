@@ -47,7 +47,9 @@ next-env.d.ts
 .taste-skill/
 
 # Redesign screenshots (kept locally, not in the repo)
-/screenshots/
+/screenshots/*
+# …except the autonomous run's per-feature screenshots, which are committed
+!/screenshots/autonomous/
 
 # Local paper storage (used when R2 is not configured)
 /.storage/

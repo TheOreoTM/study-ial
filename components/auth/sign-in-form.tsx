@@ -26,8 +26,10 @@ export function SignInForm({ next }: { next: string }) {
             password: String(form.get("password")),
         });
         if (error) {
+            // Better Auth also answers 403 for other reasons (e.g. "Invalid origin" when the page's URL doesn't match
+            // BETTER_AUTH_URL), so only the email-not-verified code gets the verification message.
             setError(
-                error.status === 403
+                error.code === "EMAIL_NOT_VERIFIED"
                     ? "Please verify your email first — check your inbox for the link."
                     : (error.message ?? "Couldn't sign you in."),
             );

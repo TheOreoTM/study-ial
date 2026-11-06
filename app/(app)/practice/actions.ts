@@ -7,6 +7,7 @@ import { aiEnabled, AiQuotaError, remainingAiQuota } from "@/lib/ai";
 import { hasThaana } from "@/lib/dhivehi";
 import { formatAiFeedback, markMcq, markWithAi as aiMark, parseMarkScheme, selfMarkScore } from "@/lib/marking";
 import { getTopicMastery } from "@/lib/queries/mastery";
+import { getLockedQuestionIds, LOCKED_MESSAGE } from "@/lib/queries/mock-exams";
 import { assertUser } from "@/lib/session";
 import type { AiMarkView, MarkSchemeView, McqResult, RevealResult, SelfMarkResult } from "./types";
 
@@ -41,6 +42,11 @@ function publishedQuestion(questionId: string) {
     });
 }
 
+/** Questions on a running mock paper can't be answered or revealed here until it's handed in. */
+async function onRunningPaper(userId: string, questionId: string) {
+    return (await getLockedQuestionIds(userId)).has(questionId);
+}
+
 function markSchemeView(q: {
     markScheme: string;
     markSchemeEn: string | null;
@@ -57,6 +63,7 @@ export async function submitMcq(input: { questionId: string; optionId: string })
 
     const q = await publishedQuestion(parsed.data.questionId);
     if (!q || q.type !== "MCQ") return { ok: false, error: "Question not found." };
+    if (await onRunningPaper(user.id, q.id)) return { ok: false, error: LOCKED_MESSAGE };
 
     const result = markMcq(q.options, parsed.data.optionId, q.marks);
     if (!result) return { ok: false, error: "That option doesn't belong to this question." };
@@ -81,12 +88,13 @@ export async function submitMcq(input: { questionId: string; optionId: string })
  * Nothing is saved until they submit their ticks with `submitSelfMark`.
  */
 export async function revealMarkScheme(input: { questionId: string }): Promise<RevealResult> {
-    await assertUser();
+    const user = await assertUser();
     const parsed = z.object({ questionId: id }).safeParse(input);
     if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
     const q = await publishedQuestion(parsed.data.questionId);
     if (!q || q.type === "MCQ") return { ok: false, error: "Question not found." };
+    if (await onRunningPaper(user.id, q.id)) return { ok: false, error: LOCKED_MESSAGE };
     return { ok: true, ...markSchemeView(q) };
 }
 
@@ -103,6 +111,7 @@ export async function submitSelfMark(input: {
 
     const q = await publishedQuestion(parsed.data.questionId);
     if (!q || q.type === "MCQ") return { ok: false, error: "Question not found." };
+    if (await onRunningPaper(user.id, q.id)) return { ok: false, error: LOCKED_MESSAGE };
 
     const { points } = parseMarkScheme(q.markScheme);
     const marksAwarded = selfMarkScore(points, parsed.data.ticked, q.marks);
@@ -131,6 +140,7 @@ export async function markWithAi(input: { questionId: string; answer: string }):
 
     const q = await publishedQuestion(parsed.data.questionId);
     if (!q || q.type === "MCQ") return { ok: false, error: "Question not found." };
+    if (await onRunningPaper(user.id, q.id)) return { ok: false, error: LOCKED_MESSAGE };
     if (hasThaana(q.stem)) return { ok: false, error: "AI marking isn't available for this question. Mark it yourself." };
 
     let result;

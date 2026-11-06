@@ -2,6 +2,7 @@ import type { SeedFlashcard, SeedQuestion, SeedSubject } from "./types";
 import { physics } from "./physics";
 import { otherSubjects } from "./other-subjects";
 import { physicsQuestions } from "./questions/physics";
+import { physicsPracticalQuestions } from "./questions/physics-practical";
 import { chemistryQuestions } from "./questions/chemistry";
 import { biologyQuestions } from "./questions/biology";
 import { mathematicsPureQuestions } from "./questions/mathematics-pure";
@@ -17,9 +18,11 @@ import { furtherMathematicsFlashcards } from "./flashcards/further-mathematics";
 
 export const subjects: SeedSubject[] = [physics, ...otherSubjects];
 
-// Physics is the hand-checked, published bank. Every other subject is seeded as DRAFT for admin review.
+// Physics is the hand-checked, published bank (its newer practical-skills questions are DRAFT until checked). Every
+// other subject is seeded as DRAFT for admin review.
 export const questions: SeedQuestion[] = [
     ...physicsQuestions,
+    ...physicsPracticalQuestions,
     ...chemistryQuestions,
     ...biologyQuestions,
     ...mathematicsPureQuestions,

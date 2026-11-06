@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowRight, Check, ClipboardCheck, Loader2, Sparkles, X } from "lucide-react";
 import { markWithAi, revealMarkScheme, submitMcq, submitSelfMark } from "@/app/(app)/practice/actions";
 import type { MarkSchemeView, PracticeQuestion, SessionTopic } from "@/app/(app)/practice/types";
@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { hasThaana } from "@/lib/dhivehi";
 import type { Mastery } from "@/lib/mastery";
+import { enterChecks, ignoreKey, optionIndexForKey } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import type { AiState } from "./practice-session";
 
@@ -199,6 +200,14 @@ function SkipButton({ props, disabled }: { props: Props; disabled?: boolean }) {
     );
 }
 
+function Kbd({ children }: { children: React.ReactNode }) {
+    return (
+        <kbd className="rounded-[6px] bg-muted px-1.5 py-0.5 font-sans text-xs font-bold text-foreground shadow-[inset_0_-1px_0_var(--border-strong)]">
+            {children}
+        </kbd>
+    );
+}
+
 // ─── Multiple choice ─────────────────────────────────────────────────────────
 
 function McqBody(props: Props) {
@@ -229,6 +238,40 @@ function McqBody(props: Props) {
                 { topicId: res.topicId, mastery: res.mastery },
             );
         });
+
+    // A–D / 1–4 pick an option and Enter checks it, so a run of multiple choice works from the keyboard.
+    const optionIds = question.options.map((o) => o.id);
+    const canAnswer = !result && !pending;
+    const shortcuts = useRef({ optionIds, canAnswer, selected, submit });
+    useEffect(() => {
+        shortcuts.current = { optionIds, canAnswer, selected, submit };
+    });
+    useEffect(() => {
+        function onKey(e: KeyboardEvent) {
+            const el = e.target instanceof HTMLElement ? e.target : null;
+            const target = el && {
+                tagName: el.tagName,
+                type: (el as HTMLInputElement).type,
+                isContentEditable: el.isContentEditable,
+                role: el.getAttribute("role"),
+            };
+            if (ignoreKey(e, target)) return;
+            const s = shortcuts.current;
+            if (!s.canAnswer) return;
+            const i = optionIndexForKey(e.key, s.optionIds.length);
+            if (i !== null) {
+                e.preventDefault();
+                setSelected(s.optionIds[i]);
+                return;
+            }
+            if (e.key === "Enter" && s.selected && enterChecks(target)) {
+                e.preventDefault();
+                s.submit();
+            }
+        }
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
 
     return (
         <>
@@ -310,6 +353,13 @@ function McqBody(props: Props) {
             )}
             {result && props.ai.enabled && !hasThaana(question.stem) && <QuestionTutor questionId={question.id} />}
             <ErrorNote error={error} />
+            {!result && (
+                // Only where there's a keyboard worth mentioning (a fine pointer that can hover).
+                <p className="hidden text-right text-[0.8125rem] text-muted-foreground [@media(hover:hover)_and_(pointer:fine)]:block">
+                    Tip: press <Kbd>A</Kbd>–<Kbd>{question.options.at(-1)?.label ?? "D"}</Kbd> to choose and{" "}
+                    <Kbd>Enter</Kbd> to check.
+                </p>
+            )}
             <Actions>
                 {result ? (
                     <NextButton isLast={isLast} onNext={onNext} />
