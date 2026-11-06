@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { aiEnabled, AiQuotaError, remainingAiQuota } from "@/lib/ai";
+import { getProAccess, PRO_REQUIRED } from "@/lib/queries/billing";
 import { hasThaana } from "@/lib/dhivehi";
 import { formatAiFeedback, markMcq, markWithAi as aiMark, parseMarkScheme, selfMarkScore } from "@/lib/marking";
 import { getTopicMastery } from "@/lib/queries/mastery";
@@ -134,6 +135,7 @@ export async function submitSelfMark(input: {
 export async function markWithAi(input: { questionId: string; answer: string }): Promise<AiMarkView> {
     const user = await assertUser();
     if (!aiEnabled) return { ok: false, error: "AI marking isn't available right now. Mark it yourself instead." };
+    if ((await getProAccess(user.id)) !== "pro") return { ok: false, error: PRO_REQUIRED };
 
     const parsed = z.object({ questionId: id, answer }).safeParse(input);
     if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };

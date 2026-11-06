@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 import { PracticeSession } from "@/components/practice/practice-session";
 import { Button } from "@/components/ui/button";
 import { aiEnabled, remainingAiQuota } from "@/lib/ai";
+import { getProAccess } from "@/lib/queries/billing";
 import { requireUser } from "@/lib/session";
 import { parseCount } from "./select";
 import { buildSession, parseMode } from "./session";
@@ -44,9 +45,10 @@ export default async function PracticePage({ searchParams }: { searchParams: Sea
     }
 
     const count = parseCount(sp.count);
-    const [session, remaining] = await Promise.all([
+    const [session, remaining, access] = await Promise.all([
         buildSession(user.id, mode, count),
         aiEnabled ? remainingAiQuota(user.id, "marking") : Promise.resolve(0),
+        getProAccess(user.id),
     ]);
 
     if (!session) {
@@ -129,7 +131,7 @@ export default async function PracticePage({ searchParams }: { searchParams: Sea
             topics={session.topics}
             back={session.back}
             againQuery={again.toString()}
-            ai={{ enabled: aiEnabled, remaining }}
+            ai={{ enabled: aiEnabled, remaining, access }}
         />
     );
 }

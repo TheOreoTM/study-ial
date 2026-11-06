@@ -4,6 +4,7 @@ import { z } from "zod";
 import { aiEnabled, AiQuotaError, fastModelId, remainingAiQuota } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { hasThaana } from "@/lib/dhivehi";
+import { getProAccess } from "@/lib/queries/billing";
 import { getLockedQuestionIds, LOCKED_MESSAGE } from "@/lib/queries/mock-exams";
 import { assertUser } from "@/lib/session";
 import {
@@ -19,6 +20,7 @@ import {
 export type TutorResult =
     | { ok: true; source: "ai" | "cache"; content: string; remaining: number | null }
     | { ok: true; source: "fallback"; reason: "off" | "quota" | "error"; content: string }
+    | { ok: true; source: "fallback"; reason: "pro"; access: "trial" | "upgrade"; content: string }
     | { ok: false; error: string };
 
 const id = z.string().min(1).max(64);
@@ -34,13 +36,19 @@ async function cached(kind: "topic" | "question", refId: string, point: number) 
     });
 }
 
-/** Cache hit → no quota; otherwise the model (with quota), falling back to bank content when AI isn't available. */
+/**
+ * Pro only (cached explanations too: the tutor is the Pro feature, not just the tokens). Cache hit → no quota;
+ * otherwise the model (with quota), falling back to bank content when AI isn't available.
+ */
 async function explain(
     userId: string,
     key: { kind: "topic" | "question"; refId: string; point: number },
     prompt: () => string,
     fallback: () => string | Promise<string>,
 ): Promise<TutorResult> {
+    // No point selling a free week while AI is switched off; the bank fallback below covers that case.
+    const access = aiEnabled ? await getProAccess(userId) : "pro";
+    if (access !== "pro") return { ok: true, source: "fallback", reason: "pro", access, content: await fallback() };
     const hit = await cached(key.kind, key.refId, key.point);
     if (hit) return { ok: true, source: "cache", content: hit.content, remaining: null };
     if (!aiEnabled) return { ok: true, source: "fallback", reason: "off", content: await fallback() };

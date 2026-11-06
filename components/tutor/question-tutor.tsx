@@ -13,24 +13,19 @@ export function QuestionTutor({ questionId }: { questionId: string }) {
     const [error, setError] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
 
-    if (result) return <TutorAnswer result={result} />;
+    const ask = () =>
+        startTransition(async () => {
+            setError(null);
+            const res = await explainQuestion({ questionId });
+            if (res.ok) setResult(res);
+            else setError(res.error);
+        });
+
+    if (result) return <TutorAnswer result={result} onUnlocked={ask} />;
     return (
         <div className="grid gap-3">
             <div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3"
-                    disabled={pending}
-                    onClick={() =>
-                        startTransition(async () => {
-                            setError(null);
-                            const res = await explainQuestion({ questionId });
-                            if (res.ok) setResult(res);
-                            else setError(res.error);
-                        })
-                    }
-                >
+                <Button variant="ghost" size="sm" className="-ml-3" disabled={pending} onClick={ask}>
                     {pending ? <Loader2 className="animate-spin" /> : <Sparkles />}
                     Explain this question step by step
                 </Button>

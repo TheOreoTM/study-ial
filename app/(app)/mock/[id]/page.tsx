@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/page-header";
 import { UnitChip } from "@/components/plans/unit-chip";
 import { Button } from "@/components/ui/button";
 import { aiEnabled, remainingAiQuota } from "@/lib/ai";
+import { getProAccess } from "@/lib/queries/billing";
 import { hasThaana } from "@/lib/dhivehi";
 import { parseMarkScheme } from "@/lib/marking";
 import { plainSnippet } from "@/lib/search";
@@ -69,7 +70,8 @@ export default async function MockPaperPage({ params }: { params: Params }) {
 
     if (mock.status === "MARKING") {
         const mcq = questions.filter((q) => q.type === "MCQ");
-        const aiLeft = aiEnabled ? await remainingAiQuota(user.id, "marking") : 0;
+        const access = aiEnabled ? await getProAccess(user.id) : "pro";
+        const aiLeft = aiEnabled && access === "pro" ? await remainingAiQuota(user.id, "marking") : 0;
         const mcqMarks = paper.attempts.reduce((n, a) => n + a.marksAwarded, 0);
         return (
             <>
@@ -78,6 +80,7 @@ export default async function MockPaperPage({ params }: { params: Params }) {
                     mockId={mock.id}
                     mcqMarks={mcqMarks}
                     mcqPossible={mcq.reduce((n, q) => n + q.marks, 0)}
+                    proPrompt={access === "pro" ? null : access}
                     questions={questions.flatMap((q, i) => {
                         const answer = answers[q.id]?.answer;
                         if (q.type === "MCQ" || !answer) return [];

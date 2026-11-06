@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { aiEnabled, AiQuotaError } from "@/lib/ai";
+import { getProAccess, PRO_REQUIRED } from "@/lib/queries/billing";
 import { hasThaana } from "@/lib/dhivehi";
 import { markMcq, markWithAi as aiMark, parseMarkScheme, selfMarkScore } from "@/lib/marking";
 import {
@@ -318,6 +319,7 @@ export async function suggestMockMarks(input: {
 }): Promise<Result<{ ticks: number[]; comments: string[] }>> {
     const user = await assertUser();
     if (!aiEnabled) return { ok: false, error: "AI marking isn't available right now. Mark it yourself." };
+    if ((await getProAccess(user.id)) !== "pro") return { ok: false, error: PRO_REQUIRED };
     const parsed = z.object({ id, questionId: id }).safeParse(input);
     if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 

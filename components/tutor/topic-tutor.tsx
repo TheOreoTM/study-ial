@@ -40,6 +40,15 @@ export function TopicTutor({
     const [error, setError] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
 
+    const ask = () => {
+        setError(null);
+        startTransition(async () => {
+            const res = await explainTopic({ topicId, point: Number(point) });
+            if (res.ok) setResult(res);
+            else setError(res.error);
+        });
+    };
+
     if (!signedIn) {
         return (
             <p className="text-muted-foreground">
@@ -60,12 +69,7 @@ export function TopicTutor({
                 className="flex flex-col gap-3 sm:flex-row sm:items-end"
                 onSubmit={(e) => {
                     e.preventDefault();
-                    setError(null);
-                    startTransition(async () => {
-                        const res = await explainTopic({ topicId, point: Number(point) });
-                        if (res.ok) setResult(res);
-                        else setError(res.error);
-                    });
+                    ask();
                 }}
             >
                 {specPoints.length > 0 && (
@@ -110,7 +114,7 @@ export function TopicTutor({
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
-            {result && <TutorAnswer result={result} />}
+            {result && <TutorAnswer result={result} onUnlocked={ask} />}
         </div>
     );
 }

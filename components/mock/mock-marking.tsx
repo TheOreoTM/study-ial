@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CircleCheck, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { markMock, suggestMockMarks } from "@/app/(app)/mock/actions";
+import { ProPrompt } from "@/components/billing/pro-prompt";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,11 +31,14 @@ export function MockMarking({
     questions,
     mcqMarks,
     mcqPossible,
+    proPrompt = null,
 }: {
     mockId: string;
     questions: MarkingQuestion[];
     mcqMarks: number;
     mcqPossible: number;
+    /** Without Pro: offer the free week (or Pro) for AI mark suggestions */
+    proPrompt?: "trial" | "upgrade" | null;
 }) {
     const router = useRouter();
     const [ticks, setTicks] = useState<Record<string, number[]>>({});
@@ -91,6 +95,9 @@ export function MockMarking({
                     as an examiner would be.
                 </p>
             </div>
+            {proPrompt && (
+                <ProPrompt access={proPrompt} feature="AI mark suggestions" onUnlocked={() => router.refresh()} />
+            )}
 
             <ol className="grid gap-5">
                 {questions.map((q) => (

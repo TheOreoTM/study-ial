@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { PracticeQuestion, SessionTopic } from "@/app/(app)/practice/types";
 import { Button } from "@/components/ui/button";
+import type { ProAccess } from "@/lib/billing";
 import { MASTERY_WINDOW, type Mastery } from "@/lib/mastery";
 import { cn } from "@/lib/utils";
 import { QuestionView, type QuestionOutcome } from "./question-view";
@@ -11,7 +12,7 @@ import { SessionProgress } from "./session-progress";
 import { SessionSummary } from "./session-summary";
 import { TopicMasteryRow } from "./topic-mastery-row";
 
-export type AiState = { enabled: boolean; remaining: number };
+export type AiState = { enabled: boolean; remaining: number; access: ProAccess };
 
 /**
  * Walks through a practice session one question at a time. All session state lives here, seeded once from
@@ -129,6 +130,7 @@ export function PracticeSession(props: {
                             isLast={index === questions.length - 1}
                             ai={ai}
                             onAiRemaining={(remaining) => setAi((a) => ({ ...a, remaining }))}
+                            onProUnlocked={() => setAi((a) => ({ ...a, access: "pro" }))}
                             onOutcome={onOutcome}
                             onNext={next}
                         />

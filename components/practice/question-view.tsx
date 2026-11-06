@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowRight, Check, ClipboardCheck, Loader2, Sparkles, X } from "lucide-react";
 import { markWithAi, revealMarkScheme, submitMcq, submitSelfMark } from "@/app/(app)/practice/actions";
 import type { MarkSchemeView, PracticeQuestion, SessionTopic } from "@/app/(app)/practice/types";
+import { ProPrompt } from "@/components/billing/pro-prompt";
 import { Markdown } from "@/components/markdown";
 import { QuestionTutor } from "@/components/tutor/question-tutor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -34,6 +35,7 @@ type Props = {
     isLast: boolean;
     ai: AiState;
     onAiRemaining: (remaining: number) => void;
+    onProUnlocked: () => void;
     onOutcome: (o: QuestionOutcome, update?: MasteryUpdate) => void;
     onNext: () => void;
 };
@@ -392,7 +394,7 @@ type WrittenPhase =
       };
 
 function WrittenBody(props: Props) {
-    const { question, ai, onAiRemaining, onOutcome, isLast, onNext } = props;
+    const { question, ai, onAiRemaining, onProUnlocked, onOutcome, isLast, onNext } = props;
     const [answer, setAnswer] = useState("");
     const [phase, setPhase] = useState<WrittenPhase>({ kind: "answering" });
     const [error, setError] = useState<string | null>(null);
@@ -404,7 +406,9 @@ function WrittenBody(props: Props) {
     const locked = phase.kind !== "answering";
     // Dhivehi questions are self-marked: AI marking and the tutor aren't offered on them.
     const dhivehi = hasThaana(question.stem);
-    const aiAvailable = !dhivehi && ai.enabled && ai.remaining > 0;
+    const aiAvailable = !dhivehi && ai.enabled && ai.access === "pro" && ai.remaining > 0;
+    // Without Pro the AI button gives way to the "Start your free week" prompt.
+    const proPrompt = !dhivehi && ai.enabled && ai.access !== "pro" ? ai.access : null;
     const answerId = `answer-${question.id}`;
 
     const record = (marks: number, update: MasteryUpdate) =>
@@ -596,12 +600,23 @@ function WrittenBody(props: Props) {
                             </>
                         ) : (
                             <>
-                                {!dhivehi && aiButton}
+                                {!dhivehi && !proPrompt && aiButton}
                                 {selfButton}
                             </>
                         )}
                     </Actions>
-                    {!dhivehi && (
+                    {proPrompt && (
+                        <ProPrompt
+                            access={proPrompt}
+                            feature="AI marking"
+                            onUnlocked={() => {
+                                onProUnlocked();
+                                // They reached for AI marking: once the free week starts, mark the answer straight away.
+                                if (hasAnswer) markAi();
+                            }}
+                        />
+                    )}
+                    {!dhivehi && !proPrompt && (
                         <p className="text-sm text-muted-foreground sm:text-right">
                             {!ai.enabled
                                 ? "AI marking isn't available right now — mark it yourself against the mark scheme."
