@@ -35,6 +35,7 @@ export function validateParsedPaper(input: unknown): ValidationReport {
 export function validateStructure(paper: ParsedPaper): ValidationReport {
     const issues: Issue[] = [];
     const qs = paper.questions;
+    if (qs.length === 0) issues.push({ level: "error", code: "empty-paper", message: "No questions were found" });
     const numbers = qs.map((q) => q.number);
     const set = new Set<string>();
     for (const n of numbers) {

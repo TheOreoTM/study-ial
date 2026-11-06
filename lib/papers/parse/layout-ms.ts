@@ -127,6 +127,13 @@ export function parseMarkSchemeLayout(pages: PageText[]): ParsedMarkScheme & { e
                 continue;
             }
 
+            // Science schemes close each question with "Total for question 13 4"
+            const sciTotal = /^Total for question (\d{1,2})\s+(\d{1,3})$/i.exec(t);
+            if (sciTotal) {
+                totals.questions[String(Number(sciTotal[1]))] = Number(sciTotal[2]);
+                continue;
+            }
+
             // Table row
             const resolved = labelText ? resolveLabel(labelText, current?.number ?? null) : null;
             if (resolved) {
@@ -138,13 +145,26 @@ export function parseMarkSchemeLayout(pages: PageText[]): ParsedMarkScheme & { e
             if (!current) continue;
             touch(current.regions, line);
 
+            const middleText = middle
+                .map((i) => i.str)
+                .join(" ")
+                .replace(/\s+/g, " ")
+                .trim();
+            const hasCodes = current.points.some((p) => /[MABE]\d/.test(p.code));
             for (const it of right) {
                 const s = it.str.trim();
                 if (!s) continue;
                 const pt = PART_TOTAL_RE.exec(s);
                 const qt = Q_TOTAL_RE.exec(s);
-                if (pt && current.points.length > 0) current.marks = (current.marks ?? 0) + Number(pt[1]);
-                else if (qt && !pt && (/marks?/i.test(s) || it.x > page.width * 0.86)) {
+                const bareNumber = /^\d{1,2}$/.test(s);
+                if (pt && hasCodes) current.marks = (current.marks ?? 0) + Number(pt[1]);
+                else if (pt) {
+                    // Science schemes: "(1)" after each marking point, the point being the text on that line
+                    current.points.push({ code: `(${pt[1]})`, marks: Number(pt[1]), text: middleText.slice(0, 400) });
+                } else if (bareNumber && (middleText || right.length > 1)) {
+                    // Science: a bare number beside a row is the part's marks
+                    current.marks = Number(s);
+                } else if (qt && !pt && (/marks?/i.test(s) || it.x > page.width * 0.86)) {
                     totals.questions[/^(\d+)/.exec(current.number)![1]] = Number(qt[1]);
                     // The question's table ends at its total; what follows is examiner guidance
                     mode = "notes";
@@ -172,7 +192,8 @@ export function parseMarkSchemeLayout(pages: PageText[]): ParsedMarkScheme & { e
         engine: "layout",
         entries: entries.map((e) => ({
             number: e.number,
-            points: e.points.slice(0, 60),
+            // Multiple choice ("D is the correct answer" … 1): one point worth the row's marks
+            points: (e.points.length || !e.marks ? e.points : [{ code: `(${e.marks})`, marks: e.marks, text: e.text[0]?.slice(0, 400) ?? "" }]).slice(0, 60),
             marks: Math.min(100, e.marks ?? (e.points.length ? e.points.reduce((a, p) => a + p.marks, 0) : 0)) || null,
             text: e.text.join("\n").slice(0, 8000),
             regions: toRegions(e.regions).slice(0, 8),

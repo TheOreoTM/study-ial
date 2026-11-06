@@ -218,3 +218,59 @@ describe("validation", () => {
         expect(r.ok).toBe(false);
     });
 });
+
+describe("science papers", () => {
+    it("reads bare question numbers, multiple choice and \"=\" totals", () => {
+        const r = parseQuestionPaperLayout([
+            page(1, [[200, 100, "TOTAL FOR PAPER = 4 MARKS"]]),
+            page(2, [
+                [43, 149, "1"],
+                [61, 149, "Which of the following is a vector quantity?"],
+                [87, 180, "A"],
+                [105, 180, "efficiency"],
+                [87, 204, "B"],
+                [105, 204, "weight"],
+                [348, 276, "(Total for Question 1 = 1 mark)"],
+                [36, 310, "*2"],
+                [61, 310, "A student inflates a balloon and releases it."],
+                [61, 340, "(a)"],
+                [79, 340, "Explain why the balloon moves forwards."],
+                [496, 355, "(3)"],
+                [348, 400, "(Total for Question 2 = 3 marks)"],
+            ]),
+        ]);
+        expect(r.questions.map((q) => [q.number, q.marks])).toEqual([
+            ["1", 1],
+            ["2", 0],
+            ["2(a)", 3],
+        ]);
+        expect(r.totals.paper).toBe(4);
+        expect(validateStructure(r).ok).toBe(true);
+    });
+
+    it("reads science mark schemes: (1) per point, bare part marks, multiple-choice rows", () => {
+        const ms = parseMarkSchemeLayout([
+            page(1, [
+                [72, 53, "Question Number"],
+                [288, 53, "Answer"],
+                [498, 53, "Mark"],
+                [69, 79, "1"],
+                [128, 79, "D is the correct answer"],
+                [508, 79, "1"],
+                [69, 120, "13(a)"],
+                [126, 140, "Use of Ek = ½ m v2"],
+                [471, 140, "(1)"],
+                [126, 160, "Ek = 2.1 × 109 J"],
+                [471, 160, "(1)"],
+                [508, 160, "2"],
+                [126, 200, "Total for question 13 2"],
+            ]),
+        ]);
+        expect(ms.entries.map((e) => [e.number, e.marks, e.points.length])).toEqual([
+            ["1", 1, 1],
+            ["13(a)", 2, 2],
+        ]);
+        expect(ms.entries[1].points[0].text).toContain("Use of Ek");
+        expect(ms.totals.questions["13"]).toBe(2);
+    });
+});

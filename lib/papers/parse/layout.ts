@@ -78,13 +78,15 @@ function joinItems(items: TextItem[]) {
     return out.replace(/\s+/g, " ").trim();
 }
 
-const QUESTION_RE = /^(\d{1,2})\s*\.$/;
-const LABEL_RE = /^\(([a-z]{1,4})\)$/;
+// A leading "*" marks a question assessing extended writing ("*18")
+const QUESTION_RE = /^\*?(\d{1,2})\s*\.$/;
+const LABEL_RE = /^\*?\(([a-z]{1,4})\)$/;
 const MARKS_RE = /^\((\d{1,2})\)$/;
-const TOTAL_Q_RE = /\(?\s*Total for Question (\d{1,2}) is (\d{1,3}) marks?\s*\)?/i;
+// "(Total for Question 3 is 9 marks)" (maths), "(Total for Question 3 = 9 marks)" (sciences)
+const TOTAL_Q_RE = /\(?\s*Total for Question (\d{1,2})\s*(?:is|=)\s*(\d{1,3}) marks?\s*\)?/i;
 // Older papers: "(Total 8 marks)" or "Q3 (Total 8 marks)" after the last part
 const TOTAL_Q_OLD_RE = /^(?:Q(\d{1,2})\s*)?\(\s*Total\s+(\d{1,3})\s+marks?\s*\)$/i;
-const TOTAL_PAPER_RE = /TOTAL FOR PAPER(?:\s*IS|:)?\s*(\d{1,3})\s*MARKS/i;
+const TOTAL_PAPER_RE = /TOTAL FOR PAPER(?:\s*IS|\s*=|:)?\s*(\d{1,3})\s*MARKS/i;
 const FIGURE_RE = /^(?:Figure|Fig\.|Diagram)\s*(\d{1,2})$/i;
 
 type Node = {
@@ -112,7 +114,7 @@ function splitLeadingLabels(items: TextItem[]): TextItem[] {
     let leading = true;
     for (const it of items) {
         if (leading) {
-            const m = /^\s*(\(([a-z]{1,4})\)|\d{1,2}\.)\s+(\S.*)$/.exec(it.str);
+            const m = /^\s*(\*?\(([a-z]{1,4})\)|\*?\d{1,2}\.)\s+(\S.*)$/.exec(it.str);
             if (m) {
                 const share = m[1].length / it.str.length;
                 out.push({ ...it, str: m[1], width: it.width * share });
@@ -183,11 +185,13 @@ export function parseQuestionPaperLayout(pages: PageText[], meta: { unit?: strin
             // Question start: "3." (sometimes split into "3" + ".") at the left margin, next in sequence
             const firstTwo = items.length > 1 ? `${items[0].str}${items[1].str}`.trim() : "";
             const qm = QUESTION_RE.exec(items[0].str.trim()) ?? (QUESTION_RE.test(firstTwo) ? QUESTION_RE.exec(firstTwo) : null);
-            if (qm && items[0].x < page.width * 0.2 && Number(qm[1]) === question + 1) {
-                question = Number(qm[1]);
+            // Science papers print the number without a dot ("12 A man dives…"): only at the margin, followed by text
+            const bare = !qm && /^\*?\d{1,2}$/.test(items[0].str.trim()) && items.length > 1 && items[0].x < page.width * 0.12 ? items[0].str.trim().replace("*", "") : null;
+            if ((qm || bare) && items[0].x < page.width * 0.2 && Number(qm ? qm[1] : bare) === question + 1) {
+                question = Number(qm ? qm[1] : bare);
                 stack = [];
                 pending = [];
-                items = items.slice(QUESTION_RE.test(items[0].str.trim()) ? 1 : 2);
+                items = items.slice(qm && !QUESTION_RE.test(items[0].str.trim()) ? 2 : 1);
                 open(String(question), null, [], [], line);
             }
             if (question === 0) continue; // cover page and instructions
@@ -280,6 +284,13 @@ export function parseQuestionPaperLayout(pages: PageText[], meta: { unit?: strin
         // that starts on the next page): keep it pending.
     }
 
+    // Multiple-choice questions print no "(1)": their only mark is the printed total
+    for (const [qn, total] of Object.entries(totals.questions)) {
+        const own = nodes.filter((n) => n.number === qn || n.number.startsWith(`${qn}(`));
+        const root = byNumber.get(qn);
+        if (root && own.length === 1 && root.marks === 0) root.marks = total;
+    }
+
     const questions: ParsedQuestion[] = nodes.map((n) => {
         const stem = n.textLines
             .map((t) => t.text)
@@ -295,9 +306,9 @@ export function parseQuestionPaperLayout(pages: PageText[], meta: { unit?: strin
             stem,
             marks: n.marks,
             latex: false,
-            figures: n.figures,
+            figures: n.figures.slice(0, 12),
             dependsOn: inferDependsOn(n.number, stem),
-            regions,
+            regions: regions.slice(0, 8),
         };
     });
 
