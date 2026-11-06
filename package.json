@@ -25,8 +25,8 @@
     "papers:tag": "tsx scripts/tag-paper-topics.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1163.0",
-    "@aws-sdk/s3-request-presigner": "3.1163.0",
+    "@aws-sdk/client-s3": "3.1162.0",
+    "@aws-sdk/s3-request-presigner": "3.1162.0",
     "@napi-rs/canvas": "1.0.12",
     "@openrouter/ai-sdk-provider": "3.1.0",
     "@prisma/adapter-pg": "7.10.1",
