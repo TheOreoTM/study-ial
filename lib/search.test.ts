@@ -138,6 +138,7 @@ describe("plainSnippet", () => {
     it("unwraps LaTeX and trims long text", () => {
         expect(plainSnippet("Use $v = f\\lambda$ here")).toBe("Use v = fλ here");
         expect(plainSnippet("$\\Delta E = mc^2$")).toBe("Δ E = mc^2");
+        expect(plainSnippet("length $0.80\\,\\text{m}$ at $120\\,\\text{Hz}$")).toBe("length 0.80 m at 120 Hz");
         expect(plainSnippet("x".repeat(300), 20)).toHaveLength(20);
     });
 });

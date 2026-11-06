@@ -260,6 +260,8 @@ const LATEX_SYMBOLS: Record<string, string> = {
 export function plainSnippet(text: string, max = 180) {
     const plain = text
         .replace(/\$([^$]*)\$/g, "$1")
+        // LaTeX spacing commands (\, \; \: \! and "\ ") are spaces, not punctuation.
+        .replace(/\\[,;:! ]/g, " ")
         .replace(/\\(frac|text|mathrm)\{([^}]*)\}/g, "$2")
         .replace(/\\([A-Za-z]+)/g, (m, name: string) => LATEX_SYMBOLS[name] ?? m)
         .replace(/[*_`#>\\]/g, "")
