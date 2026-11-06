@@ -17,6 +17,10 @@ their exam dates.
   practice near the exam, and reschedules missed work in one click. AI adds an optional personalised summary.
 - **Focus timer** — Pomodoro linked to plan tasks; logs focus time and powers the study streak.
 - **Admin** — question bank editor with live Markdown/LaTeX preview, bulk JSON import, content-gap overview.
+- **Past papers** — an index of open-access Edexcel IAL papers (Maths, Further Maths, Physics, Chemistry, Biology),
+  "Add to my papers", question paper beside mark scheme, uploads (PDF or phone photos), parsing into questions, attempts
+  marked against the scheme (self or AI), explanations, timed exams with estimated grades, spaced review of dropped
+  marks. See [docs/past-papers](docs/past-papers/PROGRESS.md).
 
 ## Stack
 
@@ -64,10 +68,22 @@ pnpm test
 3. The `vercel-build` script runs migrations before building. Seed the curriculum once:
    `DATABASE_URL=<neon url> NODE_ENV=production pnpm db:seed` (the demo user is skipped in production).
 
+## Past papers
+
+```bash
+pnpm papers:ingest --subject mathematics --units WMA11   # discover → filter → download → hash → store → upsert
+pnpm papers:parse --unit WMA11                           # read questions, mark schemes, examiner reports
+pnpm papers:grade-boundaries                             # Pearson's published unit grade boundaries
+pnpm papers:check-links                                  # verify stored source URLs
+```
+
+Files go to Cloudflare R2 when `R2_*` is set, otherwise to `.storage/`. Papers are © Pearson and only ever shown to
+signed-in students for personal study; see [docs/past-papers/DECISIONS.md](docs/past-papers/DECISIONS.md).
+
 ## Content
 
 Curriculum and the starter question bank live in `prisma/seed-data/` as typed TypeScript. All seeded questions are
-original, written in the style of IAL papers. Past-paper questions can be added through **Admin → Import**; Pearson
-papers are copyrighted, so link to the official papers (`sourceRef`) rather than re-hosting PDFs.
+original, written in the style of IAL papers. Pearson past papers live in the separate, private past-papers workspace
+(never in the public question bank).
 
 Study-IAL is not affiliated with or endorsed by Pearson Edexcel.

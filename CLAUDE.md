@@ -45,19 +45,38 @@ app/
   (app)/flashcards         topic decks with spaced repetition (review, own cards); admin review at (app)/admin/flashcards
   (app)/plans              study plans (generator + task list); /plans/community shares plans as templates
   (app)/tutor/actions.ts   AI "explain this" for topic and practice pages (no route; cached, with bank fallback)
+  (app)/past-papers        PUBLIC index of IAL past-paper sittings (metadata only, noindex)
+  (app)/papers             private workspace: my papers, upload, viewer, review, attempt, timed exam, review queue,
+                           practice by topic (docs/past-papers/)
   (app)/focus              pomodoro timer, logs FocusSession
   (app)/settings           profile, units, account deletion
-  (app)/admin              question bank management (ADMIN only)
+  (app)/admin              question bank management (ADMIN only); generate (original questions), papers, AI spend
+  api/papers/**            the ONLY routes that return paper files, page images, figure crops or attempt photos
 lib/
   db.ts  auth.ts  auth-client.ts  session.ts  ai.ts  email.ts  site.ts  utils.ts
   mastery.ts               pure mastery maths (tested)
   srs.ts analytics.ts milestones.ts tutor.ts community-plans.ts   pure feature logic (tested)
   queries/*.ts             server-only read helpers
+  papers/                  past papers: config (subject allowlist, serve mode), filename/keys/access (tested),
+                           sources/ (Pearson Algolia, PMT manifest), ingest, parse/ (layout + vision engines,
+                           validation, matching), jobs, mark, tagging, grades
+  storage/                 StorageAdapter: R2 (when R2_* are set) or local .storage/
+  generate.ts ai-log.ts    original question generation + self-check; per-call token/cost log
 prisma/
   schema.prisma  seed.ts  seed-data/   (curriculum, original questions + flashcards as TS data; non-Physics content
                                         is seeded as DRAFT and never overwritten once in the DB — SEED_REFRESH_DRAFTS=1
                                         rewrites drafts; deleted seed content is remembered in SeedTombstone)
 ```
+
+## Past papers (copyright rules — never break these)
+
+- Pearson files live in private storage and leave only through `app/api/papers/**`, which return 401 signed out and
+  404 for someone else's upload, with `no-store` + `noindex` headers. Never put a paper, page image, crop or parsed
+  question text on a public page, in `public/`, or in the sitemap. `/past-papers` shows sitting metadata only.
+- The indexer never requests `/secure/` paths or sittings inside the restricted window (`PAPERS_RESTRICTED_MONTHS`),
+  respects robots.txt, waits ≥2 s per host, and only indexes subjects in `lib/papers/config.ts`.
+- PDFs are stored byte-for-byte; keys follow `ial/{subject}/{unit}/{year}-{series}/{unit}-{paper}-{qp|ms|er}.pdf`.
+- Commands: `pnpm papers:ingest`, `papers:parse`, `papers:tag`, `papers:check-links`, `papers:grade-boundaries`.
 
 ## Conventions
 
