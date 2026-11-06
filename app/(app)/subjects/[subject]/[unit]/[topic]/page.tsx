@@ -8,6 +8,7 @@ import { TopicTutor } from "@/components/tutor/topic-tutor";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
+import { SampleQuestions } from "@/components/papers/sample-questions";
 import { db } from "@/lib/db";
 import { masteryTone, type MasteryLevel } from "@/lib/mastery";
 import { getTopic, getTopicQuestionTypeCounts, getUnitByCode } from "@/lib/queries/curriculum";
@@ -309,6 +310,8 @@ export default async function TopicPage({ params }: { params: Params }) {
                     </section>
                 </aside>
             </div>
+
+            <SampleQuestions topicId={topic.id} />
 
             {(prev || next) && (
                 <nav aria-label="Other topics in this unit" className="mt-12 grid gap-3 sm:grid-cols-2">

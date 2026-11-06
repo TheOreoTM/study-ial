@@ -193,6 +193,8 @@ model Question {
   // e.g. "WPH11 Jan 2024 Q12" or a URL to the official paper
   sourceRef   String?
   status      QuestionStatus @default(DRAFT)
+  // AI-written original questions: { model, generatedAt, selfCheck: { status, solverAnswer, notes }, similarity }
+  generation  Json?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 

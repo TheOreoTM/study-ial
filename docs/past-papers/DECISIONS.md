@@ -126,3 +126,19 @@ Decisions made while building without stopping to ask. Newest at the bottom of e
 - **Every attempt is stored** (`PaperAttempt`: answer, photo keys, marks, method, feedback JSON, timestamp). Parts
   answered below full marks enter the student's spaced-repetition queue (`PaperQuestionReview`, the flashcards'
   SM-2 scheduler).
+
+## Original question bank
+
+- **Reuses the existing `Question` model and review flow** (`source: ORIGINAL`, DRAFT → PUBLISHED by an admin) with a
+  new `generation` JSON column: model, expected answer, self-check result, closest past paper, and issues.
+- **Generation** uses the smart model (`AI_MODEL_SMART`) with the topic's spec points and up to three of the bank's
+  published questions as house-style examples, under an explicit "original, not a paraphrase" instruction. Questions
+  are text-only (no diagrams), so they can be public.
+- **Self-check is an independent solve**: a second call (the fast model) solves the question without seeing the
+  answer; numbers are compared to 2% (unit powers like `m s^-1` ignored), MCQ letters exactly, otherwise it's
+  "unclear" for the reviewer. The scheme's marks must add up to the question's.
+- **Copyright guard**: every draft is compared (word-trigram Jaccard) with the unit's parsed past-paper parts; at 35%
+  overlap or more it's flagged "too close to WMA11 Jan 2025 Q3(b)". Flagged drafts need an explicit confirm to publish.
+- **Public SEO**: topic pages now show up to three published original questions (with the mark scheme behind a
+  disclosure). Past-paper content never appears there.
+- Admin-only, quota `generate` (60 calls/day by default).
