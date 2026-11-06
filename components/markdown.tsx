@@ -2,6 +2,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+// Registers \ce{} and \pu{} for chemistry (past-paper stems use mhchem)
+import "katex/contrib/mhchem";
 import { hasThaana } from "@/lib/dhivehi";
 import { remarkUnderline } from "@/lib/remark-underline";
 import { cn } from "@/lib/utils";

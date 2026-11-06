@@ -50,3 +50,8 @@ next-env.d.ts
 /screenshots/*
 # …except the autonomous run's per-feature screenshots, which are committed
 !/screenshots/autonomous/
+
+# Local paper storage (used when R2 is not configured)
+/.storage/
+# Indexer HTTP cache
+/.cache/

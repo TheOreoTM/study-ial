@@ -10,6 +10,7 @@ import { TopicTutor } from "@/components/tutor/topic-tutor";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
+import { SampleQuestions } from "@/components/papers/sample-questions";
 import { db } from "@/lib/db";
 import { markLevel, masteryTone } from "@/lib/mastery";
 import { getTopic, getTopicQuestionTypeCounts, getUnitByCode } from "@/lib/queries/curriculum";
@@ -76,7 +77,7 @@ export default async function TopicPage({ params }: { params: Params }) {
     if (subjectSlug !== unit.subject.slug || code !== unit.code.toLowerCase())
         permanentRedirect(`${unitHref}/${topic.slug}`);
 
-    const [typeCounts, deck, mastery, recent, mistakes, ratings] = await Promise.all([
+    const [typeCounts, deck, mastery, recent, mistakes, ratings, paperParts] = await Promise.all([
         getTopicQuestionTypeCounts(topic.id),
         user ? getDeckCounts(user.id, [topic.id]).then((d) => d.get(topic.id)!) : null,
         user ? getTopicMastery(user.id, [topic.id]).then((m) => m.get(topic.id)!) : null,
@@ -97,6 +98,8 @@ export default async function TopicPage({ params }: { params: Params }) {
             : [],
         user ? countOpenMistakes(user.id, { topicId: topic.id }) : 0,
         user ? getSpecRatings(user.id, [topic]).then((r) => r.get(topic.id)!) : null,
+        // Past-paper parts on this topic: only counted for signed-in students (nothing from papers on public pages)
+        user ? db.paperQuestion.count({ where: { topicId: topic.id, children: { none: {} }, paper: { type: "QP", sitting: { ownerId: null } } } }) : 0,
     ]);
     const total = [...typeCounts.values()].reduce((a, b) => a + b, 0);
 
@@ -331,6 +334,20 @@ export default async function TopicPage({ params }: { params: Params }) {
                         </section>
                     )}
 
+                    {paperParts > 0 && (
+                        <section aria-labelledby="paper-parts" className="rounded-xl border bg-card p-5 shadow-card">
+                            <h2 id="paper-parts" className="mb-1 text-lg">
+                                Past-paper questions
+                            </h2>
+                            <p className="mb-3 text-muted-foreground">
+                                {paperParts} part{paperParts === 1 ? "" : "s"} from real papers are tagged with this topic.
+                            </p>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/papers/topics/${topic.id}`}>Practise them</Link>
+                            </Button>
+                        </section>
+                    )}
+
                     <section aria-labelledby="question-types" className="rounded-xl bg-muted p-5">
                         <h2 id="question-types" className="mb-3 text-lg">
                             Questions
@@ -358,6 +375,8 @@ export default async function TopicPage({ params }: { params: Params }) {
                     </section>
                 </aside>
             </div>
+
+            <SampleQuestions topicId={topic.id} />
 
             {(prev || next) && (
                 <nav aria-label="Other topics in this unit" className="mt-12 grid gap-3 sm:grid-cols-2">

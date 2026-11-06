@@ -15,6 +15,7 @@ const PROTECTED = [
     "/mistakes",
     "/mock",
     "/exams",
+    "/papers",
 ];
 
 export function proxy(request: NextRequest) {

@@ -3,6 +3,7 @@ import {
     BookOpen,
     CalendarCheck,
     ClipboardList,
+    FileText,
     Layers,
     LayoutDashboard,
     NotebookPen,
@@ -32,6 +33,7 @@ export type NavItem = {
 export const appNav: NavItem[] = [
     { href: "/dashboard", label: "Today", icon: LayoutDashboard },
     { href: "/subjects", label: "Subjects", icon: BookOpen },
+    { href: "/papers", label: "Papers", icon: FileText },
     { href: "/progress", label: "Progress", icon: BarChart3 },
     { href: "/mistakes", label: "Mistakes", icon: NotebookPen },
     { href: "/flashcards", label: "Flashcards", icon: Layers },

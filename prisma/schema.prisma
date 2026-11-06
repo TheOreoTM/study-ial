@@ -35,6 +35,9 @@ model User {
   flashcards    Flashcard[]
   cardReviews   FlashcardReview[]
   milestones    UserMilestone[]
+  papers        UserPaper[]
+  ownedSittings PaperSitting[]
+  paperAttempts PaperAttempt[]
   mockExams     MockExam[]
   specRatings   SpecPointRating[]
   progressShare ProgressShare?
@@ -119,6 +122,7 @@ model Unit {
   questions Question[]
   students  UserUnit[]
   plans     StudyPlanUnit[]
+  sittings  PaperSitting[]
   mockExams MockExam[]
 
   @@unique([subjectId, number])
@@ -140,6 +144,7 @@ model Topic {
   planTasks  StudyPlanTask[]
   focusTimes FocusSession[]
   flashcards Flashcard[]
+  paperQuestions PaperQuestion[]
   specRatings SpecPointRating[]
 
   @@unique([unitId, slug])
@@ -193,6 +198,8 @@ model Question {
   // e.g. "WPH11 Jan 2024 Q12" or a URL to the official paper
   sourceRef   String?
   status      QuestionStatus @default(DRAFT)
+  // AI-written original questions: { model, generatedAt, selfCheck: { status, solverAnswer, notes }, similarity }
+  generation  Json?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -514,4 +521,297 @@ model RateLimit {
   lastRequest BigInt
 
   @@map("rateLimit")
+}
+
+// ─── Past papers ─────────────────────────────────────────────────────────────
+// Pearson papers are copyright: files live in private storage and are only served to signed-in users through
+// app/api/papers/**. Public pages may show sitting metadata only. See docs/past-papers/.
+
+enum PaperSeries {
+  JAN
+  JUN
+  OCT
+}
+
+enum PaperDocType {
+  QP // question paper
+  MS // mark scheme
+  ER // examiner report
+}
+
+enum PaperSource {
+  PEARSON
+  PMT
+  UPLOAD
+}
+
+enum ParseStatus {
+  NONE
+  QUEUED
+  PARSING
+  NEEDS_REVIEW
+  READY
+  FAILED
+}
+
+// One exam sitting (unit + paper variant + series). Groups its QP, MS and ER. Public index sittings have no owner;
+// a student's private upload gets its own sitting with ownerId set.
+model PaperSitting {
+  id        String       @id @default(cuid())
+  subject   String // subject slug, e.g. "mathematics"
+  spec      String? // "2018" | "2013"
+  unitCode  String // "WMA11"
+  unitId    String?
+  unit      Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  paperCode String       @default("01") // "01", "01a", "01r"
+  year      Int?
+  series    PaperSeries?
+  // Set for private uploads only
+  ownerId   String?
+  owner     User?        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title     String? // uploads: the student's own label
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  papers   Paper[]
+  savedBy  UserPaper[]
+  sessions PaperExamSession[]
+
+  @@index([subject, unitCode, year])
+  @@index([ownerId])
+}
+
+// One stored file: an indexed Pearson/PMT document or a student's upload.
+model Paper {
+  id             String       @id @default(cuid())
+  sittingId      String
+  sitting        PaperSitting @relation(fields: [sittingId], references: [id], onDelete: Cascade)
+  type           PaperDocType
+  source         PaperSource
+  // Original URL exactly as listed (null for uploads). Lets serving switch to "fetch from source" per subject.
+  sourceUrl      String?      @unique
+  sourceTitle    String?
+  // Storage key of the PDF, or of page 1 for an image upload (pages in pageKeys)
+  storageKey     String
+  pageKeys       String[]
+  mime           String       @default("application/pdf")
+  sha256         String
+  sizeBytes      Int
+  pageCount      Int
+  // Date in the filename (publication date, not the sitting)
+  publishedAt    DateTime?
+  parseStatus    ParseStatus  @default(NONE)
+  parseError     String?
+  // Link checker
+  lastCheckedAt  DateTime?
+  lastCheckOk    Boolean?
+  lastCheckNote  String?
+  uploadedById   String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  questions PaperQuestion[]
+
+  @@index([sha256])
+  @@index([sittingId, type])
+  @@index([parseStatus])
+  @@map("papers")
+}
+
+// Parse cache: each unique file (by hash) is parsed once and reused by every Paper with that content.
+model PaperParse {
+  id         String       @id @default(cuid())
+  sha256     String
+  docType    PaperDocType
+  engine     String // "text" | "vision"
+  model      String?
+  result     Json
+  validation Json
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([sha256, docType])
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+// Database-backed background jobs (parsing, mark-scheme matching, topic tagging). Claimed with a lock so two
+// runners never work on the same job; resumable through `state`.
+model PaperJob {
+  id         String    @id @default(cuid())
+  kind       String // "parse" | "match" | "tag"
+  paperId    String
+  status     JobStatus @default(QUEUED)
+  attempts   Int       @default(0)
+  // Engine progress so a long parse can resume across invocations
+  state      Json?
+  error      String?
+  // User who triggered it (for AI quota); null for system/indexer jobs
+  userId     String?
+  lockedAt   DateTime?
+  runAfter   DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([status, runAfter])
+  @@index([paperId])
+}
+
+// A question, part or sub-part of a question paper. `number` is the full path ("3(b)(ii)"); parentId builds the tree.
+model PaperQuestion {
+  id           String          @id @default(cuid())
+  paperId      String
+  paper        Paper           @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  parentId     String?
+  parent       PaperQuestion?  @relation("PaperQuestionTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     PaperQuestion[] @relation("PaperQuestionTree")
+  number       String
+  order        Int
+  // Markdown with $LaTeX$ (and \ce{} for chemistry)
+  stem         String
+  // Marks for this part alone (0 for a question header whose marks sit in its parts)
+  marks        Int             @default(0)
+  // Page and region the part occupies ([x0,y0,x1,y1] fractions), for the "view on the page" crop
+  page         Int?
+  bbox         Float[]
+  // [{ page, bbox, key }] figures cropped server-side from the page image
+  figures      Json            @default("[]")
+  dependsOn    String[]
+  // Matched mark-scheme points [{ text, marks, code }] and notes
+  markPoints   Json?
+  markNotes    String?
+  // Common mistakes noted in the examiner report (signed-in users only)
+  examinerNotes String?
+  topicId      String?
+  topic        Topic?          @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  // Admin/student edited this after parsing
+  edited       Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  attempts PaperAttempt[]
+  reviews  PaperQuestionReview[]
+
+  @@unique([paperId, number])
+  @@index([topicId])
+}
+
+// A sitting saved to a student's workspace ("Add to my papers").
+model UserPaper {
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sittingId String
+  sitting   PaperSitting @relation(fields: [sittingId], references: [id], onDelete: Cascade)
+  addedAt   DateTime     @default(now())
+
+  @@id([userId, sittingId])
+}
+
+enum PaperMarkMethod {
+  SELF
+  AI // marked against matched mark-scheme points
+  AI_ESTIMATED // no mark scheme available: the model estimated marks
+}
+
+model PaperAttempt {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     PaperQuestion     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  sessionId    String?
+  session      PaperExamSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  answer       String?
+  // Photos of handwritten working (private storage keys)
+  imageKeys    String[]
+  marksAwarded Int?
+  maxMarks     Int
+  method       PaperMarkMethod?
+  // { points: [{ point, awarded, comment }], feedback }
+  feedback     Json?
+  createdAt    DateTime          @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, questionId])
+  @@index([sessionId])
+}
+
+enum ExamMode {
+  PRACTICE
+  TIMED
+}
+
+// A full-paper attempt (timed exam mode or untimed practice of the whole paper).
+model PaperExamSession {
+  id          String       @id @default(cuid())
+  userId      String
+  sittingId   String
+  sitting     PaperSitting @relation(fields: [sittingId], references: [id], onDelete: Cascade)
+  mode        ExamMode
+  startedAt   DateTime     @default(now())
+  // Timed mode deadline
+  endsAt      DateTime?
+  submittedAt DateTime?
+  totalMarks  Int?
+  maxMarks    Int?
+  grade       String?
+  summary     Json?
+
+  attempts PaperAttempt[]
+
+  @@index([userId, startedAt])
+}
+
+// Spaced repetition of paper questions a student dropped marks on (same SM-2 state as flashcards).
+model PaperQuestionReview {
+  userId         String
+  questionId     String
+  question       PaperQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  dueDay         DateTime      @db.Date
+  intervalDays   Int
+  ease           Float
+  reps           Int           @default(0)
+  lapses         Int           @default(0)
+  lastReviewedAt DateTime
+
+  @@id([userId, questionId])
+  @@index([userId, dueDay])
+}
+
+// Raw-mark grade boundaries for one unit in one series, with where they came from.
+model GradeBoundary {
+  id        String      @id @default(cuid())
+  unitCode  String
+  paperCode String      @default("01")
+  year      Int
+  series    PaperSeries
+  maxMark   Int
+  // { "A*"?: n, A: n, B: n, C: n, D: n, E: n }
+  grades    Json
+  sourceUrl String
+  createdAt DateTime    @default(now())
+
+  @@unique([unitCode, paperCode, year, series])
+}
+
+// Every model call, for cost control and the admin spend view. No prompts or answers are stored here.
+model AiCallLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  feature      String
+  model        String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  // Estimated cost in micro-dollars (1e-6 USD)
+  costMicros   Int      @default(0)
+  ok           Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }

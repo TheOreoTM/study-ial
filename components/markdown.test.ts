@@ -44,3 +44,11 @@ describe("Markdown direction", () => {
         expect(html).not.toContain("lang=");
     });
 });
+
+describe("Markdown chemistry", () => {
+    it("renders mhchem formulae", () => {
+        const html = render("Sulfuric acid is $\\ce{H2SO4}$");
+        expect(html).toContain("katex");
+        expect(html).not.toContain("katex-error");
+    });
+});

@@ -10,11 +10,18 @@ const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY ?? 
 export const fastModelId = () => process.env.AI_MODEL_FAST || "z-ai/glm-5.3-flash";
 export const fastModel = () => openrouter.chat(fastModelId());
 /** Stronger model for harder reasoning. */
-export const smartModel = () => openrouter.chat(process.env.AI_MODEL_SMART || "google/gemini-2.5-pro");
+export const smartModelId = () => process.env.AI_MODEL_SMART || "google/gemini-2.5-pro";
+export const smartModel = () => openrouter.chat(smartModelId());
+/** Vision-capable model for reading papers and photos of handwritten working. */
+export const visionModelId = () => process.env.AI_MODEL_VISION || "google/gemini-2.5-flash";
+export const visionModel = () => openrouter.chat(visionModelId());
+export const modelById = (id: string) => openrouter.chat(id);
 
-export type AiFeature = "marking" | "plan" | "tutor";
+// marking/tutor cover past-paper marking and explanations too; parse = reading an uploaded paper (per model call);
+// generate = admin-only original question generation
+export type AiFeature = "marking" | "plan" | "tutor" | "parse" | "generate";
 
-const DEFAULT_LIMITS: Record<AiFeature, number> = { marking: 40, plan: 5, tutor: 20 };
+const DEFAULT_LIMITS: Record<AiFeature, number> = { marking: 40, plan: 5, tutor: 20, parse: 30, generate: 60 };
 
 export function dailyLimit(feature: AiFeature) {
     const raw = process.env[`AI_DAILY_LIMIT_${feature.toUpperCase()}`];
