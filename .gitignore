@@ -48,3 +48,8 @@ next-env.d.ts
 
 # Redesign screenshots (kept locally, not in the repo)
 /screenshots/
+
+# Local paper storage (used when R2 is not configured)
+/.storage/
+# Indexer HTTP cache
+/.cache/

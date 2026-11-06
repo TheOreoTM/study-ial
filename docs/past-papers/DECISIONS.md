@@ -1,0 +1,61 @@
+# Past Papers — decisions
+
+Decisions made while building without stopping to ask. Newest at the bottom of each section.
+
+## Process
+
+- **Branch.** Work happens on `feat/past-papers`, cut from `claude/dazzling-turing-v5nswx` (identical to `main` at the
+  time: the redesign had already been merged). The PR targets `main`.
+- **Local database.** Tested against a local Postgres 16 (`postgresql://study:study@localhost/study_ial`), the same
+  migrations Neon runs in production.
+
+## Discovery & ingestion
+
+- **Pearson discovery uses Algolia, not HTML.** The course-materials page (`…/mathematics-2018.coursematerials.html`)
+  is an Angular app whose `courseMaterials` controller reads three hidden inputs (`algoliaAppId`, `algoliaAPIKey`,
+  `algoliaIndexName`) and calls Algolia's `browse` API with filters such as
+  `category:"Pearson-UK:Specification-Code/ial18-mathematics" AND category:"Pearson-UK:Category/Exam-materials" AND type:"dam:Asset"`.
+  That JSON is the listing. The ingest script reads the app id, search-only key and index name **from the public page
+  at run time** (so a key rotation doesn't break it) and calls the same endpoint the browser calls.
+- **Series comes from the listing.** Each record carries `Pearson-UK:Exam-Series/October-2023`, which is the sitting.
+  The filename date (`…-rms-20230112.pdf`) is the publication date and is stored separately (`publishedAt`). If a
+  record has no series facet, the title ("… - October 2023") is used, then the PDF cover page text.
+- **Restricted window.** Pearson moves the newest sittings to `/content/dam/secure/silver/…` (centre login). On
+  2026-11-06 that was exactly January 2026 and June 2026, plus a handful of re-issued 2024 files. Rules, all applied:
+  skip any URL containing `/secure/` (robots.txt also disallows `*/secure/*` and `*/silver/*`), skip any sitting that
+  ended less than `PAPERS_RESTRICTED_MONTHS` (default 12) months ago, and reject any download that isn't
+  `application/pdf` starting with `%PDF-` (missing files redirect to an HTML 404 page). Restricted URLs are never
+  requested at all, not even with HEAD.
+- **The `secure-content/silver` category tag is not used as the access signal.** Almost every record carries it,
+  including files under the open `/content/dam/pdf/` path that download without a login. The URL path is what
+  decides.
+- **Paper variants.** Filenames like `wma11-01a-que-…` (alternative timezone paper) and `wma12-01r-…` (re-issued
+  paper) are separate sittings with paper codes `01a` / `01r`, so each has its own QP/MS/ER and its own storage key.
+- **Modified papers** (`Modified-question-paper`, zip files of enlarged/braille-ready papers) are skipped: they are
+  zips, duplicate the standard paper, and are accessibility materials.
+- **User-Agent** is `StudyIAL-PaperIndexer/1.0 (+https://study.oreotm.xyz/takedown)` — descriptive, links to the
+  takedown page, no personal email.
+- **PMT is fallback only** and is only consulted for (unit, paper, sitting, type) combinations Pearson's open listing
+  doesn't have. For the 2018 Maths spec Pearson hosts every sitting from January 2019 to October 2025, so PMT adds
+  nothing there yet; the adapter exists for subjects/sittings Pearson has dropped.
+
+## Storage & serving
+
+- **Signed URL lifetime: 5 minutes**, issued per request by `/api/papers/files/[paperId]` after the session and
+  access check. Local storage streams the bytes through the same route instead (no public directory).
+- **Serve mode per subject** (`serve: "storage" | "source"` in `lib/papers/config.ts`). In `source` mode the route
+  redirects the signed-in user to the stored `sourceUrl` instead of our copy; nothing else changes.
+- **Public index is `noindex` and not in the sitemap.** The brief allows metadata on the public index; keeping it out of
+  search results as well is the conservative reading of "nothing Pearson-owned on SEO pages".
+- **Subject in storage keys follows Pearson's grouping.** Pearson lists Mechanics (WME), Statistics (WST) and
+  Decision (WDM) under Mathematics, so their keys sit under `ial/mathematics/…` even though the curriculum seed files
+  WME03/WST03 under Further Mathematics. The browse UI groups a sitting by its linked curriculum unit's subject, so
+  students see it where they expect; keys never move once written.
+- **Unused papers** (prepared for the cancelled January 2022 sitting, `…_UNUSED.pdf`) are skipped: they have no real
+  sitting, grade boundaries or examiner report.
+- **Corrected re-issues** (`…-updated.pdf`, "(Updated)" in the title) win over the original file for the same slot.
+- **Downloads are cached on disk** (`.cache/http/`, gitignored) as well as listings, so a run that fails after
+  downloading never requests the same file twice.
+- **PMT discovery is manifest-driven** (`data/papers/pmt-manifest.json`). PMT's paper pages render their link lists
+  client-side and its sitemaps only expose revision pages, so there's no stable listing to crawl politely. The
+  manifest is empty today because Pearson's open listing covers every IAL sitting we index.
