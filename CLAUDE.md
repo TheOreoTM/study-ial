@@ -29,6 +29,16 @@ pnpm typecheck && pnpm lint && pnpm test
 
 Demo login (seeded, non-production only, has ADMIN role): `demo@study-ial.test` / `demo-password`.
 
+Local setup gotchas (all hit in practice):
+- `.env` needs `DATABASE_URL` **and** `SHADOW_DATABASE_URL` on two *different* local ports (prisma dev prints the main
+  TCP port; the shadow is usually the next one up). Never point the shadow at the main DB (Prisma refuses: P3025), and
+  never at production — migrate dev resets its shadow.
+- After `pnpm db:migrate`, run `npx prisma generate` (Prisma 7's migrate doesn't regenerate) and restart `pnpm dev`.
+- Open the app on exactly `BETTER_AUTH_URL` (default `http://localhost:3000`). Another host or port makes Better Auth
+  reject sign-in with 403 "Invalid origin".
+- Production migrations run in Vercel's build via `prisma migrate deploy`. Never run `migrate dev`/`db:seed` against a
+  remote database; `PROD_*` variables in a local `.env` aren't read by any tooling.
+
 ## Layout
 
 ```
@@ -69,6 +79,21 @@ prisma/
                                         is seeded as DRAFT and never overwritten once in the DB — SEED_REFRESH_DRAFTS=1
                                         rewrites drafts; deleted seed content is remembered in SeedTombstone)
 ```
+
+## Speed and feel
+
+The product should feel instant and calm. Decisions and budgets are in `docs/decisions/2026-11-premium-feel.md`.
+- **Budgets (laptops first, 375 px must still work):** interactions < 100 ms, navigation shows content or a skeleton
+  < 200 ms, search < 16 ms per keystroke. Every route has a `loading.tsx`.
+- **Search is client-side.** The curriculum index comes from `/api/search/index` (CDN-cached, ~25 KB gzipped) and the
+  signed-in extras from `/api/search/personal` (private). Keystrokes never hit the network. Ranking lives in
+  `lib/search.ts`; prepare an index once (`prepareDocs`) and search the prepared form.
+- **No request per keystroke, no spinner for local work**, optimistic UI for writes the user expects to succeed.
+- **Motion:** state changes and page transitions only, ≤ ~200 ms, off for reduced motion. Nothing loops.
+- **Client JS stays lean:** Markdown/KaTeX render on the server; add a client dependency only when a server-rendered
+  alternative can't do the job, and justify it in the commit.
+- Personal data never goes into CDN-cached responses (search index, public pages); send it with `Cache-Control:
+  private, no-store`.
 
 ## Conventions
 
