@@ -68,7 +68,10 @@ export async function pageTexts(doc: PdfDoc, pages?: number[]): Promise<PageText
             if (!str) continue;
             const [, , , d, e, f] = it.transform as number[];
             const h = Math.abs(d) || it.height || 0;
-            items.push({ str, x: e, y: vp.height - f - h, width: it.width, height: h });
+            // Through the viewport, not `height - y`: some pages' boxes don't start at the origin (Pearson's 2025
+            // papers use [28.35 28.35 623.6 870.2])
+            const [vx, vy] = vp.convertToViewportPoint(e, f);
+            items.push({ str, x: vx, y: vy - h, width: it.width, height: h });
         }
         out.push({ page: n, width: vp.width, height: vp.height, items });
         page.cleanup();

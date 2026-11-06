@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attemptImageKey, figureKey, pageImageKey, paperKey, parsePaperKey, uploadImageKey, uploadPdfKey } from "@/lib/papers/keys";
+import { attemptImageKey, figureKey, isOwnAttemptKey, pageImageKey, paperKey, parsePaperKey, uploadImageKey, uploadPdfKey } from "@/lib/papers/keys";
 
 const sha = "a".repeat(64);
 
@@ -45,5 +45,15 @@ describe("derived keys", () => {
     it("rejects bad hashes and ids", () => {
         expect(() => uploadPdfKey("../../x")).toThrow();
         expect(() => attemptImageKey("../x", "a", "jpg")).toThrow();
+    });
+});
+
+describe("isOwnAttemptKey", () => {
+    it("accepts only the user's own, well-formed keys", () => {
+        expect(isOwnAttemptKey("u1", "attempts/u1/abc.jpg")).toBe(true);
+        expect(isOwnAttemptKey("u1", "attempts/u2/abc.jpg")).toBe(false);
+        expect(isOwnAttemptKey("u1", "attempts/u1/../u2/abc.jpg")).toBe(false);
+        expect(isOwnAttemptKey("u1", "attempts/u1/abc.jpg/../../x")).toBe(false);
+        expect(isOwnAttemptKey("u1", "uploads/abc.pdf")).toBe(false);
     });
 });

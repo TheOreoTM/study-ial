@@ -287,7 +287,7 @@ export function parseQuestionPaperLayout(pages: PageText[], meta: { unit?: strin
             .trim();
         const regions: Region[] = [...n.regions.entries()].map(([page, r]) => {
             const d = dims.get(page)!;
-            return { page, bbox: [0.06, Math.max(0, (r.top - 4) / d.h), 0.94, Math.min(1, (r.bottom + 4) / d.h)] };
+            return { page, bbox: [0.06, Math.max(0, (r.top - 5) / d.h), 0.94, Math.min(1, (r.bottom + 9) / d.h)] };
         });
         return {
             number: n.number,

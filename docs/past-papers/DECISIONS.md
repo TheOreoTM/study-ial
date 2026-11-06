@@ -107,3 +107,22 @@ Decisions made while building without stopping to ask. Newest at the bottom of e
   which also strips EXIF (location) data. HEIC is rejected with instructions. Direct-to-R2 presigned uploads would
   lift the cap and are listed as a next step.
 - **Limits** (env-configurable): 4 MB per upload, 60 PDF pages, 30 photos, 10 uploads per student per Maldives day.
+
+## Attempt, mark, explain
+
+- **One part at a time** (`/papers/[id]/attempt?part=…`), with the question's earlier parts shown above as context
+  and a navigator of every part coloured by the student's latest score (teal full, sun partial, bubblegum none, the
+  same scheme as practice sessions). The whole paper in one sitting is the timed exam mode.
+- **Answers**: typed (Markdown with `$LaTeX$`, live KaTeX preview) and/or up to 3 photos of handwritten working, which
+  are re-encoded server-side and stored privately under `attempts/{userId}/…`; only their owner can fetch them.
+- **AI marking sends images, not just text**: crops of the printed part (with its context) and of the matched
+  mark-scheme rows, plus the parsed mark codes and examiner guidance, to the vision model. The model returns marks per
+  code with a comment, a justification and feedback; the total is recomputed from its own ticks when they disagree.
+  Without a matched scheme the marks are labelled **AI-estimated** (`AI_ESTIMATED`).
+- **Self-marking without AI** shows the cropped scheme rows and lets the student tick the M/A/B codes they earned (or
+  slide a score when no codes were parsed).
+- **Explain / hints / similar question** use the same images. Without AI, "explain" and "hints" fall back to a summary
+  of what the scheme awards plus the examiner report's commentary; "similar question" needs AI.
+- **Every attempt is stored** (`PaperAttempt`: answer, photo keys, marks, method, feedback JSON, timestamp). Parts
+  answered below full marks enter the student's spaced-repetition queue (`PaperQuestionReview`, the flashcards'
+  SM-2 scheduler).

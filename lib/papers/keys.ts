@@ -76,3 +76,9 @@ export function attemptImageKey(userId: string, id: string, ext: "jpg" | "png" |
     if (!/^[A-Za-z0-9_-]{1,64}$/.test(userId) || !/^[A-Za-z0-9_-]{1,64}$/.test(id)) throw new Error("Invalid id");
     return `attempts/${userId}/${id}.${ext}`;
 }
+
+/** True only for a key this exact function produced for this user: attempts/{userId}/{id}.{ext}. No traversal. */
+export function isOwnAttemptKey(userId: string, key: string) {
+    const m = /^attempts\/([A-Za-z0-9_-]{1,64})\/([A-Za-z0-9_-]{1,64})\.(jpg|png|webp)$/.exec(key);
+    return !!m && m[1] === userId;
+}
