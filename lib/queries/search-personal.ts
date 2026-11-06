@@ -5,21 +5,12 @@ import { openMistakes } from "@/lib/mistakes";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { getQuestionHistory } from "@/lib/queries/mistakes";
 import { getLockedQuestionIds } from "@/lib/queries/mock-exams";
-import { plainSnippet, type SearchDoc } from "@/lib/search";
+import { plainSnippet, type PersonalSearch, type SearchDoc } from "@/lib/search";
 import { APP_TIME_ZONE } from "@/lib/time";
 
 /** How many answered questions go into a student's search index (newest first). */
 const MAX_QUESTIONS = 300;
 const RECENT_TOPICS = 4;
-
-export type PersonalSearch = {
-    /** Mastery for every topic the student has practised; missing topics are "not started" */
-    mastery: Record<string, { level: string; score: number | null }>;
-    /** Topics practised most recently, newest first */
-    recentTopicIds: string[];
-    /** Questions they've answered and their mock papers, as search documents */
-    docs: SearchDoc[];
-};
 
 /**
  * Everything personal the search palette needs, in one read. Only questions the student has attempted, never ones

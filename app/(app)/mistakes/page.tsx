@@ -178,7 +178,11 @@ function MistakeItem({ entry: e }: { entry: MistakeEntry }) {
     const { points, notes } = q.type === "MCQ" ? { points: [], notes: [] } : parseMarkScheme(q.markScheme);
 
     return (
-        <li className="rounded-lg border bg-card">
+        // The id lets search link straight to a question; :target outlines it on arrival.
+        <li
+            id={`q-${q.id}`}
+            className="scroll-mt-24 rounded-lg border bg-card target:shadow-[inset_0_0_0_2px_var(--progress)]"
+        >
             <details className="group">
                 <summary className="flex cursor-pointer list-none items-start gap-3 rounded-lg px-4 py-3.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-5 [&::-webkit-details-marker]:hidden">
                     <div className="min-w-0 flex-1">

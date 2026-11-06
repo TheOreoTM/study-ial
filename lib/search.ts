@@ -23,6 +23,16 @@ export type SearchDoc = {
     action?: { label: string; href: string };
 };
 
+/** A signed-in student's own search data, from /api/search/personal. */
+export type PersonalSearch = {
+    /** Mastery for every topic the student has practised; missing topics are "not started" */
+    mastery: Record<string, { level: "new" | "weak" | "developing" | "strong"; score: number | null }>;
+    /** Topics practised most recently, newest first */
+    recentTopicIds: string[];
+    /** Questions they've answered and their mock papers, as search documents */
+    docs: SearchDoc[];
+};
+
 export type SearchHit = {
     doc: SearchDoc;
     score: number;

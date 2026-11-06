@@ -3,7 +3,7 @@
 
 import type { SearchKind } from "@/lib/search";
 
-export type RecentPick = { href: string; name: string; context: string; kind: SearchKind };
+export type RecentPick = { href: string; name: string; context: string; kind: SearchKind; code?: string };
 
 export const RECENTS_KEY = "study-ial:search-recents";
 export const MAX_RECENTS = 5;
@@ -44,10 +44,31 @@ export function loadRecents(): RecentPick[] {
     }
 }
 
+const CHANGE_EVENT = "study-ial:recents-changed";
+
 export function saveRecents(list: RecentPick[]) {
     try {
         window.localStorage.setItem(RECENTS_KEY, JSON.stringify(list));
+        window.dispatchEvent(new Event(CHANGE_EVENT));
     } catch {
         // Private mode or storage full: recents are a convenience, so carry on without them.
     }
+}
+
+/** For useSyncExternalStore: the raw stored string (stable between changes), and change notifications. */
+export function readRecentsRaw(): string | null {
+    try {
+        return window.localStorage.getItem(RECENTS_KEY);
+    } catch {
+        return null;
+    }
+}
+
+export function subscribeRecents(onChange: () => void) {
+    window.addEventListener(CHANGE_EVENT, onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+        window.removeEventListener(CHANGE_EVENT, onChange);
+        window.removeEventListener("storage", onChange);
+    };
 }

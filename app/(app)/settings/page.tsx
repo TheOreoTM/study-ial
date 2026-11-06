@@ -62,7 +62,7 @@ export default async function SettingsPage() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card id="share" className="scroll-mt-24">
                     <CardHeader>
                         <CardTitle>Share your progress</CardTitle>
                         <CardDescription>A read-only link for a parent or teacher. No account needed.</CardDescription>
