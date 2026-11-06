@@ -56,6 +56,12 @@ export function addMonth(from: Date): Date {
     return d;
 }
 
+/**
+ * What the Pro gate shows a student for AI marking and the tutor: "pro" (has Pro, or billing is off so AI works as
+ * before), "trial" (no Pro, free week still available) or "upgrade" (trial used; send them to /billing).
+ */
+export type ProAccess = "pro" | "trial" | "upgrade";
+
 export type Entitlement =
     | { pro: false; reason: "free" | "expired" }
     | { pro: true; reason: "trial" | "active" | "grace" | "canceling"; until: Date };
@@ -93,6 +99,28 @@ export function nextPeriod(sub: Sub | null, now: Date): { start: Date; end: Date
     const e = entitlement(sub, now);
     const start = e.pro && e.reason !== "grace" ? e.until : now;
     return { start, end: addMonth(start) };
+}
+
+/**
+ * Whether the student may start a checkout. Everyone can, except while a paid month with a saved card is running
+ * (it renews itself; a cancelled one is resumed instead of paid again).
+ */
+export function canCheckout(sub: Sub | null, now: Date) {
+    if (!sub || sub.status !== "ACTIVE" || !sub.cardToken) return true;
+    return !sub.currentPeriodEnd || sub.currentPeriodEnd.getTime() <= now.getTime();
+}
+
+/** A cancelled paid month can be switched back on until it ends. */
+export function canResume(sub: Sub | null, now: Date) {
+    const e = entitlement(sub, now);
+    return e.pro && e.reason === "canceling" && Boolean(sub?.cardToken);
+}
+
+/** The "your free week ends tomorrow" email: once, in the last day of the trial. */
+export function trialReminderDue(sub: Sub & { remindedAt: Date | null }, now: Date) {
+    if (sub.status !== "TRIALING" || !sub.trialEndsAt || sub.remindedAt) return false;
+    const left = sub.trialEndsAt.getTime() - now.getTime();
+    return left > 0 && left <= DAY;
 }
 
 export type CronAction = "renew" | "retry" | "expire" | "none";

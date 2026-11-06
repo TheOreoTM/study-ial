@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
     addMonth,
+    canCheckout,
+    canResume,
     canStartTrial,
     cronAction,
     entitlement,
@@ -10,6 +12,7 @@ import {
     nextPeriod,
     priceWithGst,
     trialEnd,
+    trialReminderDue,
     type Sub,
 } from "./billing";
 
@@ -191,5 +194,44 @@ describe("invoiceNumber", () => {
         expect(invoiceNumber(1234567, new Date("2027-01-01T00:00:00Z"))).toBe("SIAL-2027-1234567");
         // 20:00 UTC on 31 Dec is already 1 Jan in Malé (UTC+5)
         expect(invoiceNumber(7, new Date("2026-12-31T20:00:00Z"))).toBe("SIAL-2027-000007");
+    });
+});
+
+describe("canCheckout / canResume", () => {
+    it("allows checkout unless a saved-card month is running", () => {
+        expect(canCheckout(null, now)).toBe(true);
+        expect(canCheckout(sub({ status: "TRIALING", trialEndsAt: at(D) }), now)).toBe(true);
+        expect(canCheckout(sub({ status: "PAST_DUE", graceEndsAt: at(D) }), now)).toBe(true);
+        expect(canCheckout(sub({ status: "EXPIRED" }), now)).toBe(true);
+        expect(canCheckout(sub({ cardToken: null }), now)).toBe(true);
+        expect(canCheckout(sub({}), now)).toBe(false);
+        expect(canCheckout(sub({ cancelAtPeriodEnd: true }), now)).toBe(false);
+        expect(canCheckout(sub({ currentPeriodEnd: at(-H) }), now)).toBe(true);
+    });
+
+    it("resumes only a cancelled month that is still running", () => {
+        expect(canResume(sub({ cancelAtPeriodEnd: true }), now)).toBe(true);
+        expect(canResume(sub({}), now)).toBe(false);
+        expect(canResume(sub({ cancelAtPeriodEnd: true, currentPeriodEnd: at(-H) }), now)).toBe(false);
+        expect(canResume(sub({ cancelAtPeriodEnd: true, cardToken: null }), now)).toBe(false);
+        expect(canResume(null, now)).toBe(false);
+    });
+});
+
+describe("trialReminderDue", () => {
+    const trial = (ends: Date, remindedAt: Date | null = null) => ({
+        ...sub({ status: "TRIALING", trialEndsAt: ends, currentPeriodEnd: null }),
+        remindedAt,
+    });
+
+    it("is due once, in the trial's last day", () => {
+        expect(trialReminderDue(trial(at(2 * D)), now)).toBe(false);
+        expect(trialReminderDue(trial(at(20 * H)), now)).toBe(true);
+        expect(trialReminderDue(trial(at(20 * H), at(-H)), now)).toBe(false);
+        expect(trialReminderDue(trial(at(-H)), now)).toBe(false);
+    });
+
+    it("isn't sent for paid subscriptions", () => {
+        expect(trialReminderDue({ ...sub({ trialEndsAt: at(H) }), remindedAt: null }, now)).toBe(false);
     });
 });
