@@ -69,9 +69,11 @@ type ContentLike = {
     sourceRef: string | null;
 };
 
-/** Lines of a mark scheme that are a single marking point, i.e. end with "(1)". */
+/** Marks available across a mark scheme: the sum of the "(n)" at the end of each line. */
 export function countMarkingPoints(markScheme: string) {
-    return markScheme.split("\n").filter((line) => /\(1\)\s*$/.test(line.trim())).length;
+    return markScheme
+        .split("\n")
+        .reduce((total, line) => total + Number(/\((\d+)\)\s*$/.exec(line.trim())?.[1] ?? 0), 0);
 }
 
 /** Cross-field rules. Hard errors block saving; warnings are shown but allowed. */

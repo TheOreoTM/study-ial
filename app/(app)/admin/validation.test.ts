@@ -15,6 +15,10 @@ describe("countMarkingPoints", () => {
         expect(countMarkingPoints("- use of $v = u + at$ (1)\n- answer 12 m/s (1)  \nnote: ecf")).toBe(2);
         expect(countMarkingPoints("")).toBe(0);
     });
+
+    it("adds up lines worth more than one mark", () => {
+        expect(countMarkingPoints("a full definition (2)\nand an example (1)")).toBe(3);
+    });
 });
 
 describe("questionInputSchema", () => {
