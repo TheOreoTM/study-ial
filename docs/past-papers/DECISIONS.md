@@ -142,3 +142,26 @@ Decisions made while building without stopping to ask. Newest at the bottom of e
 - **Public SEO**: topic pages now show up to three published original questions (with the mark scheme behind a
   disclosure). Past-paper content never appears there.
 - Admin-only, quota `generate` (60 calls/day by default).
+
+## Extras
+
+- **Topic tagging is heuristic** (TF-IDF over each topic's name, summary and spec points, plus built-in hint words
+  for common IAL topic names such as Integration → "dx", "area", "region"; Differentiation → "dy", "tangent"). A part
+  is tagged only when one topic clearly wins; parents take their children's majority. 62% of WMA11 parts get a tag;
+  a spot check of one paper found ~13 of 17 tags right. Vision-parsed (LaTeX) stems tag better; an AI tagger is a
+  next step. Students are told tags are automatic.
+- **"Practise weak questions on topic X across every paper"** is `/papers/topics/[topicId]`: every tagged part from
+  the index and the student's uploads, dropped-marks first, with an "only my weak ones" filter. Linked from topic pages
+  (signed-in only: public pages never mention paper content) and from the progress page's weakest topics.
+- **Spaced repetition of wrong answers**: `/papers/review`, scheduled by the flashcards' SM-2 (`gradeFromScore`:
+  full = easy, ≥60% = good, else again → back tomorrow). A banner on My papers shows what's due.
+- **Timed exam**: time limit read from the cover page ("Time: 1 hour 30 minutes", default 90), answers autosaved in
+  the browser, auto hand-in at zero, then each part is marked (self or AI) against the session. Estimated grade from
+  that sitting's published boundaries (or the unit's latest), scaled to the boundary's max mark.
+- **Grade boundaries** come from Pearson's public grade-boundary PDFs (listed in the same Algolia index), read with the
+  same text-layer tools: 974 unit boundaries with source URLs. Only the numbers are kept, not the PDFs.
+- **Examiner-report insights** show on every part as "What examiners noticed" (signed-in pages only) and power the
+  non-AI explanation fallback.
+- **Cost controls**: per-user daily quotas per feature (`AI_DAILY_LIMIT_*`, now including `parse` and `generate`),
+  quota refunds on failures, token/cost logging per call (`AiCallLog`, counts only), and `/admin/ai`.
+- Attempting a paper (or starting a timed exam) adds it to the student's papers.

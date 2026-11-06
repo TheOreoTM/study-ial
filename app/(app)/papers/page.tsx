@@ -9,6 +9,7 @@ import { DocChips } from "@/components/papers/doc-chips";
 import { Button } from "@/components/ui/button";
 import { paperLabel, SERIES_LABEL } from "@/lib/papers/filename";
 import { getMyPapers, seriesKey } from "@/lib/queries/papers";
+import { dueReviewCount } from "@/lib/queries/paper-progress";
 import { requireUser } from "@/lib/session";
 import { UnitChip } from "../subjects/_components/chips";
 
@@ -24,7 +25,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function MyPapersPage() {
     const user = await requireUser();
-    const sittings = await getMyPapers(user.id);
+    const [sittings, due] = await Promise.all([getMyPapers(user.id), dueReviewCount(user.id)]);
 
     return (
         <>
@@ -45,6 +46,17 @@ export default async function MyPapersPage() {
                     </>
                 }
             />
+            {due > 0 && (
+                <Link
+                    href="/papers/review"
+                    className="mb-6 flex items-center justify-between gap-3 rounded-xl bg-primary-soft p-4 font-semibold shadow-raised hover:-translate-y-px sm:p-5"
+                >
+                    <span>
+                        <span className="num font-display text-xl font-extrabold">{due}</span> past-paper question{due === 1 ? "" : "s"} to review today
+                    </span>
+                    <span className="font-display font-extrabold">Review →</span>
+                </Link>
+            )}
             {sittings.length === 0 ? (
                 <EmptyState
                     icon={FileText}

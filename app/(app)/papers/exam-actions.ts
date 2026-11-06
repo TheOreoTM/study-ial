@@ -42,6 +42,11 @@ export async function startExam(input: { sittingId: string }): Promise<Result<{ 
     if (live) return { ok: true, sessionId: live.id };
     const minutes = await paperMinutes(loaded.qp.id);
     const maxMarks = loaded.parts.reduce((a, p) => a + markContextFor(loaded.rows, p).maxMarks, 0);
+    await db.userPaper.upsert({
+        where: { userId_sittingId: { userId: user.id, sittingId: loaded.sitting.id } },
+        create: { userId: user.id, sittingId: loaded.sitting.id },
+        update: {},
+    });
     const session = await db.paperExamSession.create({
         data: { userId: user.id, sittingId: loaded.sitting.id, mode: "TIMED", endsAt: new Date(Date.now() + minutes * 60_000), maxMarks },
     });

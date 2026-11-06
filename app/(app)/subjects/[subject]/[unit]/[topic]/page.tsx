@@ -77,7 +77,7 @@ export default async function TopicPage({ params }: { params: Params }) {
     if (subjectSlug !== unit.subject.slug || code !== unit.code.toLowerCase())
         permanentRedirect(`${unitHref}/${topic.slug}`);
 
-    const [typeCounts, deck, mastery, recent] = await Promise.all([
+    const [typeCounts, deck, mastery, recent, paperParts] = await Promise.all([
         getTopicQuestionTypeCounts(topic.id),
         user ? getDeckCounts(user.id, [topic.id]).then((d) => d.get(topic.id)!) : null,
         user ? getTopicMastery(user.id, [topic.id]).then((m) => m.get(topic.id)!) : null,
@@ -96,6 +96,8 @@ export default async function TopicPage({ params }: { params: Params }) {
                   },
               })
             : [],
+        // Past-paper parts on this topic: only counted for signed-in students (nothing from papers on public pages)
+        user ? db.paperQuestion.count({ where: { topicId: topic.id, children: { none: {} }, paper: { type: "QP", sitting: { ownerId: null } } } }) : 0,
     ]);
     const total = [...typeCounts.values()].reduce((a, b) => a + b, 0);
 
@@ -280,6 +282,20 @@ export default async function TopicPage({ params }: { params: Params }) {
                                     </Link>
                                 </Button>
                             </div>
+                        </section>
+                    )}
+
+                    {paperParts > 0 && (
+                        <section aria-labelledby="paper-parts" className="rounded-xl border bg-card p-5 shadow-card">
+                            <h2 id="paper-parts" className="mb-1 text-lg">
+                                Past-paper questions
+                            </h2>
+                            <p className="mb-3 text-muted-foreground">
+                                {paperParts} part{paperParts === 1 ? "" : "s"} from real papers are tagged with this topic.
+                            </p>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/papers/topics/${topic.id}`}>Practise them</Link>
+                            </Button>
                         </section>
                     )}
 

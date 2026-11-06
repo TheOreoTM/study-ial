@@ -91,7 +91,7 @@ export async function QuestionsPanel({
                         <p className="flex items-center gap-2 text-destructive">
                             <AlertTriangle className="size-4" aria-hidden /> {qp.parseError ?? "Reading this paper failed."}
                         </p>
-                        <RequestParseButton paperId={qp.id} label="Try again" />
+                        {(aiEnabled || !/needs AI/.test(qp.parseError ?? "")) && <RequestParseButton paperId={qp.id} label="Try again" />}
                     </div>
                 )}
                 {qp.parseStatus === "NEEDS_REVIEW" && (

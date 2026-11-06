@@ -14,6 +14,7 @@ import { compareNumbers, questionOf } from "@/lib/papers/parse/numbering";
 import { parsedMarkSchemeSchema, parsedPaperSchema, type ParsedMarkScheme, type ParsedPaper } from "@/lib/papers/parse/schema";
 import { validateStructure, type ValidationReport } from "@/lib/papers/parse/validate";
 import { parseWithVision } from "@/lib/papers/parse/vision";
+import { tagPaperTopics } from "@/lib/papers/tag-paper";
 import type { StorageAdapter } from "@/lib/storage/types";
 
 export type ParseOptions = {
@@ -268,6 +269,12 @@ export async function parsePaper(store: StorageAdapter, paperId: string, opts: P
     }
     const link = await linkSitting(paper.sittingId);
     log(`linked: ${link.matched} parts matched to the mark scheme${link.missing.length ? `, missing ${link.missing.join(", ")}` : ""}`);
+    // Tag topics once the scheme is linked (its words help); re-run whenever any document of the sitting changes
+    const qp = paper.type === "QP" ? paper.id : (await db.paper.findFirst({ where: { sittingId: paper.sittingId, type: "QP" }, select: { id: true } }))?.id;
+    if (qp) {
+        const tags = await tagPaperTopics(qp);
+        if (tags.total) log(`topics: ${tags.tagged}/${tags.total} parts tagged`);
+    }
 
     // Uploads always get a human check; indexed papers only when validation found problems
     const status =

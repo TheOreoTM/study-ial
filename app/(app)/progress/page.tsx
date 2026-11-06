@@ -18,6 +18,7 @@ import { syncMilestones } from "@/lib/queries/milestones";
 import { getQuestionCounts } from "@/lib/queries/curriculum";
 import { getTopicMastery } from "@/lib/queries/mastery";
 import { requireUser } from "@/lib/session";
+import { PaperProgressSection } from "@/components/papers/progress-section";
 import { localDayKey } from "@/lib/time";
 import { MasteryRow } from "./mastery-row";
 
@@ -295,6 +296,7 @@ export default async function ProgressPage() {
                     ))}
                 </div>
             )}
+            <PaperProgressSection userId={user.id} />
             <div className="mt-10">
                 <MilestoneGrid milestones={milestones} />
             </div>

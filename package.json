@@ -20,7 +20,8 @@
     "papers:ingest": "tsx scripts/ingest-papers.ts",
     "papers:check-links": "tsx scripts/check-paper-links.ts",
     "papers:parse": "tsx --conditions react-server scripts/run-paper-jobs.ts",
-    "papers:grade-boundaries": "tsx scripts/ingest-grade-boundaries.ts"
+    "papers:grade-boundaries": "tsx scripts/ingest-grade-boundaries.ts",
+    "papers:tag": "tsx scripts/tag-paper-topics.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

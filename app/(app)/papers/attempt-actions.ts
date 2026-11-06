@@ -74,6 +74,11 @@ function ownKeys(userId: string, keys: string[]) {
     return keys.every((k) => isOwnAttemptKey(userId, k));
 }
 
+/** Working on a paper puts it in the student's papers, so it's easy to come back to. */
+async function keepInWorkspace(userId: string, sittingId: string) {
+    await db.userPaper.upsert({ where: { userId_sittingId: { userId, sittingId } }, create: { userId, sittingId }, update: {} });
+}
+
 function revalidateAfter(sittingId: string) {
     revalidatePath(`/papers/${sittingId}`, "layout");
     revalidatePath("/progress");
@@ -114,6 +119,7 @@ export async function selfMarkPart(input: {
         },
     });
     await scheduleReview(user.id, d.questionId, marksAwarded, max);
+    await keepInWorkspace(user.id, part.sitting.id);
     revalidateAfter(part.sitting.id);
     return { ok: true, attemptId: attempt.id, marksAwarded, maxMarks: max, method: "SELF", points, justification: "", feedback: "", remaining: null };
 }
@@ -155,6 +161,7 @@ export async function aiMarkPart(input: { questionId: string; answer: string; im
         },
     });
     await scheduleReview(user.id, d.questionId, result.marksAwarded, part.ctx.maxMarks);
+    await keepInWorkspace(user.id, part.sitting.id);
     revalidateAfter(part.sitting.id);
     return {
         ok: true,
