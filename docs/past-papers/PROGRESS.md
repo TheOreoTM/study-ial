@@ -39,12 +39,14 @@ Environment: local Postgres 16, **local filesystem storage** (no R2 credentials 
 | Further Mathematics (WFM) | 62 | 59 | 62 | 59 |
 | Physics | 207 | 194 | 207 | 197 |
 | Chemistry | 210 | 205 | 208 | 203 |
-| Biology | still running at the time of writing; re-run `pnpm papers:ingest --subject biology` to finish (it resumes) | | | |
+| Biology | 206 | 193 | 206 | 199 |
 
 - WMA11 end-to-end first: 68 files, 23 sittings (January 2019 → October 2025). A re-run made **0 requests** and stored
   0 (idempotent by URL, then content hash).
 - Maths + Further Maths: 1,125 files, 0 errors, 175 restricted files skipped unrequested, 8 skipped as not real
   sittings ("unused" January 2022 papers, a typo'd duplicate).
+- Physics + Chemistry + Biology: 1,812 files, 0 errors, 224 restricted files skipped unrequested, 3 duplicates by
+  content hash. **Total across all five subjects: 2,937 files.**
 - Link checker: 12 sampled Maths source URLs, 0 broken.
 - Grade boundaries: 974 unit boundaries from 34 Pearson documents (21 of 23 WMA11 sittings have them).
 - About 1.9 GB of PDFs; the HTTP cache (`.cache/http`) keeps a second copy so interrupted runs never re-download.
