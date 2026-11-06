@@ -25,7 +25,14 @@ function readQuery(raw: string | string[] | undefined) {
     return (q ?? "").trim().slice(0, 100);
 }
 
-const kindLabel = { subject: "Subject", unit: "Unit", topic: "Topic" } as const;
+const kindLabel = {
+    subject: "Subject",
+    unit: "Unit",
+    topic: "Topic",
+    page: "Page",
+    question: "Question",
+    mock: "Mock paper",
+} as const;
 
 export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
     const q = readQuery((await searchParams).q);

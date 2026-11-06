@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { highlight, normalize, plainSnippet, scoreDoc, search, tokenize, type SearchDoc } from "./search";
+import {
+    groupHits,
+    highlight,
+    normalize,
+    plainSnippet,
+    prepareDocs,
+    scoreDoc,
+    search,
+    searchPrepared,
+    tokenize,
+    type SearchDoc,
+} from "./search";
 
 const docs: SearchDoc[] = [
     {
@@ -128,5 +139,55 @@ describe("plainSnippet", () => {
         expect(plainSnippet("Use $v = f\\lambda$ here")).toBe("Use v = fλ here");
         expect(plainSnippet("$\\Delta E = mc^2$")).toBe("Δ E = mc^2");
         expect(plainSnippet("x".repeat(300), 20)).toHaveLength(20);
+    });
+});
+
+describe("prepared search", () => {
+    it("gives the same results as searching raw docs", () => {
+        const prepared = prepareDocs(docs);
+        for (const q of ["momentum", "wph11", "proj", "conservation", "physics"]) {
+            expect(searchPrepared(prepared, q)).toEqual(search(docs, q));
+        }
+    });
+
+    it("finds documents by their keywords", () => {
+        const page: SearchDoc = {
+            kind: "page",
+            id: "share",
+            href: "/settings#share",
+            name: "Share your progress",
+            code: "",
+            context: "Settings",
+            keywords: ["parent", "teacher", "link"],
+        };
+        const [hit] = search([...docs, page], "parent");
+        expect(hit.doc.id).toBe("share");
+    });
+
+    it("never matches an empty code to a token", () => {
+        const page: SearchDoc = { kind: "page", id: "p", href: "/", name: "Mock papers", code: "", context: "" };
+        expect(search([page], "")).toEqual([]);
+        expect(search([page], "mock")[0].doc.id).toBe("p");
+    });
+});
+
+describe("groupHits", () => {
+    const hit = (kind: SearchDoc["kind"], id: string, score: number) => ({
+        doc: { kind, id, href: "/", name: id, code: "", context: "" },
+        score,
+        point: null,
+    });
+
+    it("orders groups by their best hit and caps each kind", () => {
+        const groups = groupHits(
+            [hit("page", "p1", 120), hit("topic", "t1", 100), hit("topic", "t2", 90), hit("topic", "t3", 80), hit("unit", "u1", 50)],
+            { topic: 2 },
+        );
+        expect(groups.map((g) => g.kind)).toEqual(["page", "topic", "unit"]);
+        expect(groups[1].hits.map((h) => h.doc.id)).toEqual(["t1", "t2"]);
+    });
+
+    it("is empty without hits", () => {
+        expect(groupHits([])).toEqual([]);
     });
 });

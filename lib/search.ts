@@ -1,9 +1,12 @@
-// Curriculum search over subjects, units, topics and specification points. Pure functions (unit-tested); the page
-// loads the documents and calls `search`. Question stems are deliberately not searchable: they'd leak practice
-// content (and drafts) onto a public page.
+// Search over the curriculum (subjects, units, topics, spec points), app pages and actions, and, for a signed-in
+// student, the questions they've attempted and their mock papers. Pure functions (unit-tested). It runs in the
+// browser on every keystroke: build the index once with `prepareDocs`, then call `searchPrepared`. Unseen question
+// stems are never indexed: they'd leak practice content (and drafts).
+
+export type SearchKind = "subject" | "unit" | "topic" | "page" | "question" | "mock";
 
 export type SearchDoc = {
-    kind: "subject" | "unit" | "topic";
+    kind: SearchKind;
     id: string;
     href: string;
     /** Display name, e.g. "Motion and kinematics" */
@@ -14,6 +17,10 @@ export type SearchDoc = {
     context: string;
     summary?: string | null;
     specPoints?: string[];
+    /** Extra words it should be found by (e.g. "settings" for "Share your progress") */
+    keywords?: string[];
+    /** A secondary action, e.g. Practise for a topic or question */
+    action?: { label: string; href: string };
 };
 
 export type SearchHit = {
@@ -57,74 +64,138 @@ function wordStart(text: string, token: string) {
     return false;
 }
 
-/**
- * Scores one document. Every query word must appear somewhere in it (as the start of a word), otherwise it doesn't
- * match. Names count most, then codes, then summaries, then spec points.
- */
-export function scoreDoc(doc: SearchDoc, tokens: string[]): SearchHit | null {
-    if (tokens.length === 0) return null;
-    const name = normalize(doc.name);
-    const code = doc.code.toLowerCase();
-    const context = normalize(doc.context);
-    const summary = doc.summary ? normalize(doc.summary) : "";
-    const points = (doc.specPoints ?? []).map(normalize);
-    const phrase = tokens.join(" ");
+/** A document with its text normalized once, so each keystroke only scans. */
+export type PreparedDoc = {
+    doc: SearchDoc;
+    name: string;
+    code: string;
+    context: string;
+    summary: string;
+    keywords: string;
+    points: string[];
+};
 
-    let score = 0;
-    let bestPoint: { index: number; hits: number } | null = null;
-    for (const t of tokens) {
-        let found = false;
-        if (code === t) {
-            score += 80;
-            found = true;
-        }
-        if (wordStart(name, t)) {
-            score += 20;
-            found = true;
-        }
-        if (wordStart(summary, t)) {
-            score += 5;
-            found = true;
-        }
-        if (wordStart(context, t)) {
-            score += 2;
-            found = true;
-        }
-        if (!found && points.some((p) => wordStart(p, t))) found = true;
-        if (!found) return null;
-    }
-    // Spec points: credit the one that matches the most words.
-    points.forEach((p, index) => {
-        const hits = tokens.filter((t) => wordStart(p, t)).length;
-        if (hits > 0 && (!bestPoint || hits > bestPoint.hits)) bestPoint = { index, hits };
-    });
-    const bp = bestPoint as { index: number; hits: number } | null;
-    if (bp) score += 3 * bp.hits;
-
-    if (name === phrase) score += 100;
-    else if (name.startsWith(phrase)) score += 60;
-    else if (phrase.length > 3 && name.includes(phrase)) score += 30;
-
-    // Codes are short and exact, so a code search finds the unit before its topics.
-    if (doc.kind === "unit") score += 1;
-    if (doc.kind === "subject") score += 2;
-
-    const nameMatched = tokens.some((t) => wordStart(name, t) || code === t);
+export function prepareDoc(doc: SearchDoc): PreparedDoc {
     return {
         doc,
-        score,
-        point: bp && !nameMatched ? { index: bp.index, text: doc.specPoints![bp.index] } : null,
+        name: normalize(doc.name),
+        code: doc.code.toLowerCase(),
+        context: normalize(doc.context),
+        summary: doc.summary ? normalize(doc.summary) : "",
+        keywords: doc.keywords?.length ? normalize(doc.keywords.join(" ")) : "",
+        points: (doc.specPoints ?? []).map(normalize),
     };
 }
 
-export function search(docs: SearchDoc[], query: string, limit = 30): SearchHit[] {
+export function prepareDocs(docs: SearchDoc[]): PreparedDoc[] {
+    return docs.map(prepareDoc);
+}
+
+/** Small nudges so equal matches order sensibly: a code search finds the unit before its topics. */
+const KIND_BONUS: Record<SearchKind, number> = { subject: 2, unit: 1, topic: 0, page: 1, question: 0, mock: 0 };
+
+/**
+ * Scores one prepared document. Every query word must appear somewhere in it (as the start of a word), otherwise it
+ * doesn't match. Names count most, then codes and keywords, then summaries, then spec points.
+ */
+export function scorePrepared(p: PreparedDoc, tokens: string[]): SearchHit | null {
+    if (tokens.length === 0) return null;
+    const phrase = tokens.join(" ");
+
+    let score = 0;
+    for (const t of tokens) {
+        let found = false;
+        if (p.code === t) {
+            score += 80;
+            found = true;
+        }
+        if (wordStart(p.name, t)) {
+            score += 20;
+            found = true;
+        }
+        if (p.keywords && wordStart(p.keywords, t)) {
+            score += 15;
+            found = true;
+        }
+        if (p.summary && wordStart(p.summary, t)) {
+            score += 5;
+            found = true;
+        }
+        if (wordStart(p.context, t)) {
+            score += 2;
+            found = true;
+        }
+        if (!found && !p.points.some((pt) => wordStart(pt, t))) return null;
+    }
+    // Spec points: credit the one that matches the most words.
+    let best: { index: number; hits: number } | null = null;
+    for (let index = 0; index < p.points.length; index++) {
+        let hits = 0;
+        for (const t of tokens) if (wordStart(p.points[index], t)) hits++;
+        if (hits > 0 && (!best || hits > best.hits)) best = { index, hits };
+    }
+    if (best) score += 3 * best.hits;
+
+    if (p.name === phrase) score += 100;
+    else if (p.name.startsWith(phrase)) score += 60;
+    else if (phrase.length > 3 && p.name.includes(phrase)) score += 30;
+
+    score += KIND_BONUS[p.doc.kind];
+
+    const nameMatched = tokens.some((t) => wordStart(p.name, t) || p.code === t);
+    return {
+        doc: p.doc,
+        score,
+        point: best && !nameMatched ? { index: best.index, text: p.doc.specPoints![best.index] } : null,
+    };
+}
+
+export function scoreDoc(doc: SearchDoc, tokens: string[]): SearchHit | null {
+    return scorePrepared(prepareDoc(doc), tokens);
+}
+
+export function searchPrepared(prepared: PreparedDoc[], query: string, limit = 30): SearchHit[] {
     const tokens = tokenize(query);
     if (tokens.length === 0) return [];
-    return docs
-        .map((d) => scoreDoc(d, tokens))
-        .filter((h): h is SearchHit => h !== null)
-        .sort((a, b) => b.score - a.score || a.doc.name.localeCompare(b.doc.name))
-        .slice(0, limit);
+    const hits: SearchHit[] = [];
+    for (const p of prepared) {
+        const h = scorePrepared(p, tokens);
+        if (h) hits.push(h);
+    }
+    return hits.sort((a, b) => b.score - a.score || a.doc.name.localeCompare(b.doc.name)).slice(0, limit);
+}
+
+export function search(docs: SearchDoc[], query: string, limit = 30): SearchHit[] {
+    return searchPrepared(prepareDocs(docs), query, limit);
+}
+
+export const KIND_LABEL: Record<SearchKind, string> = {
+    page: "Go to",
+    topic: "Topics",
+    unit: "Units",
+    subject: "Subjects",
+    question: "Questions you've answered",
+    mock: "Your mock papers",
+};
+
+/**
+ * Groups hits by kind for display: at most `perKind[kind]` each, groups ordered by their best hit (so the strongest
+ * match is always at the top), hits keep their score order.
+ */
+export function groupHits(
+    hits: SearchHit[],
+    perKind: Partial<Record<SearchKind, number>> = {},
+): { kind: SearchKind; hits: SearchHit[] }[] {
+    const groups = new Map<SearchKind, SearchHit[]>();
+    for (const h of hits) {
+        const list = groups.get(h.doc.kind) ?? [];
+        if (list.length < (perKind[h.doc.kind] ?? Infinity)) list.push(h);
+        groups.set(h.doc.kind, list);
+    }
+    return [...groups]
+        .map(([kind, list]) => ({ kind, hits: list }))
+        .filter((g) => g.hits.length > 0)
+        .sort((a, b) => b.hits[0].score - a.hits[0].score);
 }
 
 export type Segment = { text: string; match: boolean };
