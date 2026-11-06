@@ -95,7 +95,11 @@ SDK and community Python/Ruby SDKs, so check each against UAT before relying on 
 - **Webhooks:** `X-Signature = sha256(nonce + timestamp + apiKey)`; the body isn't signed, so a webhook (and the return
   redirect's `state`) only tells us *which* transaction to re-fetch.
 
-## Open (before taking real money)
+## Open (before taking real money) — Deferred
+
+The product owner deferred payment integration (6 Nov 2026): no BML work until they say so. What's built stays
+dormant behind `BILLING_PROVIDER` (unset in production, so nobody is gated).
+
 
 1. BML merchant account + UAT keys; **ask BML's integration team to confirm merchant-initiated card-on-file charges for
    monthly renewals** (the reported `PP-TKN-007` failure). If they can't, switch to prepaid months: same app, the
