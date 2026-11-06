@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { getSubjects } from "@/lib/queries/curriculum";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toIsoDate } from "@/components/units/exam-sessions";
 import { toPickerSubjects } from "@/components/units/types";
@@ -78,6 +80,18 @@ export default async function SettingsPage() {
                                     : null
                             }
                         />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Pro plan</CardTitle>
+                        <CardDescription>AI marking and the AI tutor, payments and tax invoices.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button variant="outline" asChild>
+                            <Link href="/billing">Manage your plan</Link>
+                        </Button>
                     </CardContent>
                 </Card>
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
+import { LogOut, Monitor, Moon, Settings, Sparkles, Sun } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     DropdownMenu,
@@ -90,6 +90,11 @@ export function UserMenu({
                 <DropdownMenuItem asChild>
                     <Link href="/settings">
                         <Settings className="size-4" /> Settings
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/billing">
+                        <Sparkles className="size-4" /> Pro plan
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
