@@ -1,4 +1,15 @@
-import { BarChart3, BookOpen, CalendarCheck, Layers, LayoutDashboard, Settings, Shield, Timer, type LucideIcon } from "lucide-react";
+import {
+    BarChart3,
+    BookOpen,
+    CalendarCheck,
+    FileText,
+    Layers,
+    LayoutDashboard,
+    Settings,
+    Shield,
+    Timer,
+    type LucideIcon,
+} from "lucide-react";
 
 export const site = {
     name: "Study-IAL",
@@ -13,6 +24,7 @@ export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly
 export const appNav: NavItem[] = [
     { href: "/dashboard", label: "Today", icon: LayoutDashboard },
     { href: "/subjects", label: "Subjects", icon: BookOpen },
+    { href: "/papers", label: "Papers", icon: FileText },
     { href: "/progress", label: "Progress", icon: BarChart3 },
     { href: "/flashcards", label: "Flashcards", icon: Layers },
     { href: "/plans", label: "Study plans", icon: CalendarCheck },

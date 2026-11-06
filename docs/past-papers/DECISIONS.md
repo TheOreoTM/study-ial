@@ -59,3 +59,18 @@ Decisions made while building without stopping to ask. Newest at the bottom of e
 - **PMT discovery is manifest-driven** (`data/papers/pmt-manifest.json`). PMT's paper pages render their link lists
   client-side and its sitemaps only expose revision pages, so there's no stable listing to crawl politely. The
   manifest is empty today because Pearson's open listing covers every IAL sitting we index.
+
+## Index UI & workspace
+
+- **Routes.** `/past-papers` (public, `noindex`, metadata only) → `/past-papers/[unit]` (sittings by year, series
+  filter). `/papers` is the signed-in workspace and `/papers/[id]` the viewer; `/papers` is in the proxy's protected
+  list and disallowed in robots.txt. Nav gets one "Papers" item.
+- **"Add to my papers" saves the sitting**, so the question paper, its mark scheme and its examiner report come
+  together and stay linked. Any signed-in student can open any public-index sitting; saving is a bookmark plus the
+  home for attempts.
+- **PDFs are drawn with pdf.js on a canvas**, not embedded with `<iframe>`: Chrome on Android and other mobile
+  browsers can't render embedded PDFs, and the canvas renderer behaves the same everywhere. Pages render lazily as
+  they scroll into view. "Open in new tab" is always offered.
+- **R2 needs a CORS rule** allowing `GET` from the site's origin, because the viewer fetches the 5-minute signed URL
+  from the browser. Documented in PROGRESS.md.
+- **Someone else's private upload returns 404, not 403**, so ids can't be probed.

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 // Optimistic check only (cookie presence). Pages still verify the session server-side.
-const PROTECTED = ["/dashboard", "/practice", "/plans", "/focus", "/progress", "/settings", "/onboarding", "/admin"];
+const PROTECTED = ["/dashboard", "/practice", "/plans", "/focus", "/progress", "/settings", "/onboarding", "/admin", "/papers"];
 
 export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;

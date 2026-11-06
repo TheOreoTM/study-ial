@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
                 "/settings",
                 "/admin",
                 "/onboarding",
+                "/papers",
             ],
         },
         sitemap: new URL("/sitemap.xml", site.url).toString(),

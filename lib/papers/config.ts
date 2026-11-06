@@ -109,3 +109,31 @@ export const INDEXER_USER_AGENT = "StudyIAL-PaperIndexer/1.0 (+https://study.ore
 export const MIN_REQUEST_GAP_MS = 2000;
 
 export const TAKEDOWN_EMAIL = process.env.NEXT_PUBLIC_TAKEDOWN_EMAIL || "takedown@oreotm.xyz";
+
+/** Names for 2013-spec units that aren't in the curriculum (the 2018 spec renamed or merged them). */
+export const LEGACY_UNIT_NAMES: Record<string, string> = {
+    WMA01: "Core Mathematics C12",
+    WMA02: "Core Mathematics C34",
+    WDM01: "Decision Mathematics D1",
+    WPH01: "Physics on the Go",
+    WPH02: "Physics at Work",
+    WPH03: "Exploring Physics",
+    WPH04: "Physics on the Move",
+    WPH05: "Physics from Creation to Collapse",
+    WPH06: "Experimental Physics",
+    WCH01: "The Core Principles of Chemistry",
+    WCH02: "Application of Core Principles of Chemistry",
+    WCH03: "Chemistry Laboratory Skills I",
+    WCH04: "General Principles of Chemistry I",
+    WCH05: "General Principles of Chemistry II",
+    WCH06: "Chemistry Laboratory Skills II",
+    WBI01: "Lifestyle, Transport, Genes and Health",
+    WBI02: "Development, Plants and the Environment",
+    WBI03: "Practical Biology and Research Skills I",
+    WBI04: "The Natural Environment and Species Survival",
+    WBI05: "Energy, Exercise and Co-ordination",
+    WBI06: "Practical Biology and Investigative Skills",
+};
+
+export const unitDisplayName = (code: string, curriculumName?: string | null) =>
+    curriculumName ?? LEGACY_UNIT_NAMES[code.toUpperCase()] ?? "Legacy specification unit";

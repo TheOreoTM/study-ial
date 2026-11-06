@@ -339,7 +339,10 @@ export default async function HomePage() {
                         {site.name}
                     </span>
                     <p>© {new Date().getFullYear()} Study-IAL</p>
-                    <p>Not affiliated with or endorsed by Pearson Edexcel.</p>
+                    <p>
+                        Not affiliated with or endorsed by Pearson Edexcel. Past papers are © Pearson, for personal study
+                        only. <Link href="/takedown">Copyright &amp; takedown</Link>
+                    </p>
                 </div>
             </footer>
         </div>
